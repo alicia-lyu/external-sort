@@ -60,6 +60,8 @@ template <class Value> inline bool odd (
 		Value const value, int bits_from_lsb = 0)
 {
 	return ((value >> bits_from_lsb) & Value (1)) != 0;
+	// Alternatively `((Value (1) << bits_from_lsb) & value) != 0`
+	// as symmetrical to `even`
 }
 //
 template <class Value> inline bool even (

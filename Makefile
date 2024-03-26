@@ -33,6 +33,14 @@ trace : Test.exe Makefile
 	./Test.exe >> trace
 	@size -t Test.exe $(OBJS) | sort -r >> trace
 
+ExternalSort.exe: Makefile ExternalSort.cpp
+	g++ $(CPPFLAGS) -o ExternalSort.exe ExternalSort.cpp
+# Where, 
+# "-c" gives the total number of records 
+# "-s" is the individual record size 
+# "-o" is the trace of your program run 
+# ./ExternalSort.exe -c 120 -s 1000 -o trace0.txt  (Example values)
+
 $(OBJS) : Makefile defs.h
 Test.o : Iterator.h Scan.h Filter.h Sort.h
 Iterator.o Scan.o Filter.o Sort.o : Iterator.h

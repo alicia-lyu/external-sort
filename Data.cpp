@@ -38,12 +38,14 @@ bool DataIterator::next ()
 
     if (_count >= _plan->_byteCount)
         return false;
+    
+    byte _byte = engine();
 
     ++ _count;
     return true;
 }
 
-byte DataIterator::getByte ()
+byte DataIterator::getByte () const
 {
-    
+    return _byte;
 }

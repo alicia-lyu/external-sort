@@ -1,9 +1,9 @@
 #pragma once
 
 #include "defs.h"
+#include "Row.h"
 
 typedef uint64_t RowCount;
-typedef u_int16_t RowSize; // 20-2000, unit: byte
 
 class Plan
 {
@@ -22,6 +22,8 @@ public:
 	virtual ~Iterator ();
 	void run ();
 	virtual bool next () = 0;
+	Row * getRow();
 private:
 	RowCount _count;
+	Row * _row;
 }; // class Iterator

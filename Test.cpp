@@ -3,6 +3,7 @@
 #include "Filter.h"
 #include "Sort.h"
 #include "utils.h"
+#include "Witness.h"
 
 int main (int argc, char * argv [])
 {
@@ -15,17 +16,21 @@ int main (int argc, char * argv [])
 		std::tie(recordCount, recordSize, outputPath) = getArgs(argc, argv);
 		ofstream_ptr inFile = getInFileStream(outputPath);
 
-		Plan * const plan = new ScanPlan (7, 20, inFile);
-		// new SortPlan ( new FilterPlan ( new ScanPlan (7) ) );
+		Plan * const scanPlan = new ScanPlan (7, 20, inFile);
+		Plan * const witnessBefore = new WitnessPlan(scanPlan);
+		// TODO: sortPlan
+		Plan * const witnessAfter = new WitnessPlan(witnessBefore); // TODO: change to sortPlan
 
-		Iterator * const it = plan->init ();
+		Iterator * const it = witnessAfter->init ();
 		it->run ();
 
 		inFile->close();
 		
 		delete it;
 
-		delete plan;
+		delete scanPlan;
+		delete witnessBefore;
+		delete witnessAfter;
 
 	return 0;
 } // main

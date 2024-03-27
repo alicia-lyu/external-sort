@@ -21,8 +21,7 @@ April 29, 2024    | Submission
 - [x] Add data records (incl mem mgmt) to iterators @Alicia
 - [x] Add data generation (random values) in ScanIterator @Alicia
 - [x] Test with simple plan -- scan only @Alicia
-- [ ] Add predicate evaluation (e.g. parity) to FilterIterator
-- [ ] Test with moderate plan -- scan & filter
+- [ ] Add parity check with new classes Witness
 
 ### Sorting: By April 8
 
@@ -38,6 +37,7 @@ April 29, 2024    | Submission
 
 ### Optimization and bonus points: By April 29
 
+- [ ] Add predicate evaluation (e.g. parity) to FilterIterator
 - [ ] Add duplicate removal and evaluate performance (distinct)
   - [ ] In stream (after sort)
   - [ ] In sort

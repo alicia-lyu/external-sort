@@ -53,10 +53,3 @@ bool ScanIterator::next ()
 	++ _count;
 	return true;
 } // ScanIterator::next
-
-Row * ScanIterator::getRow ()
-{
-	TRACE (true);
-
-	return _row;
-}

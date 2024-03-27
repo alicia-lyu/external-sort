@@ -1,5 +1,8 @@
-#include "Iterator.h"
+#pragma once
+
 #include "defs.h"
+
+typedef u_int16_t RowSize; // 20-2000, unit: byte
 
 class Row
 {

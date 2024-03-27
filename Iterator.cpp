@@ -29,3 +29,8 @@ void Iterator::run ()
 	traceprintf ("entire plan produced %lu rows\n",
 			(unsigned long) _count);
 } // Iterator::run
+
+Row * Iterator::getRow ()
+{
+    return _row;
+}

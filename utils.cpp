@@ -21,10 +21,10 @@ std::tuple<int, int, string> getArgs(int argc, char* argv[])
             recordCount = (RowCount) argv[++i];
         } else if (arg == "-s" && i + 1 < argc) {
             char* end;
-            unsigned long value = std::strtoul(argv[1], &end, 10); // Convert string to unsigned long
+            unsigned long value = std::strtoul(argv[++i], &end, 10); // Convert string to unsigned long
 
             if (*end != '\0' || value < 20 || value > 2000) {
-                std::cerr << "Please enter a record size between 20 and 2000.\n";
+                std::cerr << "Expected record size between 20 and 2000, got " << value << '\n';
                 exit(1);
             }
 

@@ -4,7 +4,7 @@ CPPOPT=-g -Og -D_DEBUG
 CPPFLAGS=$(CPPOPT) -Wall -ansi -pedantic -std=c++17
 # -Wparentheses -Wno-unused-parameter -Wformat-security
 # -fno-rtti -std=c++11 -std=c++98
-
+TIMESTAMP=$(shell date +%Y-%m-%d-%H-%M-%S)
 # documents and scripts
 DOCS=Tasks.txt
 SCRS=
@@ -29,10 +29,18 @@ MSG=no message
 Test.exe : Makefile $(OBJS)
 	g++ $(CPPFLAGS) -o Test.exe $(OBJS)
 
-trace : Test.exe Makefile
-	@date > trace
-	./Test.exe >> trace
-	@size -t Test.exe $(OBJS) | sort -r >> trace
+OUTPUT_DIR=./logs/${TIMESTAMP}
+OUTPUT_FILE=$(OUTPUT_DIR)/trace
+
+$(OUTPUT_DIR) : 
+	mkdir -p $(OUTPUT_DIR)
+
+$(OUTPUT_FILE) : Test.exe Makefile $(OUTPUT_DIR)
+	echo $(TIMESTAMP) > $(OUTPUT_FILE)
+	./Test.exe -c 7 -s 20 -o $(OUTPUT_FILE) >> $(OUTPUT_FILE)
+	# @size -t Test.exe $(OBJS) | sort -r >> $(OUTPUT_FILE)
+
+test: $(OUTPUT_FILE)
 
 ExternalSort.exe: Makefile ExternalSort.cpp
 	g++ $(CPPFLAGS) -o ExternalSort.exe ExternalSort.cpp
@@ -63,3 +71,10 @@ co :
 
 clean :
 	@rm -f $(OBJS) Test.exe Test.exe.stackdump trace
+
+temp.exe : temp.cpp
+	g++ $(CPPFLAGS) -o temp.exe temp.cpp
+
+temp.out : temp.exe
+	echo $(TIMESTAMP) > temp.out
+	./temp.exe >> temp.out

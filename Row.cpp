@@ -1,6 +1,7 @@
 #include "Row.h"
 
-Row::Row (RowSize size)
+Row::Row (RowSize size):
+    size (size)
 {
     TRACE (true);
     _bytes = (byte *) malloc(size);

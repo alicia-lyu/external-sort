@@ -19,7 +19,7 @@ std::tuple<int, int, string> getArgs(int argc, char* argv[])
     for (int i = 1; i < argc; ++i) {
         string arg = argv[i];
         if (arg == "-c" && i + 1 < argc) {
-            recordCount = (RowCount) argv[++i];
+            recordCount = (RowCount) std::stoi(argv[++i]);
         } else if (arg == "-s" && i + 1 < argc) {
             char* end;
             unsigned long value = std::strtoul(argv[++i], &end, 10); // Convert string to unsigned long

@@ -17,9 +17,9 @@ public:
     RowSize size;
     MemoryRun (u_int16_t count, RowSize size);
     ~MemoryRun ();
-    byte * const getRow (u_int16_t index);
+    byte * getRow (u_int16_t index);
     byte * fillRowRandomly(u_int16_t index);
 private:
-    byte ** _rows;
+    byte * _rows;
     random_bytes_engine _engine;
 };

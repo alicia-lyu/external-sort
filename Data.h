@@ -30,5 +30,5 @@ private:
     DataPlan const * const _plan;
     ByteCount _count;
     byte _byte;
-    random_bytes_engine engine;
+    random_bytes_engine _engine;
 };

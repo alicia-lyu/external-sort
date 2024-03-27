@@ -39,7 +39,7 @@ bool DataIterator::next ()
     if (_count >= _plan->_byteCount)
         return false;
     
-    byte _byte = engine();
+    byte _byte = _engine();
 
     ++ _count;
     return true;

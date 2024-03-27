@@ -25,9 +25,10 @@ std::tuple<int, int, std::string> getArgs(int argc, char* argv[])
     );
 }
 
+char separator = std::filesystem::path::preferred_separator;
+
 std::tuple<std::string, std::string> separatePath(std::string path)
 {
-	char separator = std::filesystem::path::preferred_separator;
     size_t lastSlash = path.rfind(separator);
 
     if (lastSlash == std::string::npos) {
@@ -42,7 +43,7 @@ std::ifstream getInFileStream(std::string outputPath)
 {
     std::string dir, filename;
     tie(dir, filename) = separatePath(outputPath);
-    std::string inputPath = dir + "input.txt";
+    std::string inputPath = dir + separator + "input.txt";
 
     std::ifstream inFile(inputPath);
 

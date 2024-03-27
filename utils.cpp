@@ -1,20 +1,34 @@
 #include <filesystem>
-#include <fstream>
 #include <iostream>
+#include <cstdlib>
 #include "Iterator.h"
+#include "utils.h"
 
-std::tuple<int, int, std::string> getArgs(int argc, char* argv[])
+std::tuple<int, int, string> getArgs(int argc, char* argv[])
 {
     RowCount recordCount;
-    u_int16_t recordSize; // 20-2000 bytes
-    std::string outputPath;
+    RowSize recordSize; // 20-2000 bytes
+    string outputPath;
+
+    if (argc <= 3) {
+        std::cerr << "Usage: " << argv[0] << " -c <record_count> -s <record_size> -o <output_path>\n";
+        exit(1);
+    }
 
     for (int i = 1; i < argc; ++i) {
-        std::string arg = argv[i];
+        string arg = argv[i];
         if (arg == "-c" && i + 1 < argc) {
             recordCount = (RowCount) argv[++i];
         } else if (arg == "-s" && i + 1 < argc) {
-            recordSize = (u_int16_t) argv[++i];
+            char* end;
+            unsigned long value = std::strtoul(argv[1], &end, 10); // Convert string to unsigned long
+
+            if (*end != '\0' || value < 20 || value > 2000) {
+                std::cerr << "Please enter a record size between 20 and 2000.\n";
+                exit(1);
+            }
+
+            RowSize recordSize = static_cast<RowSize>(value);
         } else if (arg == "-o" && i + 1 < argc) {
             outputPath = argv[++i];
         }
@@ -27,11 +41,11 @@ std::tuple<int, int, std::string> getArgs(int argc, char* argv[])
 
 char separator = std::filesystem::path::preferred_separator;
 
-std::tuple<std::string, std::string> separatePath(std::string path)
+std::tuple<string, string> separatePath(string path)
 {
     size_t lastSlash = path.rfind(separator);
 
-    if (lastSlash == std::string::npos) {
+    if (lastSlash == string::npos) {
         return std::make_tuple("", path);
     }
     
@@ -39,15 +53,15 @@ std::tuple<std::string, std::string> separatePath(std::string path)
         path.substr(0, lastSlash), path.substr(lastSlash+1));
 }
 
-std::ifstream getInFileStream(std::string outputPath)
+ofstream_ptr getInFileStream(string outputPath)
 {
-    std::string dir, filename;
-    tie(dir, filename) = separatePath(outputPath);
-    std::string inputPath = dir + separator + "input.txt";
+    string dir, filename;
+    std::tie(dir, filename) = separatePath(outputPath);
+    string inputPath = dir + separator + "input.txt";
 
-    std::ifstream inFile(inputPath);
+    auto inFile = std::make_shared<std::ofstream>(inputPath);
 
-    if (!inFile.is_open()) {
+    if (!inFile->is_open()) {
         std::cerr << "Failed to open input file: " << inputPath << std::endl;
         exit(1);
     }

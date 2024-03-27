@@ -2,19 +2,27 @@
 #include "Scan.h"
 #include "Filter.h"
 #include "Sort.h"
+#include "utils.h"
 
 int main (int argc, char * argv [])
 {
 	TRACE (true);
 
-	Plan * const plan = new ScanPlan (7);
-	// new SortPlan ( new FilterPlan ( new ScanPlan (7) ) );
+		RowCount recordCount;
+	    RowSize recordSize; // 20-2000 bytes
+	    string outputPath;
 
-	Iterator * const it = plan->init ();
-	it->run ();
-	delete it;
+		std::tie(recordCount, recordSize, outputPath) = getArgs(argc, argv);
+		ofstream_ptr inFile = getInFileStream(outputPath);
 
-	delete plan;
+		Plan * const plan = new ScanPlan (7, 20, inFile);
+		// new SortPlan ( new FilterPlan ( new ScanPlan (7) ) );
+
+		Iterator * const it = plan->init ();
+		it->run ();
+		delete it;
+
+		delete plan;
 
 	return 0;
 } // main

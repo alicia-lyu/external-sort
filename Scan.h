@@ -1,25 +1,26 @@
 #include <random>
 #include <vector>
+#include <fstream>
 
 #include "Iterator.h"
-
-typedef u_int16_t RowSize;
+#include "utils.h"
 
 using random_bytes_engine = std::independent_bits_engine<
     std::default_random_engine, CHAR_BIT, unsigned char>;
 
-using row = std::vector<unsigned char>;
+using row = std::vector<unsigned char>; // As class for data records
 
 class ScanPlan : public Plan
 {
 	friend class ScanIterator;
 public:
-	ScanPlan (RowCount const count, RowSize const size);
+	ScanPlan (RowCount const count, RowSize const size, ofstream_ptr const inFile);
 	~ScanPlan ();
 	Iterator * init () const;
 private:
 	RowCount const _count;
 	RowSize const _size;
+	ofstream_ptr const _inFile;
 }; // class ScanPlan
 
 class ScanIterator : public Iterator

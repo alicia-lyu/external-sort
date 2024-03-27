@@ -3,12 +3,14 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <cstdio>
+#include <string>
 
 typedef uint8_t byte;
+using string = std::string;
 
 #define slotsof(a)	(sizeof (a) / sizeof (a[0]))
 
-#define nullptr	((void *) NULL)
+// #define nullptr	((void *) NULL)
 
 #define yesno(b)	((b) ? "yes" : "no")
 

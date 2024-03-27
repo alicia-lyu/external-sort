@@ -1,7 +1,7 @@
 CPPOPT=-g -Og -D_DEBUG
 # -O2 -Os -Ofast
 # -fprofile-generate -fprofile-use
-CPPFLAGS=$(CPPOPT) -Wall -ansi -pedantic
+CPPFLAGS=$(CPPOPT) -Wall -ansi -pedantic -std=c++17
 # -Wparentheses -Wno-unused-parameter -Wformat-security
 # -fno-rtti -std=c++11 -std=c++98
 
@@ -17,7 +17,8 @@ SRCS=	defs.cpp Assert.cpp Test.cpp \
 
 # compilation targets
 OBJS=	defs.o Assert.o Test.o \
-		Iterator.o Scan.o Filter.o Sort.o
+		Iterator.o Scan.o Filter.o Sort.o \
+		utils.o
 
 # RCS assists
 REV=-q -f
@@ -42,11 +43,12 @@ ExternalSort.exe: Makefile ExternalSort.cpp
 # ./ExternalSort.exe -c 120 -s 1000 -o trace0.txt  (Example values)
 
 $(OBJS) : Makefile defs.h
-Test.o : Iterator.h Scan.h Filter.h Sort.h
-Iterator.o Scan.o Filter.o Sort.o : Iterator.h
+Test.o : Iterator.h Scan.h Filter.h Sort.h utils.h
+Iterator.o Scan.o Filter.o Sort.o utils.o : Iterator.h
 Scan.o : Scan.h
 Filter.o : Filter.h
 Sort.o : Sort.h
+utils.o: utils.h
 
 list : Makefile
 	echo Makefile $(HDRS) $(SRCS) $(DOCS) $(SCRS) > list

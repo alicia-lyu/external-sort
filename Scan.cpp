@@ -1,7 +1,8 @@
 #include "Scan.h"
+#include "defs.h"
 
-ScanPlan::ScanPlan (RowCount const count, RowSize const size) : 
-	_count (count), _size (size)
+ScanPlan::ScanPlan (RowCount const count, RowSize const size, ofstream_ptr const inFile) : 
+	_count (count), _size (size), _inFile (inFile)
 {
 	TRACE (true);
 } // ScanPlan::ScanPlan
@@ -34,7 +35,7 @@ ScanIterator::~ScanIterator ()
 
 bool ScanIterator::next ()
 {
-	TRACE (true);
+	TRACE (false);
 
 	if (_count >= _plan->_count)
 		return false;
@@ -44,3 +45,17 @@ bool ScanIterator::next ()
 	++ _count;
 	return true;
 } // ScanIterator::next
+
+row ScanIterator::getRow ()
+{
+	TRACE (false);
+	unsigned char * rowContent = _row.data();
+	traceprintf ("produced %s\n", (unsigned char *) (rowContent));
+
+	ofstream_ptr inFile = _plan->_inFile;
+	if (inFile->good()) {
+		*inFile << rowContent;
+	}
+
+	return _row;
+}

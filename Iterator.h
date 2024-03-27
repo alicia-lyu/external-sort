@@ -3,6 +3,7 @@
 #include "defs.h"
 
 typedef uint64_t RowCount;
+typedef u_int16_t RowSize; // 20-2000, unit: byte
 
 class Plan
 {

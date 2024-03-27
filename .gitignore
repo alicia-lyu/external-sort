@@ -1,4 +1,4 @@
 *.o
 *.exe
 .vscode
-temp.cpp
+temp.*

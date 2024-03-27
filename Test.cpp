@@ -19,15 +19,15 @@ int main (int argc, char * argv [])
 	Plan * const scanPlan = new ScanPlan (7, 20, inFile);
 	// Plan * const witnessBefore = new WitnessPlan(scanPlan);
 	// TODO: sortPlan
-	Plan * const witnessFinal = new WitnessPlan(scanPlan); // TODO: change to sortPlan
+	// Plan * const witnessFinal = new WitnessPlan(scanPlan); // TODO: change to sortPlan
 
-	Iterator * const it = witnessFinal->init ();
+	Iterator * const it = scanPlan->init ();
 	it->run ();
 
 	inFile->close();
 	
 	delete it;
-	delete witnessFinal;
+	delete scanPlan;
 
 	return 0;
 } // main

@@ -1,9 +1,7 @@
 #pragma once
 
 #include "defs.h"
-#include "Row.h"
-
-typedef uint64_t RowCount;
+#include "Data.h"
 
 class Plan
 {

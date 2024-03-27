@@ -40,7 +40,7 @@ bool ScanIterator::next ()
 	if (_count >= _plan->_count)
 		return false;
 	
-	_row = std::make_shared<Row>(_plan->_size);
+	_row = std::make_shared<Row>(_plan->_size); //TODO: use promise to ensure _row is ready before next() returns
 
 	std::generate(_row->begin(), _row->end(), std::ref(_engine));
 

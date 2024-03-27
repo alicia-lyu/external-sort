@@ -2,6 +2,7 @@
 
 #include "defs.h"
 #include <memory>
+#include <random>
 
 typedef uint64_t RowCount;
 typedef u_int16_t RowSize; // 20-2000, unit: 
@@ -22,6 +23,9 @@ public:
 
 using row_ptr = std::shared_ptr<Row>;
 
+using random_bytes_engine = std::independent_bits_engine<
+    std::default_random_engine, CHAR_BIT, byte>;
+
 class MemoryRun // an in-memory run of rows
 {
 public:
@@ -30,7 +34,8 @@ public:
     MemoryRun (u_int16_t count, RowSize size);
     ~MemoryRun ();
     Row * const getRow (u_int16_t index);
-    // bool fillRowRandomly(u_int16_t index);
+    Row * fillRowRandomly(u_int16_t index);
 private:
     Row * _rows;
+    random_bytes_engine _engine;
 };

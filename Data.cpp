@@ -38,6 +38,7 @@ MemoryRun::MemoryRun (u_int16_t count, RowSize size):
 MemoryRun::~MemoryRun ()
 {
     TRACE (true);
+    free(_rows);
 }
 
 Row * const MemoryRun::getRow (u_int16_t index)
@@ -45,4 +46,9 @@ Row * const MemoryRun::getRow (u_int16_t index)
     return _rows + index;
 }
 
-// bool MemoryRun::fillRowRandomly (u_int16_t index)
+Row * MemoryRun::fillRowRandomly (u_int16_t index)
+{
+    Row * row = getRow(index);
+    std::generate(row->begin(), row->end(), std::ref(_engine));
+    return row;
+}

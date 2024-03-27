@@ -1,4 +1,3 @@
-#include <random>
 #include <vector>
 #include <fstream>
 
@@ -6,9 +5,6 @@
 #include "utils.h"
 #include "defs.h"
 #include "Data.h"
-
-using random_bytes_engine = std::independent_bits_engine<
-    std::default_random_engine, CHAR_BIT, byte>;
 
 class ScanPlan : public Plan
 {
@@ -34,5 +30,4 @@ private:
 	ScanPlan const * const _plan;
 	RowCount _count;
 	row_ptr _row; // _row pointer changes reference every step
-	random_bytes_engine _engine;
 }; // class ScanIterator

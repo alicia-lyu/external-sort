@@ -29,10 +29,10 @@ public:
 	ScanIterator (ScanPlan const * const plan);
 	~ScanIterator ();
 	bool next ();
-	row_ptr getRow();
+	row_ptr const getRow(); // returned pointer cannot be directed to another object
 private:
 	ScanPlan const * const _plan;
 	RowCount _count;
-	row_ptr _row;
+	row_ptr _row; // _row pointer changes reference every step
 	random_bytes_engine _engine;
 }; // class ScanIterator

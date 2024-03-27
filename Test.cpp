@@ -17,7 +17,7 @@ int main (int argc, char * argv [])
 	ofstream_ptr inFile = getInFileStream(outputPath);
 
 	Plan * const scanPlan = new ScanPlan (7, 20, inFile);
-	// Plan * const witnessBefore = new WitnessPlan(scanPlan, false);
+	// Plan * const witnessBefore = new WitnessPlan(scanPlan);
 	// TODO: sortPlan
 	// Plan * const witnessFinal = new WitnessPlan(scanPlan); // TODO: change to sortPlan
 

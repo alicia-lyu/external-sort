@@ -18,7 +18,7 @@ public:
 	WitnessIterator (WitnessPlan const * const plan);
 	~WitnessIterator ();
 	bool next ();
-    row_ptr getRow();
+    const row_ptr getRow();
 private:
 	WitnessPlan const * const _plan;
 	Iterator * const _input;

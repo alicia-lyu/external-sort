@@ -45,6 +45,10 @@ bool ScanIterator::next ()
 	unsigned char * rowContent = _row.data();
 	string hexString = rowToHexString(rowContent, _plan->_size);
 	traceprintf ("produced %s\n", hexString.c_str());
+	ofstream_ptr inFile = _plan->_inFile;
+	if (inFile->good()) {
+		*inFile << hexString << "\n";
+	}
 	
 	++ _count;
 	return true;
@@ -52,12 +56,7 @@ bool ScanIterator::next ()
 
 row ScanIterator::getRow ()
 {
-	TRACE (false);
-	
-	ofstream_ptr inFile = _plan->_inFile;
-	if (inFile->good()) {
-		*inFile << _row.data();
-	}
+	TRACE (true);
 
 	return _row;
 }

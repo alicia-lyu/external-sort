@@ -20,7 +20,7 @@ Iterator * ScanPlan::init () const
 } // ScanPlan::init
 
 ScanIterator::ScanIterator (ScanPlan const * const plan) :
-	_plan (plan), _count (0)
+	_plan (plan), _count (0), _row (nullptr)
 {
 	TRACE (true);
 } // ScanIterator::ScanIterator

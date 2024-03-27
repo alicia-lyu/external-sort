@@ -42,6 +42,10 @@ $(OUTPUT_FILE) : Test.exe Makefile $(OUTPUT_DIR)
 
 test: $(OUTPUT_FILE)
 
+lldb : Test.exe $(OUTPUT_DIR)
+	touch $(OUTPUT_FILE)
+	lldb -- ./Test.exe -c 7 -s 20 -o $(OUTPUT_FILE)
+
 ExternalSort.exe: Makefile ExternalSort.cpp
 	g++ $(CPPFLAGS) -o ExternalSort.exe ExternalSort.cpp
 # Where, 

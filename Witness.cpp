@@ -25,7 +25,7 @@ WitnessIterator::WitnessIterator (WitnessPlan const * const plan) :
 	_consumed (0), _produced (0)
 {
 	TRACE (true);
-    parity = std::numeric_limits<RowSize>::max();
+    parity = std::numeric_limits<u_int16_t>::max(); // TODO: debug
     traceprintf ("Initialized parity %s\n", getParityString().c_str());
 } // WitnessIterator::WitnessIterator
 
@@ -47,14 +47,13 @@ bool WitnessIterator::next ()
     if (_produced >= _consumed && !_input->next()) {
         traceprintf ("Final parity %s\n", getParityString().c_str());
         return false;
+    } else {
+        _row = _input->getRow();
+        byte * rowContent = _row->data();
+        parity ^= *rowContent;
+        ++_produced;
+        return true;
     }
-
-    _row = _input->getRow();
-    byte * rowContent = _row->data();
-    parity ^= *rowContent;
-    ++_produced;
-
-	return true;
 } // WitnessIterator::next
 
 std::string WitnessIterator::getParityString ()

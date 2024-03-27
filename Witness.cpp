@@ -2,7 +2,8 @@
 #include "utils.h"
 #include "Witness.h"
 
-WitnessPlan::WitnessPlan (Plan * const input) : _input (input)
+WitnessPlan::WitnessPlan (Plan * const input, bool const final) : 
+    final (final), _input (input)
 {
 	TRACE (true);
 } // WitnessPlan::WitnessPlan
@@ -52,6 +53,10 @@ bool WitnessIterator::next ()
     byte * rowContent = _row->data();
     parity ^= *rowContent;
     ++_produced;
+
+    if (_plan->final == true) {
+        delete _row;
+    }
 
 	return true;
 } // WitnessIterator::next

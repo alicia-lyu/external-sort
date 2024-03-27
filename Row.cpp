@@ -9,6 +9,7 @@ Row::Row (RowSize size):
 
 Row::~Row ()
 {
+    TRACE (true);
     free(_bytes);
 }
 

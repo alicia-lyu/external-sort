@@ -17,9 +17,9 @@ int main (int argc, char * argv [])
 		ofstream_ptr inFile = getInFileStream(outputPath);
 
 		Plan * const scanPlan = new ScanPlan (7, 20, inFile);
-		Plan * const witnessBefore = new WitnessPlan(scanPlan);
+		Plan * const witnessBefore = new WitnessPlan(scanPlan, false);
 		// TODO: sortPlan
-		Plan * const witnessAfter = new WitnessPlan(witnessBefore); // TODO: change to sortPlan
+		Plan * const witnessAfter = new WitnessPlan(witnessBefore, true); // TODO: change to sortPlan
 
 		Iterator * const it = witnessAfter->init ();
 		it->run ();
@@ -27,9 +27,6 @@ int main (int argc, char * argv [])
 		inFile->close();
 		
 		delete it;
-
-		delete scanPlan;
-		delete witnessBefore;
 		delete witnessAfter;
 
 	return 0;

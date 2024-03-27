@@ -4,7 +4,8 @@ class WitnessPlan : public Plan
 {
 	friend class WitnessIterator;
 public:
-	WitnessPlan (Plan * const input);
+    bool const final;
+	WitnessPlan (Plan * const input, bool const final);
 	~WitnessPlan ();
 	Iterator * init () const;
 private:

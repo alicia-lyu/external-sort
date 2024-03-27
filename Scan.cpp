@@ -22,7 +22,6 @@ ScanIterator::ScanIterator (ScanPlan const * const plan) :
 	_plan (plan), _count (0)
 {
 	TRACE (true);
-	_row = new Row(_plan->_size);
 } // ScanIterator::ScanIterator
 
 ScanIterator::~ScanIterator ()
@@ -39,6 +38,8 @@ bool ScanIterator::next ()
 
 	if (_count >= _plan->_count)
 		return false;
+	
+	_row = new Row(_plan->_size);
 
 	std::generate(_row->begin(), _row->end(), std::ref(_engine));
 

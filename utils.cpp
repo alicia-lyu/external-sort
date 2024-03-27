@@ -1,6 +1,7 @@
 #include <filesystem>
 #include <iostream>
 #include <cstdlib>
+#include <sstream>
 #include "Iterator.h"
 #include "utils.h"
 
@@ -28,7 +29,7 @@ std::tuple<int, int, string> getArgs(int argc, char* argv[])
                 exit(1);
             }
 
-            RowSize recordSize = static_cast<RowSize>(value);
+            recordSize = static_cast<RowSize>(value);
         } else if (arg == "-o" && i + 1 < argc) {
             outputPath = argv[++i];
         }
@@ -67,4 +68,25 @@ ofstream_ptr getInFileStream(string outputPath)
     }
 
     return inFile;
+}
+
+string byteToHexString(unsigned char byte) {
+    std::stringstream result;
+    result << "0x"
+       << std::hex // Use hexadecimal format
+       << std::uppercase // Optional: Use uppercase letters for A-F
+       << std::setw(2) // Ensure the output is at least two digits
+       << std::setfill('0') // Fill with leading zeros if necessary
+       << static_cast<int>(byte); // Convert byte to int for correct formatting
+    return result.str();
+}
+
+string rowToHexString(unsigned char * rowContent, RowSize size) {
+    string result = "";
+    for (int i = 0; i < size; ++i) {
+		unsigned char byte = rowContent[i];
+		string hexString = byteToHexString(byte);
+        result += hexString + " ";
+	}
+    return result;
 }

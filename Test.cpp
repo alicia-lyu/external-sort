@@ -20,6 +20,9 @@ int main (int argc, char * argv [])
 
 		Iterator * const it = plan->init ();
 		it->run ();
+
+		inFile->close();
+		
 		delete it;
 
 		delete plan;

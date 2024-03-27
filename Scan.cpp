@@ -1,5 +1,6 @@
 #include "Scan.h"
 #include "defs.h"
+#include "utils.h"
 
 ScanPlan::ScanPlan (RowCount const count, RowSize const size, ofstream_ptr const inFile) : 
 	_count (count), _size (size), _inFile (inFile)
@@ -41,7 +42,10 @@ bool ScanIterator::next ()
 		return false;
 
 	std::generate(begin(_row), end(_row), std::ref(_engine));
-
+	unsigned char * rowContent = _row.data();
+	string hexString = rowToHexString(rowContent, _plan->_size);
+	traceprintf ("produced %s\n", hexString.c_str());
+	
 	++ _count;
 	return true;
 } // ScanIterator::next
@@ -49,12 +53,10 @@ bool ScanIterator::next ()
 row ScanIterator::getRow ()
 {
 	TRACE (false);
-	unsigned char * rowContent = _row.data();
-	traceprintf ("produced %s\n", (unsigned char *) (rowContent));
-
+	
 	ofstream_ptr inFile = _plan->_inFile;
 	if (inFile->good()) {
-		*inFile << rowContent;
+		*inFile << _row.data();
 	}
 
 	return _row;

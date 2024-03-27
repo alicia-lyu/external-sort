@@ -22,7 +22,7 @@ ScanIterator::ScanIterator (ScanPlan const * const plan) :
 	_plan (plan), _count (0)
 {
 	TRACE (true);
-	_row = row(_plan->_size);
+	_row = new Row(_plan->_size);
 } // ScanIterator::ScanIterator
 
 ScanIterator::~ScanIterator ()
@@ -40,9 +40,9 @@ bool ScanIterator::next ()
 	if (_count >= _plan->_count)
 		return false;
 
-	std::generate(begin(_row), end(_row), std::ref(_engine));
+	std::generate(_row->begin(), _row->end(), std::ref(_engine));
 
-	byte * rowContent = _row.data();
+	byte * rowContent = _row->data();
 	string hexString = rowToHexString(rowContent, _plan->_size);
 	traceprintf ("produced %s\n", hexString.c_str());
 	ofstream_ptr inFile = _plan->_inFile;
@@ -54,7 +54,7 @@ bool ScanIterator::next ()
 	return true;
 } // ScanIterator::next
 
-row ScanIterator::getRow ()
+Row * ScanIterator::getRow ()
 {
 	TRACE (true);
 

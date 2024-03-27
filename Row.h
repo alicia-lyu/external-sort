@@ -10,6 +10,7 @@ private:
 public:
     Row (RowSize size);
     ~Row ();
-    byte * begin();
-    byte * end();
+    byte * begin ();
+    byte * end ();
+    byte * data ();
 };

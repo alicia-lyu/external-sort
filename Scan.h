@@ -5,11 +5,10 @@
 #include "Iterator.h"
 #include "utils.h"
 #include "defs.h"
+#include "Row.h"
 
 using random_bytes_engine = std::independent_bits_engine<
     std::default_random_engine, CHAR_BIT, byte>;
-
-using row = std::vector<byte>; // As class for data records
 
 class ScanPlan : public Plan
 {
@@ -30,10 +29,10 @@ public:
 	ScanIterator (ScanPlan const * const plan);
 	~ScanIterator ();
 	bool next ();
-	row getRow();
+	Row * getRow();
 private:
 	ScanPlan const * const _plan;
 	RowCount _count;
-	row _row;
+	Row * _row;
 	random_bytes_engine _engine;
 }; // class ScanIterator

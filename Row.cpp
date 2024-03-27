@@ -20,3 +20,8 @@ byte * Row::end ()
 {
     return _bytes + size;
 }
+
+byte * Row::data ()
+{
+    return _bytes;
+}

@@ -18,7 +18,7 @@ SRCS=	defs.cpp Assert.cpp Test.cpp \
 # compilation targets
 OBJS=	defs.o Assert.o Test.o \
 		Iterator.o Scan.o Filter.o Sort.o \
-		utils.o
+		utils.o Row.o
 
 # RCS assists
 REV=-q -f
@@ -51,12 +51,13 @@ ExternalSort.exe: Makefile ExternalSort.cpp
 # ./ExternalSort.exe -c 120 -s 1000 -o trace0.txt  (Example values)
 
 $(OBJS) : Makefile defs.h
-Test.o : Iterator.h Scan.h Filter.h Sort.h utils.h
-Iterator.o Scan.o Filter.o Sort.o utils.o : Iterator.h
+Test.o : Iterator.h Scan.h Filter.h Sort.h utils.h Row.h
+Iterator.o Scan.o Filter.o Sort.o utils.o Row.o : Iterator.h
 Scan.o : Scan.h
 Filter.o : Filter.h
 Sort.o : Sort.h
 utils.o: utils.h
+Row.o : Row.h
 
 list : Makefile
 	echo Makefile $(HDRS) $(SRCS) $(DOCS) $(SCRS) > list

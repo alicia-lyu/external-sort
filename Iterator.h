@@ -22,8 +22,8 @@ public:
 	virtual ~Iterator ();
 	void run ();
 	virtual bool next () = 0;
-	Row * getRow();
+	row_ptr getRow();
 private:
 	RowCount _count;
-	Row * _row;
+	row_ptr _row;
 }; // class Iterator

@@ -29,10 +29,10 @@ public:
 	ScanIterator (ScanPlan const * const plan);
 	~ScanIterator ();
 	bool next ();
-	Row * getRow();
+	row_ptr getRow();
 private:
 	ScanPlan const * const _plan;
 	RowCount _count;
-	Row * _row;
+	row_ptr _row;
 	random_bytes_engine _engine;
 }; // class ScanIterator

@@ -1,5 +1,6 @@
 #include "Scan.h"
 #include "utils.h"
+#include <memory>
 
 ScanPlan::ScanPlan (RowCount const count, RowSize const size, ofstream_ptr const inFile) : 
 	_count (count), _size (size), _inFile (inFile)
@@ -39,7 +40,7 @@ bool ScanIterator::next ()
 	if (_count >= _plan->_count)
 		return false;
 	
-	_row = new Row(_plan->_size);
+	_row = std::make_shared<Row>(_plan->_size);
 
 	std::generate(_row->begin(), _row->end(), std::ref(_engine));
 

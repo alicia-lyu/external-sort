@@ -30,7 +30,7 @@ void Iterator::run ()
 			(unsigned long) _count);
 } // Iterator::run
 
-Row * Iterator::getRow ()
+row_ptr Iterator::getRow ()
 {
     return _row;
 }

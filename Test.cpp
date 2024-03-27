@@ -9,25 +9,25 @@ int main (int argc, char * argv [])
 {
 	TRACE (true);
 
-		RowCount recordCount;
-	    RowSize recordSize; // 20-2000 bytes
-	    string outputPath;
+	RowCount recordCount;
+	RowSize recordSize; // 20-2000 bytes
+	string outputPath;
 
-		std::tie(recordCount, recordSize, outputPath) = getArgs(argc, argv);
-		ofstream_ptr inFile = getInFileStream(outputPath);
+	std::tie(recordCount, recordSize, outputPath) = getArgs(argc, argv);
+	ofstream_ptr inFile = getInFileStream(outputPath);
 
-		Plan * const scanPlan = new ScanPlan (7, 20, inFile);
-		Plan * const witnessBefore = new WitnessPlan(scanPlan, false);
-		// TODO: sortPlan
-		Plan * const witnessAfter = new WitnessPlan(witnessBefore, true); // TODO: change to sortPlan
+	Plan * const scanPlan = new ScanPlan (7, 20, inFile);
+	// Plan * const witnessBefore = new WitnessPlan(scanPlan, false);
+	// TODO: sortPlan
+	// Plan * const witnessFinal = new WitnessPlan(scanPlan); // TODO: change to sortPlan
 
-		Iterator * const it = witnessAfter->init ();
-		it->run ();
+	Iterator * const it = scanPlan->init ();
+	it->run ();
 
-		inFile->close();
-		
-		delete it;
-		delete witnessAfter;
+	inFile->close();
+	
+	delete it;
+	delete scanPlan;
 
 	return 0;
 } // main

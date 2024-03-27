@@ -1,6 +1,7 @@
 #pragma once
 
 #include "defs.h"
+#include <memory>
 
 typedef u_int16_t RowSize; // 20-2000, unit: byte
 
@@ -17,3 +18,5 @@ public:
     byte * end ();
     byte * data ();
 };
+
+using row_ptr = std::shared_ptr<Row>;

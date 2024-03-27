@@ -1,5 +1,4 @@
 #include "Scan.h"
-#include "defs.h"
 #include "utils.h"
 
 ScanPlan::ScanPlan (RowCount const count, RowSize const size, ofstream_ptr const inFile) : 
@@ -42,7 +41,8 @@ bool ScanIterator::next ()
 		return false;
 
 	std::generate(begin(_row), end(_row), std::ref(_engine));
-	unsigned char * rowContent = _row.data();
+
+	byte * rowContent = _row.data();
 	string hexString = rowToHexString(rowContent, _plan->_size);
 	traceprintf ("produced %s\n", hexString.c_str());
 	ofstream_ptr inFile = _plan->_inFile;

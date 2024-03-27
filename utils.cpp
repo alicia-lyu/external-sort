@@ -70,7 +70,7 @@ ofstream_ptr getInFileStream(string outputPath)
     return inFile;
 }
 
-string byteToHexString(unsigned char byte) {
+string byteToHexString(byte byte) {
     std::stringstream result;
     result << "0x"
        << std::hex // Use hexadecimal format
@@ -81,10 +81,10 @@ string byteToHexString(unsigned char byte) {
     return result.str();
 }
 
-string rowToHexString(unsigned char * rowContent, RowSize size) {
+string rowToHexString(byte * rowContent, RowSize size) {
     string result = "";
     for (int i = 0; i < size; ++i) {
-		unsigned char byte = rowContent[i];
+		byte byte = rowContent[i];
 		string hexString = byteToHexString(byte);
         result += hexString + " ";
 	}

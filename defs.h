@@ -5,7 +5,7 @@
 #include <cstdio>
 #include <string>
 
-typedef uint8_t byte;
+typedef unsigned char byte;
 using string = std::string;
 
 #define slotsof(a)	(sizeof (a) / sizeof (a[0]))

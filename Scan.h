@@ -4,11 +4,12 @@
 
 #include "Iterator.h"
 #include "utils.h"
+#include "defs.h"
 
 using random_bytes_engine = std::independent_bits_engine<
-    std::default_random_engine, CHAR_BIT, unsigned char>;
+    std::default_random_engine, CHAR_BIT, byte>;
 
-using row = std::vector<unsigned char>; // As class for data records
+using row = std::vector<byte>; // As class for data records
 
 class ScanPlan : public Plan
 {

@@ -18,11 +18,9 @@ public:
 	WitnessIterator (WitnessPlan const * const plan);
 	~WitnessIterator ();
 	bool next ();
-    const row_ptr getRow();
 private:
 	WitnessPlan const * const _plan;
 	Iterator * const _input;
 	RowCount _consumed, _produced;
-    row_ptr _row;
     std::string getParityString ();
 }; // class WitnessIterator

@@ -7,22 +7,6 @@
 typedef uint64_t RowCount;
 typedef u_int16_t RowSize; // 20-2000, unit: 
 
-class Row
-{
-public:
-    RowSize size;
-private:
-    byte * _bytes;
-public:
-    Row (RowSize size);
-    ~Row ();
-    byte * begin ();
-    byte * end ();
-    byte * data ();
-};
-
-using row_ptr = std::shared_ptr<Row>;
-
 using random_bytes_engine = std::independent_bits_engine<
     std::default_random_engine, CHAR_BIT, byte>;
 
@@ -33,9 +17,9 @@ public:
     RowSize size;
     MemoryRun (u_int16_t count, RowSize size);
     ~MemoryRun ();
-    Row * const getRow (u_int16_t index);
-    Row * fillRowRandomly(u_int16_t index);
+    byte * const getRow (u_int16_t index);
+    byte * fillRowRandomly(u_int16_t index);
 private:
-    Row * _rows;
+    byte ** _rows;
     random_bytes_engine _engine;
 };

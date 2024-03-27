@@ -1,6 +1,7 @@
 #include "Filter.h"
 
-FilterPlan::FilterPlan (Plan * const input) : _input (input)
+FilterPlan::FilterPlan (Plan * const input, MemoryRun * run) : 
+	_input (input), _run (run)
 {
 	TRACE (true);
 } // FilterPlan::FilterPlan
@@ -14,10 +15,10 @@ FilterPlan::~FilterPlan ()
 Iterator * FilterPlan::init () const
 {
 	TRACE (true);
-	return new FilterIterator (this);
+	return new FilterIterator (this, _run);
 } // FilterPlan::init
 
-FilterIterator::FilterIterator (FilterPlan const * const plan) :
+FilterIterator::FilterIterator (FilterPlan const * const plan, MemoryRun * run) :
 	_plan (plan), _input (plan->_input->init ()),
 	_consumed (0), _produced (0)
 {

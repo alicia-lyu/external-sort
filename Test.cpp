@@ -16,7 +16,10 @@ int main (int argc, char * argv [])
 	std::tie(recordCount, recordSize, outputPath) = getArgs(argc, argv);
 	ofstream_ptr inFile = getInFileStream(outputPath);
 
-	Plan * const scanPlan = new ScanPlan (7, 20, inFile);
+	MemoryRun * run = new MemoryRun(recordCount, recordSize);
+	// TODO: separate count in memory run and in total
+
+	Plan * const scanPlan = new ScanPlan (recordCount, recordSize, inFile, run);
 	// Plan * const witnessBefore = new WitnessPlan(scanPlan);
 	// TODO: sortPlan
 	// Plan * const witnessFinal = new WitnessPlan(scanPlan); // TODO: change to sortPlan
@@ -28,6 +31,7 @@ int main (int argc, char * argv [])
 	
 	delete it;
 	delete scanPlan;
+	delete run;
 
 	return 0;
 } // main

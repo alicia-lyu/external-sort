@@ -20,8 +20,6 @@ public:
 	virtual ~Iterator ();
 	void run ();
 	virtual bool next () = 0;
-	row_ptr getRow();
 private:
 	RowCount _count;
-	row_ptr _row;
 }; // class Iterator

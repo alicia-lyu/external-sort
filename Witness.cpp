@@ -48,10 +48,11 @@ bool WitnessIterator::next ()
         traceprintf ("Final parity %s\n", getParityString().c_str());
         return false;
     } else {
-        _row = _input->getRow();
-        byte * rowContent = _row->data();
-        parity ^= *rowContent;
-        ++_produced;
+        // TODO: get row from MemoryRun
+        // _row = _input->getRow();
+        // byte * rowContent = _row->data();
+        // parity ^= *rowContent;
+        // ++_produced;
         return true;
     }
 } // WitnessIterator::next

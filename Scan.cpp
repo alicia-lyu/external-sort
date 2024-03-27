@@ -2,8 +2,8 @@
 #include "utils.h"
 #include <memory>
 
-ScanPlan::ScanPlan (RowCount const count, RowSize const size, ofstream_ptr const inFile) : 
-	_count (count), _size (size), _inFile (inFile)
+ScanPlan::ScanPlan (RowCount const count, RowSize const size, ofstream_ptr const inFile, MemoryRun * run) : 
+	_count (count), _size (size), _inFile (inFile), _run (run)
 {
 	TRACE (true);
 } // ScanPlan::ScanPlan
@@ -16,11 +16,11 @@ ScanPlan::~ScanPlan ()
 Iterator * ScanPlan::init () const
 {
 	TRACE (true);
-	return new ScanIterator (this);
+	return new ScanIterator (this, _run);
 } // ScanPlan::init
 
-ScanIterator::ScanIterator (ScanPlan const * const plan) :
-	_plan (plan), _count (0), _row (nullptr)
+ScanIterator::ScanIterator (ScanPlan const * const plan, MemoryRun * run) :
+	_plan (plan), _count (0), _run (run)
 {
 	TRACE (true);
 } // ScanIterator::ScanIterator
@@ -39,13 +39,12 @@ bool ScanIterator::next ()
 
 	if (_count >= _plan->_count)
 		return false;
-	
-	//TODO: use promise to ensure _row is ready before next() returns
 
-	
+	byte * row = _run->fillRowRandomly(_count);
+	// TODO: separate count in plan and in memory run, when memory spills
+	// TODO: use promise to ensure row is ready before next() returns
 
-	byte * rowContent = _row->data();
-	string hexString = rowToHexString(rowContent, _plan->_size);
+	string hexString = rowToHexString(row, _plan->_size);
 	traceprintf ("produced %s\n", hexString.c_str());
 	ofstream_ptr inFile = _plan->_inFile;
 	if (inFile->good()) {

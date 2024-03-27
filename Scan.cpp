@@ -1,6 +1,7 @@
 #include "Scan.h"
 
-ScanPlan::ScanPlan (RowCount const count) : _count (count)
+ScanPlan::ScanPlan (RowCount const count, RowSize const size) : 
+	_count (count), _size (size)
 {
 	TRACE (true);
 } // ScanPlan::ScanPlan
@@ -20,6 +21,7 @@ ScanIterator::ScanIterator (ScanPlan const * const plan) :
 	_plan (plan), _count (0)
 {
 	TRACE (true);
+	_row = row(_plan->_size);
 } // ScanIterator::ScanIterator
 
 ScanIterator::~ScanIterator ()
@@ -36,6 +38,8 @@ bool ScanIterator::next ()
 
 	if (_count >= _plan->_count)
 		return false;
+
+	std::generate(begin(_row), end(_row), std::ref(_engine));
 
 	++ _count;
 	return true;

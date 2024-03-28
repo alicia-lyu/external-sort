@@ -17,12 +17,12 @@ int main (int argc, char * argv [])
 	ofstream_ptr inFile = getInFileStream(outputPath);
 
 	MemoryRun * run = new MemoryRun(recordCount, recordSize);
-	// TODO: separate count in memory run and in total
+	// TODO: separate count in memory run and in total (later)
 
 	Plan * const scanPlan = new ScanPlan (recordCount, recordSize, inFile, run);
 	// Plan * const witnessBefore = new WitnessPlan(scanPlan);
 	// TODO: sortPlan
-	// Plan * const witnessFinal = new WitnessPlan(scanPlan); // TODO: change to sortPlan
+	// Plan * const witnessFinal = new WitnessPlan(witnessBefore); // TODO: change to sortPlan
 
 	Iterator * const it = scanPlan->init ();
 	it->run ();

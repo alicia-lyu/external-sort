@@ -22,7 +22,7 @@ MemoryRun::~MemoryRun ()
 byte * MemoryRun::getRow (u_int16_t index)
 {
     // to get the row at index, we need to skip (index * size) bytes
-    return _rows;
+    return _rows + index * size;
 }
 
 byte * MemoryRun::fillRowRandomly (u_int16_t index)

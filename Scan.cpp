@@ -54,3 +54,8 @@ bool ScanIterator::next ()
 	++ _count;
 	return true;
 } // ScanIterator::next
+
+// an interface for getrow
+byte* ScanIterator::getRow (u_int16_t index) {
+	return _run->getRow(index);
+} // ScanIterator::getRow

@@ -26,6 +26,7 @@ public:
 	ScanIterator (ScanPlan const * const plan, MemoryRun * run);
 	~ScanIterator ();
 	bool next ();
+	byte* getRow (u_int16_t);
 private:
 	ScanPlan const * const _plan;
 	RowCount _count;

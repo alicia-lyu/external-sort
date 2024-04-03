@@ -4,7 +4,13 @@ MemoryRun::MemoryRun (u_int16_t count, RowSize size):
     count (count), size (size)
 {
     TRACE (true);
-    _rows = (byte *) malloc(sizeof(RowSize) * count);
+    // there are `count` rows, each of size `size`
+    // so total memory needed is count * size (bytes)
+    _rows = (byte *) malloc(count * size * sizeof(byte));
+
+    // in production, seed the engine with a random number
+    // in testing, use the default state of the engine
+    // _engine.seed(_device());
 }
 
 MemoryRun::~MemoryRun ()
@@ -15,7 +21,8 @@ MemoryRun::~MemoryRun ()
 
 byte * MemoryRun::getRow (u_int16_t index)
 {
-    return _rows + index;
+    // to get the row at index, we need to skip (index * size) bytes
+    return _rows;
 }
 
 byte * MemoryRun::fillRowRandomly (u_int16_t index)

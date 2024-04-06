@@ -23,7 +23,7 @@ public:
     TournamentTree (std::vector<byte *> records, RowSize recordSize); // records.size() u_int8_t max 256 records (min 5 MB, larger than 1 MB cache line)
     ~TournamentTree ();
     void push (byte * record);
-    u_int8_t poll (); // returning from which buffer to fetch the next record (max. 2^8 = 256 buffers)
+    u_int8_t poll (byte * outputOffset); // returning from which buffer to fetch the next record (max. 2^8 = 256 buffers)
     void printTree ();
 private:
     Node * _root;

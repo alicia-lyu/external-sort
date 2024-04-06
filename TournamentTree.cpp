@@ -2,6 +2,8 @@
 #include <queue>
 #include <iostream>
 #include "utils.h"
+#include <utility>
+#include <algorithm>
 
 Node::Node (std::vector<byte> data, u_int8_t bufferNum, Node * farthestLoser)
 : data (data), left (nullptr), right (nullptr),parent (nullptr), 
@@ -107,6 +109,58 @@ std::vector<byte> TournamentTree::_getData(std::vector<byte *> records, u_int8_t
     std::vector<byte> data;
     data.assign(records[offset], records[offset] + _recordSize);
     return data;
+}
+
+u_int8_t TournamentTree::poll(byte * outputOffset)
+{
+    _root->left->parent = nullptr;
+    std::copy(_root->data.begin(), _root->data.end(), outputOffset);
+    return _root->bufferNum;
+}
+
+void TournamentTree::push(byte * record)
+{
+    std::vector<byte> recordData;
+    recordData.assign(record, record + _recordSize);
+    Node * advancing = new Node(recordData, _root->bufferNum, nullptr); // parent == nullptr
+    Node * incumbent = _root->farthestLoser; // parent != nullptr
+    Node * winner;
+    Node * loser;
+    Node * lastLoser = nullptr;
+    bool incumbentIsLeft;
+    while (incumbent != nullptr) {
+        std::tie(winner, loser) = _contest(incumbent, advancing);
+        // Loser inherit all pointers from incumbent
+        // Nodes settle when they lose
+        Node * leftChild;
+        Node * rightChild;
+        if (lastLoser != nullptr) {
+            if (incumbentIsLeft) {
+                leftChild = lastLoser;
+            } else {
+                rightChild = lastLoser;
+            }
+        } else{
+           leftChild = incumbent->left;
+           rightChild = incumbent->right;
+        }
+        loser->left = leftChild;
+        leftChild->parent = loser;
+        loser->right = rightChild;
+        rightChild->parent = loser;
+        //// The parent of loser is updated next round
+        advancing = winner;
+        // Next incumbent to challenge
+        incumbent = incumbent->parent;
+        // Record lastLoser and lastIncumbent
+        lastLoser = loser;
+        incumbentIsLeft = incumbent->parent->left == incumbent;
+    }
+    delete _root;
+    advancing->parent = nullptr;
+    advancing->left = loser;
+    advancing->right = nullptr;
+    _root = advancing;
 }
 
 void TournamentTree::printTree ()

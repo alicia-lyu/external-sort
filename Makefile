@@ -62,6 +62,7 @@ Filter.o : Filter.h
 Sort.o : Sort.h
 utils.o: utils.h
 Witness.o: Witness.h
+TournamentTree.o: TournamentTree.h
 
 list : Makefile
 	echo Makefile $(HDRS) $(SRCS) $(DOCS) $(SCRS) > list
@@ -83,3 +84,12 @@ temp.exe : temp.cpp
 temp.out : temp.exe
 	echo $(TIMESTAMP) > temp.out
 	./temp.exe >> temp.out
+
+TestTTOBJS=	TournamentTree.o utils.o Data.o defs.o
+
+TestTT.exe : TestTournamentTree.cpp TournamentTree.o utils.o Data.o
+	g++ $(CPPFLAGS) -o TestTT.exe TestTournamentTree.cpp $(TestTTOBJS)
+
+TestTT.out : TestTT.exe
+	echo $(TIMESTAMP) > TestTT.out
+	./TestTT.exe >> TestTT.out

@@ -25,7 +25,8 @@ WitnessIterator::WitnessIterator (WitnessPlan const * const plan) :
 	_consumed (0), _produced (0)
 {
 	TRACE (true);
-    parity = std::numeric_limits<u_int16_t>::max(); // TODO: debug
+    parity = 0xFFF;
+    // TODO: final witness allocate output buffer, or add a new plan to do that
     traceprintf ("Initialized parity %s\n", getParityString().c_str());
 } // WitnessIterator::WitnessIterator
 

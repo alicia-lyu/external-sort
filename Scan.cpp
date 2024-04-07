@@ -41,8 +41,6 @@ bool ScanIterator::next ()
 		return false;
 
 	byte * row = _run->fillRowRandomly(_count);
-	// TODO: separate count in plan and in memory run, when memory spills (later)
-	// TODO: use promise to ensure row is ready before next() returns (not certain about correctness, may already work now)
 
 	string hexString = rowToHexString(row, _plan->_size);
 	traceprintf ("produced %s\n", hexString.c_str());

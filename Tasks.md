@@ -25,7 +25,7 @@ April 29, 2024    | Submission
 
 ### Sorting: By April 8
 
-- [ ] Write and test the tournament tree
+- [x] Write and test the tournament tree @Alicia
 - [ ] Add in-memory sorting
 - [ ] Add Plan & Iterator that verify the order of the sorted rows
 - [ ] Test with 0, 1, 2, 3, 7 rows

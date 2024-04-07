@@ -2,8 +2,8 @@
 #include "utils.h"
 #include "Witness.h"
 
-WitnessPlan::WitnessPlan (Plan * const input) : 
-    _input (input)
+WitnessPlan::WitnessPlan (Plan * const inputPlan) : 
+    _inputPlan (inputPlan)
 {
 	TRACE (true);
 } // WitnessPlan::WitnessPlan
@@ -11,7 +11,7 @@ WitnessPlan::WitnessPlan (Plan * const input) :
 WitnessPlan::~WitnessPlan ()
 {
 	TRACE (true);
-	delete _input;
+	delete _inputPlan;
 } // WitnessPlan::~WitnessPlan
 
 Iterator * WitnessPlan::init () const
@@ -21,7 +21,7 @@ Iterator * WitnessPlan::init () const
 } // WitnessPlan::init
 
 WitnessIterator::WitnessIterator (WitnessPlan const * const plan) :
-	_plan (plan), _input (plan->_input->init ()),
+	_plan (plan), _inputIterator (plan->_inputPlan->init ()),
 	_consumed (0), _produced (0)
 {
 	TRACE (true);
@@ -33,7 +33,7 @@ WitnessIterator::~WitnessIterator ()
 {
 	TRACE (true);
 
-	delete _input;
+	delete _inputIterator;
 
 	traceprintf ("produced %lu of %lu rows\n",
 			(unsigned long) (_produced),
@@ -44,16 +44,20 @@ bool WitnessIterator::next ()
 {
 	TRACE (true);
 
-    if (_produced >= _consumed && !_input->next()) {
+    if (_produced >= _consumed && !_inputIterator->next()) {
         traceprintf ("Final parity %s\n", getParityString().c_str());
         return false;
     } else {
-        // TODO: get row from MemoryRun
-        // _row = _input->getRow();
-        // byte * rowContent = _row->data();
-        // parity ^= *rowContent;
+        // TODO: design appropriate interface and inheritence
+        // to enable getting rows from input iterator
+        
+        // byte* _row = ...
+        // for (u_int16_t i = 0; i < _plan->_inputPlan->getRowSize(); ++i) {
+        //     byte rowContent = _row[i];
+        //     parity ^= rowContent;
+        // }
         // ++_produced;
-        return true;
+        // return true;
     }
 } // WitnessIterator::next
 

@@ -4,11 +4,11 @@ class WitnessPlan : public Plan
 {
 	friend class WitnessIterator;
 public:
-	WitnessPlan (Plan * const input);
+	WitnessPlan (Plan * const inputPlan);
 	~WitnessPlan ();
 	Iterator * init () const;
 private:
-	Plan * const _input;
+	Plan * const _inputPlan;
 }; // class WitnessPlan
 
 class WitnessIterator : public Iterator
@@ -20,7 +20,7 @@ public:
 	bool next ();
 private:
 	WitnessPlan const * const _plan;
-	Iterator * const _input;
+	Iterator * const _inputIterator;
 	RowCount _consumed, _produced;
     std::string getParityString ();
 }; // class WitnessIterator

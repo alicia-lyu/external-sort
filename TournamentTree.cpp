@@ -17,7 +17,7 @@ Node::Node (std::vector<byte> data, u_int8_t bufferNum, Node * farthestLoser)
 Node::~Node ()
 {
     TRACE (false);
-    traceprintf("Node deleted with bufferNum %d\n", bufferNum);
+    // traceprintf("Node deleted with bufferNum %d\n", bufferNum);
 }
 
 TournamentTree::TournamentTree (std::vector<byte *> records, RowSize recordSize)
@@ -71,22 +71,19 @@ std::tuple<Node *, Node *>  TournamentTree::_formRoot (std::vector<byte *> recor
         std::tie(left_winner, left_loser) = _formRoot(records, offset, numRecordsLeft);
         std::tie(right_winner, right_loser) = _formRoot(records, offset + numRecordsLeft, numRecords - numRecordsLeft);
         std::tie(root, loser) = _contest(left_winner, right_winner);
-        if (left_loser != nullptr) {
-            left_loser->parent = loser;
-            loser->left = left_loser;
-        }
-        if (right_loser != nullptr) {
-            right_loser->parent = loser;
-            loser->right = right_loser;
-        }
+        if (left_loser != nullptr) left_loser->parent = loser;
+        loser->left = left_loser;
+        if (right_loser != nullptr) right_loser->parent = loser;
+        loser->right = right_loser;
     }
+    loser->parent = root;
+    root->left = loser;
     return std::make_tuple(root, loser);
 }
 
 std::tuple<Node *, Node *> TournamentTree::_contest (Node * root_left, Node * root_right)
 {
     TRACE (false);
-    traceprintf("Contest between %d and %d\n", root_left->bufferNum, root_right->bufferNum);
     Node * winner;
     Node * loser;
     if (root_left->data <= root_right->data) {
@@ -99,8 +96,7 @@ std::tuple<Node *, Node *> TournamentTree::_contest (Node * root_left, Node * ro
     if (winner->farthestLoser == nullptr) {
         winner->farthestLoser = loser;
     }
-    loser->parent = winner;
-    winner->left = loser;
+    traceprintf("Winner %d, loser %d\n", winner->bufferNum, loser->bufferNum);
     return std::make_tuple(winner, loser);
 }
 
@@ -111,55 +107,59 @@ std::vector<byte> TournamentTree::_getData(std::vector<byte *> records, u_int8_t
     return data;
 }
 
-u_int8_t TournamentTree::poll(byte * outputOffset)
+u_int8_t TournamentTree::peek(byte * outputOffset)
 {
-    _root->left->parent = nullptr;
+    TRACE (true);
     std::copy(_root->data.begin(), _root->data.end(), outputOffset);
     return _root->bufferNum;
 }
 
-void TournamentTree::push(byte * record)
+void TournamentTree::pushAndPoll(byte * record)
 {
+    TRACE (true);
     std::vector<byte> recordData;
     recordData.assign(record, record + _recordSize);
-    Node * advancing = new Node(recordData, _root->bufferNum, nullptr); // parent == nullptr
-    Node * incumbent = _root->farthestLoser; // parent != nullptr
+    Node * advancing = new Node(recordData, _root->bufferNum, nullptr);
+    Node * incumbent = _root->farthestLoser;
     Node * winner;
     Node * loser;
     Node * lastLoser = nullptr;
     bool incumbentIsLeft;
-    while (incumbent != nullptr) {
+    while (incumbent != _root) {
         std::tie(winner, loser) = _contest(incumbent, advancing);
         // Loser inherit all pointers from incumbent
-        // Nodes settle when they lose
+        //// Nodes settle when they lose
         Node * leftChild;
         Node * rightChild;
         if (lastLoser != nullptr) {
             if (incumbentIsLeft) {
                 leftChild = lastLoser;
+                rightChild = incumbent->right;
             } else {
                 rightChild = lastLoser;
+                leftChild = incumbent->left;
             }
-        } else{
+        } else {
            leftChild = incumbent->left;
            rightChild = incumbent->right;
         }
         loser->left = leftChild;
-        leftChild->parent = loser;
+        if (leftChild != nullptr) leftChild->parent = loser;
         loser->right = rightChild;
-        rightChild->parent = loser;
+        if (rightChild != nullptr) rightChild->parent = loser;
         //// The parent of loser is updated next round
         advancing = winner;
-        // Next incumbent to challenge
-        incumbent = incumbent->parent;
         // Record lastLoser and lastIncumbent
         lastLoser = loser;
-        incumbentIsLeft = incumbent->parent->left == incumbent;
+        incumbentIsLeft = incumbent->parent->left == incumbent; // Will never reach root, so no need to check for nullptr
+        // Next incumbent to challenge
+        incumbent = incumbent->parent;
     }
-    delete _root;
     advancing->parent = nullptr;
     advancing->left = loser;
     advancing->right = nullptr;
+    loser->parent = advancing;
+    delete _root; // popped
     _root = advancing;
 }
 
@@ -168,6 +168,7 @@ void TournamentTree::printTree ()
     TRACE (true);
     _printRoot();
     _printNode(_root->left, "", true);
+    _checkParents();
 }
 
 void TournamentTree::_printNode (Node * node, string prefix, bool isLeft)
@@ -181,4 +182,29 @@ void TournamentTree::_printNode (Node * node, string prefix, bool isLeft)
 void TournamentTree::_printRoot ()
 {
     printf("Root: buffer %d, farthest loser %d\n", _root->bufferNum, _root->farthestLoser->bufferNum);
+}
+
+void TournamentTree::_checkParents ()
+{
+    std::queue<Node *> q;
+    q.push(_root);
+    Node * node;
+    while (q.empty() == false) {
+        node = q.front();
+        q.pop();
+        if (node != nullptr) {
+            if (node->left != nullptr) {
+                if (node->left->parent != node) {
+                    printf("Parent of left child %d is %d\n", node->left->bufferNum, node->left->parent->bufferNum);
+                }
+                q.push(node->left);
+            }
+            if (node->right != nullptr) {
+                if (node->right->parent != node) {
+                    printf("Parent of right child %d is %d\n", node->right->bufferNum, node->right->parent->bufferNum);
+                }
+                q.push(node->right);
+            }
+        }
+    }
 }

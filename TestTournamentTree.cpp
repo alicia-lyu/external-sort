@@ -13,9 +13,18 @@ int main (int argc, char * argv [])
     for (u_int8_t i = 0; i < recordCount; i++) {
         run->fillRowRandomly(i);
         records.push_back(run->getRow(i));
-        printf("Record %d: %s\n", i, rowToHexString(run->getRow(i), recordSize).c_str());
     }
     TournamentTree * tree = new TournamentTree(records, recordSize);
     tree->printTree();
+    byte * outputBuffer = (byte *) malloc(recordCount * recordSize * sizeof(byte));
+    u_int8_t bufferNum = tree->peek(outputBuffer);
+    printf("Peeked %d\n", bufferNum);
+    byte * newRecord = (byte *) malloc(recordSize * sizeof(byte));
+    std::copy(records.front(), records.front() + recordSize, newRecord);
+    tree->pushAndPoll(newRecord);
+    tree->printTree();
     delete tree;
+    free(newRecord);
+    free(outputBuffer);
+    delete run;
 }

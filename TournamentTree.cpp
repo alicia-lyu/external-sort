@@ -71,11 +71,13 @@ std::tuple<Node *, Node *>  TournamentTree::_formRoot (std::vector<byte *> recor
         std::tie(left_winner, left_loser) = _formRoot(records, offset, numRecordsLeft);
         std::tie(right_winner, right_loser) = _formRoot(records, offset + numRecordsLeft, numRecords - numRecordsLeft);
         std::tie(root, loser) = _contest(left_winner, right_winner);
+        // Take care of the pointers involving two losers (two leaves)
         if (left_loser != nullptr) left_loser->parent = loser;
         loser->left = left_loser;
         if (right_loser != nullptr) right_loser->parent = loser;
         loser->right = right_loser;
     }
+    // Take care of the pointers not involving two losers (the stem of root and second)
     loser->parent = root;
     root->left = loser;
     return std::make_tuple(root, loser);
@@ -120,15 +122,17 @@ void TournamentTree::pushAndPoll(byte * record)
     std::vector<byte> recordData;
     recordData.assign(record, record + _recordSize);
     Node * advancing = new Node(recordData, _root->bufferNum, nullptr);
-    Node * incumbent = _root->farthestLoser;
+    // The new record is intended to come from the same buffer as the root that is going to be popped
+    Node * incumbent = _root->farthestLoser; 
+    // farthest loser will never be a Node that is popped (it is a descendant of whatever Node)
     Node * winner;
     Node * loser;
     Node * lastLoser = nullptr;
     bool incumbentIsLeft;
     while (incumbent != _root) {
         std::tie(winner, loser) = _contest(incumbent, advancing);
-        // Loser inherit all pointers from incumbent
-        //// Nodes settle when they lose
+        // Loser inherit all pointers from incumbent---Nodes settle when they lose
+        //// Update the parent of the last loser
         Node * leftChild;
         Node * rightChild;
         if (lastLoser != nullptr) {
@@ -139,6 +143,7 @@ void TournamentTree::pushAndPoll(byte * record)
                 rightChild = lastLoser;
                 leftChild = incumbent->left;
             }
+        //// Update left and right children of loser
         } else {
            leftChild = incumbent->left;
            rightChild = incumbent->right;
@@ -147,7 +152,8 @@ void TournamentTree::pushAndPoll(byte * record)
         if (leftChild != nullptr) leftChild->parent = loser;
         loser->right = rightChild;
         if (rightChild != nullptr) rightChild->parent = loser;
-        //// The parent of loser is updated next round
+
+        // Winner keeps advancing, no need to change pointers, as they will be overwritten
         advancing = winner;
         // Record lastLoser and lastIncumbent
         lastLoser = loser;

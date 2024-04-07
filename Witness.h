@@ -18,7 +18,7 @@ private:
 class WitnessIterator : public Iterator
 {
 public:
-	std::vector<bool> parity; // max. 16000
+	byte * parity; // max. 16000
 	WitnessIterator (WitnessPlan const * const plan, MemoryRun * run, RowSize const size);
 	~WitnessIterator ();
 	bool next ();
@@ -28,5 +28,4 @@ private:
 	Iterator * const _input;
 	RowSize const _size;
 	RowCount _consumed, _produced;
-    std::string getParityString ();
 }; // class WitnessIterator

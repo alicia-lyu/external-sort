@@ -1,7 +1,7 @@
 #include "Sort.h"
 
-SortPlan::SortPlan (Plan * const input, MemoryRun * run) : 
-	_input (input), _run (run)
+SortPlan::SortPlan (Plan * const input, MemoryRun * run, RowSize const size) : 
+	_input (input), _run (run), _size (size)
 {
 	TRACE (true);
 } // SortPlan::SortPlan
@@ -15,12 +15,11 @@ SortPlan::~SortPlan ()
 Iterator * SortPlan::init () const
 {
 	TRACE (true);
-	return new SortIterator (this, _run);
+	return new SortIterator (this, _run, _size);
 } // SortPlan::init
 
-SortIterator::SortIterator (SortPlan const * const plan, MemoryRun * run) :
-	_plan (plan), _input (plan->_input->init ()),
-	_consumed (0), _produced (0)
+SortIterator::SortIterator (SortPlan const * const plan, MemoryRun * run, RowSize const size) :
+	_plan (plan), _input (plan->_input->init ()), _run (run), _size (size), _consumed (0), _produced (0)
 {
 	TRACE (true);
 

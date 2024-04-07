@@ -5,6 +5,7 @@ MemoryRun::MemoryRun (u_int16_t count, RowSize size):
 {
     TRACE (true);
     _rows = (byte *) malloc(size * count * sizeof(byte));
+    _engine.seed(_device());
 }
 
 MemoryRun::~MemoryRun ()

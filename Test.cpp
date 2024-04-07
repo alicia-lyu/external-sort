@@ -32,7 +32,7 @@ int main (int argc, char * argv [])
 		MemoryRun * run = new MemoryRun(recordCountCurrentRun, recordSize);
 		Plan * const scanPlan = new ScanPlan (recordCountCurrentRun, recordSize, inFile, run);
 		Plan * const witnessPlan = new WitnessPlan (scanPlan, run, recordSize);
-		// TODO: Pass run to witnessPlan
+		Plan * const sortPlan = new SortPlan (witnessPlan, run, recordSize);
 		Iterator * const it = witnessPlan->init ();
 		it->run ();
 		delete it;

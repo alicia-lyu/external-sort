@@ -2,6 +2,7 @@ CPPOPT=-g -Og -D_DEBUG
 # -O2 -Os -Ofast
 # -fprofile-generate -fprofile-use
 CPPFLAGS=$(CPPOPT) -Wall -ansi -pedantic -std=c++17
+DEBUGFLAGS=-DCMAKE_BUILD_TYPE=Debug -DLLDB_EXPORT_ALL_SYMBOLS=ON -std=c++17
 # -Wparentheses -Wno-unused-parameter -Wformat-security
 # -fno-rtti -std=c++11 -std=c++98
 TIMESTAMP=$(shell date +%Y-%m-%d-%H-%M-%S)
@@ -62,6 +63,7 @@ Filter.o : Filter.h
 Sort.o : Sort.h
 utils.o: utils.h
 Witness.o: Witness.h
+TournamentTree.o: TournamentTree.h
 
 list : Makefile
 	echo Makefile $(HDRS) $(SRCS) $(DOCS) $(SCRS) > list
@@ -83,3 +85,18 @@ temp.exe : temp.cpp
 temp.out : temp.exe
 	echo $(TIMESTAMP) > temp.out
 	./temp.exe >> temp.out
+
+TestTTHDRS=	TournamentTree.h defs.h
+TestTTSRCS=	TournamentTree.cpp defs.cpp
+TestTTOBJS=	TournamentTree.o utils.o Data.o defs.o
+
+TestTT.exe : TestTournamentTree.cpp $(TestTTOBJS) $(TestTTHDRS) $(TestTTSRCS)
+	g++ $(CPPFLAGS) -o TestTT.exe TestTournamentTree.cpp $(TestTTOBJS)
+
+TestTT.out : TestTT.exe
+	echo $(TIMESTAMP) > TestTT.out
+	./TestTT.exe >> TestTT.out
+
+lldbTT : TestTournamentTree.cpp $(TestTTOBJS) $(TestTTHDRS) $(TestTTSRCS)
+	g++ $(DEBUGFLAGS) -o TestTT.exe TestTournamentTree.cpp $(TestTTOBJS)
+	lldb -- ./TestTT.exe

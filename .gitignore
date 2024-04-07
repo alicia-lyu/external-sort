@@ -1,5 +1,7 @@
 *.o
 *.exe
+*.out
+*.dSYM
 .vscode
 temp.*
 /logs/

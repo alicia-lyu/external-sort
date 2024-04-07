@@ -21,7 +21,7 @@ April 29, 2024    | Submission
 - [x] Add data records (incl mem mgmt) to iterators @Alicia
 - [x] Add data generation (random values) in ScanIterator @Alicia
 - [x] Test with simple plan -- scan only @Alicia
-- [ ] Add parity check with new classes Witness
+- [x] Add parity check with new classes Witness @Alicia @Yuheng
 
 ### Sorting: By April 8
 

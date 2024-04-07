@@ -109,6 +109,12 @@ std::vector<byte> TournamentTree::_getData(std::vector<byte *> records, u_int8_t
     return data;
 }
 
+void TournamentTree::inPlaceSort()
+{
+    TRACE (true);
+    // TODO
+}
+
 u_int8_t TournamentTree::peek(byte * outputOffset)
 {
     TRACE (true);

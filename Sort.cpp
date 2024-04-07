@@ -22,10 +22,6 @@ SortIterator::SortIterator (SortPlan const * const plan, MemoryRun * run, RowSiz
 	_plan (plan), _input (plan->_input->init ()), _run (run), _size (size), _consumed (0), _produced (0)
 {
 	TRACE (true);
-
-	while (_input->next ())  ++ _consumed;
-	delete _input;
-
 	traceprintf ("consumed %lu rows\n",
 			(unsigned long) (_consumed));
 } // SortIterator::SortIterator
@@ -33,7 +29,7 @@ SortIterator::SortIterator (SortPlan const * const plan, MemoryRun * run, RowSiz
 SortIterator::~SortIterator ()
 {
 	TRACE (true);
-
+	delete _input;
 	traceprintf ("produced %lu of %lu rows\n",
 			(unsigned long) (_produced),
 			(unsigned long) (_consumed));
@@ -43,8 +39,10 @@ bool SortIterator::next ()
 {
 	TRACE (true);
 
-	if (_produced >= _consumed)  return false;
-
+	if (!_input->next()) {
+		return false;
+	}
+	
 	++ _produced;
 	return true;
 } // SortIterator::next

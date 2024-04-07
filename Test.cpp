@@ -7,7 +7,6 @@
 
 int main (int argc, char * argv [])
 {
-	TRACE (true);
 
 	RowCount recordCount;
 	RowSize recordSize; // 20-2000 bytes

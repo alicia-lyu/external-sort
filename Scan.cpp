@@ -15,19 +15,16 @@ ScanPlan::~ScanPlan ()
 
 Iterator * ScanPlan::init () const
 {
-	TRACE (true);
 	return new ScanIterator (this, _run);
 } // ScanPlan::init
 
 ScanIterator::ScanIterator (ScanPlan const * const plan, MemoryRun * run) :
 	_plan (plan), _count (0), _run (run)
 {
-	TRACE (true);
 } // ScanIterator::ScanIterator
 
 ScanIterator::~ScanIterator ()
 {
-	TRACE (true);
 	traceprintf ("produced %lu of %lu rows\n",
 			(unsigned long) (_count),
 			(unsigned long) (_plan->_count));
@@ -35,7 +32,6 @@ ScanIterator::~ScanIterator ()
 
 bool ScanIterator::next ()
 {
-	TRACE (false);
 
 	if (_count >= _plan->_count)
 		return false;

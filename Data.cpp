@@ -4,7 +4,7 @@ MemoryRun::MemoryRun (u_int16_t count, RowSize size):
     count (count), size (size)
 {
     TRACE (true);
-    _rows = (byte *) malloc(sizeof(RowSize) * count);
+    _rows = (byte *) malloc(size * count * sizeof(byte));
 }
 
 MemoryRun::~MemoryRun ()
@@ -15,7 +15,7 @@ MemoryRun::~MemoryRun ()
 
 byte * MemoryRun::getRow (u_int16_t index)
 {
-    return _rows + index;
+    return _rows + index * size;
 }
 
 byte * MemoryRun::fillRowRandomly (u_int16_t index)

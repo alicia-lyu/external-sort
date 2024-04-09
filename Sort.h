@@ -10,25 +10,23 @@ class SortPlan : public Plan
 {
 	friend class SortIterator;
 public:
-	SortPlan (Plan * const input, MemoryRun * run, RowSize const size);
+	SortPlan (Plan * const input, u_int32_t recordCountPerRun, RowSize const size);
 	~SortPlan ();
 	Iterator * init () const;
 private:
 	Plan * const _input;
-	MemoryRun * _run;
 	RowSize const _size;
+	u_int32_t const _countPerRun;
 }; // class SortPlan
 
 class SortIterator : public Iterator
 {
 public:
-	SortIterator (SortPlan const * const plan, MemoryRun * run, RowSize const size);
+	SortIterator (SortPlan const * const plan);
 	~SortIterator ();
-	bool next ();
+	byte * next ();
 private:
 	SortPlan const * const _plan;
 	Iterator * const _input;
-	MemoryRun * _run;
-	RowSize const _size;
 	RowCount _consumed, _produced;
 }; // class SortIterator

@@ -10,22 +10,22 @@ class ScanPlan : public Plan
 {
 	friend class ScanIterator;
 public:
-	ScanPlan (RowCount const count, RowSize const size, ofstream_ptr const inFile, MemoryRun * run);
+	ScanPlan (RowCount const count, RowSize const size, u_int32_t recordCountPerRun, ofstream_ptr const inFile);
 	~ScanPlan ();
 	Iterator * init () const;
 private:
 	RowCount const _count;
 	RowSize const _size;
 	ofstream_ptr const _inFile;
-	MemoryRun * _run;
+	u_int32_t const _countPerRun;
 }; // class ScanPlan
 
 class ScanIterator : public Iterator
 {
 public:
-	ScanIterator (ScanPlan const * const plan, MemoryRun * run);
+	ScanIterator (ScanPlan const * const plan);
 	~ScanIterator ();
-	bool next ();
+	byte * next ();
 private:
 	ScanPlan const * const _plan;
 	RowCount _count;

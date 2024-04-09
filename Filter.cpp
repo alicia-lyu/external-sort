@@ -36,16 +36,17 @@ FilterIterator::~FilterIterator ()
 			(unsigned long) (_consumed));
 } // FilterIterator::~FilterIterator
 
-bool FilterIterator::next ()
+byte * FilterIterator::next ()
 {
 	TRACE (true);
 
 	do
 	{
-		if ( ! _input->next ())  return false;
+		byte * received=_input->next ();
+		if ( received == nullptr)  return nullptr;
 		++ _consumed;
 	} while (_consumed % 2 == 0);
 
 	++ _produced;
-	return true;
+	return nullptr;
 } // FilterIterator::next

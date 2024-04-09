@@ -2,8 +2,8 @@
 #include "utils.h"
 #include <memory>
 
-ScanPlan::ScanPlan (RowCount const count, RowSize const size, ofstream_ptr const inFile, MemoryRun * run) : 
-	_count (count), _size (size), _inFile (inFile), _run (run)
+ScanPlan::ScanPlan (RowCount const count, RowSize const size, u_int32_t recordCountPerRun, ofstream_ptr const inFile) : 
+	_count (count), _size (size), _inFile (inFile), _countPerRun(recordCountPerRun)
 {
 	TRACE (true);
 } // ScanPlan::ScanPlan
@@ -15,28 +15,32 @@ ScanPlan::~ScanPlan ()
 
 Iterator * ScanPlan::init () const
 {
-	return new ScanIterator (this, _run);
+	return new ScanIterator (this);
 } // ScanPlan::init
 
-ScanIterator::ScanIterator (ScanPlan const * const plan, MemoryRun * run) :
-	_plan (plan), _count (0), _run (run)
+ScanIterator::ScanIterator (ScanPlan const * const plan) :
+	_plan (plan), _count (0)
 {
+	TRACE (true);
+	_run = new MemoryRun(_plan->_countPerRun, _plan->_size);
 } // ScanIterator::ScanIterator
 
 ScanIterator::~ScanIterator ()
 {
+	delete _run;
 	traceprintf ("produced %lu of %lu rows\n",
 			(unsigned long) (_count),
 			(unsigned long) (_plan->_count));
 } // ScanIterator::~ScanIterator
 
-bool ScanIterator::next ()
+byte * ScanIterator::next ()
 {
 
 	if (_count >= _plan->_count)
-		return false;
+		return nullptr;
 
-	byte * row = _run->fillRowRandomly(_count);
+	RowCount runPosition = _count % _plan->_countPerRun;
+	byte * row = _run->fillRowRandomly(runPosition);
 
 	string hexString = rowToHexString(row, _plan->_size);
 	traceprintf ("produced %s\n", hexString.c_str());
@@ -46,5 +50,5 @@ bool ScanIterator::next ()
 	}
 	
 	++ _count;
-	return true;
+	return row;
 } // ScanIterator::next

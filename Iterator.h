@@ -19,7 +19,7 @@ public:
 	Iterator ();
 	virtual ~Iterator ();
 	void run ();
-	virtual bool next () = 0;
+	virtual byte * next () = 0;
 private:
 	RowCount _count;
 }; // class Iterator

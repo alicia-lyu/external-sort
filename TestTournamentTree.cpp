@@ -16,15 +16,17 @@ int main (int argc, char * argv [])
     }
     TournamentTree * tree = new TournamentTree(records, recordSize);
     tree->printTree();
-    byte * outputBuffer = (byte *) malloc(recordCount * recordSize * sizeof(byte));
-    u_int8_t bufferNum = tree->peek(outputBuffer);
+    u_int8_t bufferNum = tree->peek();
     printf("Peeked %d\n", bufferNum);
     byte * newRecord = (byte *) malloc(recordSize * sizeof(byte));
     std::copy(records.front(), records.front() + recordSize, newRecord);
     tree->pushAndPoll(newRecord);
     tree->printTree();
+    for (int i = 0; i < recordCount; i++) {
+        tree->poll();
+        tree->printTree();
+    }
     delete tree;
     free(newRecord);
-    free(outputBuffer);
     delete run;
 }

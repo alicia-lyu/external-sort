@@ -109,33 +109,16 @@ std::vector<byte> TournamentTree::_getData(std::vector<byte *> records, u_int8_t
     return data;
 }
 
-void TournamentTree::inPlaceSort()
+Node * TournamentTree::_advanceToTop(Node * advancing, Node * incumbent)
 {
-    TRACE (true);
-    // TODO
-}
-
-u_int8_t TournamentTree::peek(byte * outputOffset)
-{
-    TRACE (true);
-    std::copy(_root->data.begin(), _root->data.end(), outputOffset);
-    return _root->bufferNum;
-}
-
-void TournamentTree::pushAndPoll(byte * record)
-{
-    TRACE (true);
-    std::vector<byte> recordData;
-    recordData.assign(record, record + _recordSize);
-    Node * advancing = new Node(recordData, _root->bufferNum, nullptr);
-    // The new record is intended to come from the same buffer as the root that is going to be popped
-    Node * incumbent = _root->farthestLoser; 
-    // farthest loser will never be a Node that is popped (it is a descendant of whatever Node)
     Node * winner;
     Node * loser;
     Node * lastLoser = nullptr;
     bool incumbentIsLeft;
+    traceprintf("Advancing %d, incumbent %d\n", advancing->bufferNum, incumbent->bufferNum);
     while (incumbent != _root) {
+        // Stop at root, as root is going to be polled -- it is already part of the history
+        // Advancing cannot be larger than root; it is guaranteed by the logic outside tournament tree -- merge sort
         std::tie(winner, loser) = _contest(incumbent, advancing);
         // Loser inherit all pointers from incumbent---Nodes settle when they lose
         //// Update the parent of the last loser
@@ -154,11 +137,18 @@ void TournamentTree::pushAndPoll(byte * record)
            leftChild = incumbent->left;
            rightChild = incumbent->right;
         }
-        loser->left = leftChild;
-        if (leftChild != nullptr) leftChild->parent = loser;
-        loser->right = rightChild;
-        if (rightChild != nullptr) rightChild->parent = loser;
-
+        if (leftChild != loser && leftChild != winner){
+            loser->left = leftChild;
+            if (leftChild != nullptr) leftChild->parent = loser;
+        } else {
+            loser->left = nullptr;
+        }
+        if (rightChild != loser && rightChild != winner) {
+            loser->right = rightChild;
+            if (rightChild != nullptr) rightChild->parent = loser;
+        } else {
+            loser->right = nullptr;
+        }
         // Winner keeps advancing, no need to change pointers, as they will be overwritten
         advancing = winner;
         // Record lastLoser and lastIncumbent
@@ -171,16 +161,58 @@ void TournamentTree::pushAndPoll(byte * record)
     advancing->left = loser;
     advancing->right = nullptr;
     loser->parent = advancing;
-    delete _root; // popped
+    Node * previousRoot = _root;
     _root = advancing;
+    return previousRoot;
+}
+
+void TournamentTree::inPlaceSort()
+{
+    TRACE (true);
+    // TODO
+}
+
+byte * TournamentTree::poll()
+{
+    TRACE (true);
+    Node * previousRoot = _advanceToTop(_root->farthestLoser, _root->farthestLoser->parent);
+    byte * polled = previousRoot->data.data();
+    traceprintf("Polled %d\n", previousRoot->bufferNum);
+    delete previousRoot;
+    return polled;
+}
+
+u_int8_t TournamentTree::peek()
+{
+    TRACE (true);
+    return _root->bufferNum;
+}
+
+byte * TournamentTree::pushAndPoll(byte * record)
+{
+    TRACE (true);
+    std::vector<byte> recordData;
+    recordData.assign(record, record + _recordSize);
+    Node * advancing = new Node(recordData, _root->bufferNum, nullptr);
+    // The new record is intended to come from the same buffer as the root that is going to be popped
+    Node * incumbent = _root->farthestLoser; 
+    // farthest loser will never be a Node that is popped (it is a descendant of whatever Node)
+    Node * previousRoot = _advanceToTop(advancing, incumbent);
+    // Poll (advancing farthestLoser) and push (advancing new record) separately do not work.
+    // As we are only polling one record, we cannot advance twice. A node never retreats to
+    // lower levels, but only advances.
+    byte * polled = previousRoot->data.data();
+    traceprintf("Pushed %d and polled %d\n", advancing->bufferNum, previousRoot->bufferNum);
+    delete previousRoot;
+    return polled;
 }
 
 void TournamentTree::printTree ()
 {
     TRACE (true);
+    _checkParents();
     _printRoot();
     _printNode(_root->left, "", true);
-    _checkParents();
 }
 
 void TournamentTree::_printNode (Node * node, string prefix, bool isLeft)
@@ -207,13 +239,15 @@ void TournamentTree::_checkParents ()
         if (node != nullptr) {
             if (node->left != nullptr) {
                 if (node->left->parent != node) {
-                    printf("Parent of left child %d is %d\n", node->left->bufferNum, node->left->parent->bufferNum);
+                    printf("Parent of left child %d is %d, expected %d\n", node->left->bufferNum, node->left->parent->bufferNum, node->bufferNum);
+                    exit(1);
                 }
                 q.push(node->left);
             }
             if (node->right != nullptr) {
                 if (node->right->parent != node) {
-                    printf("Parent of right child %d is %d\n", node->right->bufferNum, node->right->parent->bufferNum);
+                    printf("Parent of right child %d is %d, expected %d\n", node->right->bufferNum, node->right->parent->bufferNum, node->bufferNum);
+                    exit(1);
                 }
                 q.push(node->right);
             }

@@ -12,14 +12,16 @@ SCRS=
 
 # headers and code sources
 HDRS=	defs.h \
-		Iterator.h Scan.h Filter.h Sort.h
+		Iterator.h Scan.h Filter.h Sort.h \
+		utils.h Data.h Witness.h TournamentTree.h
 SRCS=	defs.cpp Assert.cpp Test.cpp \
-		Iterator.cpp Scan.cpp Filter.cpp Sort.cpp
+		Iterator.cpp Scan.cpp Filter.cpp Sort.cpp \
+		utils.cpp Data.cpp Witness.cpp TournamentTree.cpp
 
 # compilation targets
 OBJS=	defs.o Assert.o Test.o \
 		Iterator.o Scan.o Filter.o Sort.o \
-		utils.o Data.o Witness.o
+		utils.o Data.o Witness.o TournamentTree.o
 
 # RCS assists
 REV=-q -f
@@ -56,7 +58,7 @@ ExternalSort.exe: Makefile ExternalSort.cpp
 # ./ExternalSort.exe -c 120 -s 1000 -o trace0.txt  (Example values)
 
 $(OBJS) : Makefile defs.h
-Test.o : Iterator.h Scan.h Filter.h Sort.h utils.h Data.h Witness.h
+Test.o : Iterator.h Scan.h Filter.h Sort.h utils.h Data.h Witness.h TournamentTree.h
 Iterator.o Scan.o Filter.o Sort.o utils.o Data.o Witness.o : Iterator.h Data.h
 Scan.o : Scan.h
 Filter.o : Filter.h

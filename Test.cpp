@@ -23,9 +23,13 @@ int main (int argc, char * argv [])
 	Plan * const scanPlan = new ScanPlan (recordCount, recordSize, recordCountPerRun, inFile);
 	Plan * const witnessPlan = new WitnessPlan (scanPlan, recordSize);
 	Plan * const sortPlan = new SortPlan (witnessPlan, recordCountPerRun, recordSize);
-	Iterator * const it = witnessPlan->init ();
+	Plan * const witnessPlan2 = new WitnessPlan (sortPlan, recordSize);
+	Iterator * const it = witnessPlan2->init ();
 	it->run ();
 	delete it;
+	delete witnessPlan2;
+	delete sortPlan;
+	delete witnessPlan;
 	delete scanPlan;
 
 	inFile->close();

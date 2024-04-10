@@ -116,7 +116,7 @@ Node * TournamentTree::_advanceToTop(Node * advancing, Node * incumbent)
     Node * lastLoser = nullptr;
     bool incumbentIsLeft;
     traceprintf("Advancing %d, incumbent %d\n", advancing->bufferNum, incumbent->bufferNum);
-    while (incumbent != _root) {
+    while (incumbent != _root) { // Guaranteed that incumbent arg is not root
         // Stop at root, as root is going to be polled -- it is already part of the history
         // Advancing cannot be larger than root; it is guaranteed by the logic outside tournament tree -- merge sort
         std::tie(winner, loser) = _contest(incumbent, advancing);
@@ -137,18 +137,10 @@ Node * TournamentTree::_advanceToTop(Node * advancing, Node * incumbent)
            leftChild = incumbent->left;
            rightChild = incumbent->right;
         }
-        if (leftChild != loser && leftChild != winner){
-            loser->left = leftChild;
-            if (leftChild != nullptr) leftChild->parent = loser;
-        } else {
-            loser->left = nullptr;
-        }
-        if (rightChild != loser && rightChild != winner) {
-            loser->right = rightChild;
-            if (rightChild != nullptr) rightChild->parent = loser;
-        } else {
-            loser->right = nullptr;
-        }
+        loser->left = leftChild;
+        if (leftChild != nullptr) leftChild->parent = loser;
+        loser->right = rightChild;
+        if (rightChild != nullptr) rightChild->parent = loser;
         // Winner keeps advancing, no need to change pointers, as they will be overwritten
         advancing = winner;
         // Record lastLoser and lastIncumbent
@@ -175,7 +167,38 @@ void TournamentTree::inPlaceSort()
 byte * TournamentTree::poll()
 {
     TRACE (true);
-    Node * previousRoot = _advanceToTop(_root->farthestLoser, _root->farthestLoser->parent);
+    if (_root == nullptr) {
+        return nullptr;
+    }
+    Node * advancing = _root->farthestLoser;
+    Node * previousRoot;
+    if (advancing == nullptr) {
+        previousRoot = _root;
+        _root = nullptr;
+    } else {
+        Node * incumbent = advancing->parent; // advancing, if exists, cannot be root
+        if (incumbent == _root) {
+            previousRoot = _root;
+            _root = advancing;
+            advancing->parent = nullptr;
+        } else {
+            // Advancing breaks tie to become a free node
+            Node * child;
+            if (advancing->left != nullptr && advancing->right != nullptr) {
+                traceprintf("Advancing %d has two children %d and %d\n", advancing->bufferNum, advancing->left->bufferNum, advancing->right->bufferNum);
+                // Farthest loser of root should have reached further down the tree.
+                exit(1);
+            } else if (advancing->left != nullptr) {
+                child = advancing->left;
+            } else {
+                child = advancing->right;
+            }
+            advancing->parent = nullptr;
+            if (incumbent->left == advancing) incumbent->left = child;
+            else incumbent->right = child;
+            previousRoot = _advanceToTop(advancing, incumbent);
+        }
+    }
     byte * polled = previousRoot->data.data();
     traceprintf("Polled %d\n", previousRoot->bufferNum);
     delete previousRoot;
@@ -210,9 +233,13 @@ byte * TournamentTree::pushAndPoll(byte * record)
 void TournamentTree::printTree ()
 {
     TRACE (true);
+    if (_root == nullptr) {
+        printf("Empty tree\n");
+        return;
+    }
     _checkParents();
     _printRoot();
-    _printNode(_root->left, "", true);
+    _printNode(_root, "", true);
 }
 
 void TournamentTree::_printNode (Node * node, string prefix, bool isLeft)
@@ -225,7 +252,11 @@ void TournamentTree::_printNode (Node * node, string prefix, bool isLeft)
 
 void TournamentTree::_printRoot ()
 {
-    printf("Root: buffer %d, farthest loser %d\n", _root->bufferNum, _root->farthestLoser->bufferNum);
+    if (_root->farthestLoser == nullptr) {
+        printf("Root: buffer %d, farthest loser NULL\n", _root->bufferNum);
+    } else {
+        printf("Root: buffer %d, farthest loser %d\n", _root->bufferNum, _root->farthestLoser->bufferNum);
+    }
 }
 
 void TournamentTree::_checkParents ()

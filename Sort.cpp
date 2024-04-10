@@ -58,7 +58,6 @@ byte * SortIterator::next ()
 	byte * row = _tree->poll();
 	if (row == nullptr) return nullptr;
 	++ _produced;
-	traceprintf ("#%d produced %s\n", _produced,
-			rowToHexString(row, _plan->_size).c_str());
+	// traceprintf ("#%d produced %s\n", _produced, rowToHexString(row, _plan->_size).c_str());
 	return row;
 } // SortIterator::next

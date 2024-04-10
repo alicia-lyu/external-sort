@@ -5,13 +5,13 @@
 #include <utility>
 #include <algorithm>
 
-Node::Node (std::vector<byte> data, u_int8_t bufferNum, Node * farthestLoser)
-: data (data), left (nullptr), right (nullptr),parent (nullptr), 
+Node::Node (byte * data, RowSize size, u_int8_t bufferNum, Node * farthestLoser)
+: data (data), _size (size), left (nullptr), right (nullptr),parent (nullptr), 
     bufferNum (bufferNum), farthestLoser (farthestLoser)
 {   
     TRACE (false);
-    string recordContent = rowToHexString(data.data(), data.size());
-    traceprintf("Node created with bufferNum %d and data %s\n", bufferNum, recordContent.c_str());
+    string recordContent = rowToHexString(data, _size);
+    // traceprintf("Node created with bufferNum %d and data %s\n", bufferNum, recordContent.c_str());
 }
 
 Node::~Node ()
@@ -49,9 +49,9 @@ TournamentTree::~TournamentTree ()
 
 std::tuple<Node *, Node *>  TournamentTree::_formRoot (std::vector<byte *> records, u_int8_t offset, u_int8_t numRecords)
 {
-    TRACE (true);
+    // TRACE (true);
     if (numRecords == 1) {
-        Node * root = new Node(_getData(records, offset), offset, nullptr);
+        Node * root = new Node(records.at(offset), _recordSize, offset, nullptr);
         return std::make_tuple(root, nullptr);
     }
     Node * left_winner;
@@ -59,8 +59,8 @@ std::tuple<Node *, Node *>  TournamentTree::_formRoot (std::vector<byte *> recor
     Node * root;
     Node * loser;
     if (numRecords == 2) {
-        left_winner = new Node(_getData(records, offset), offset, nullptr);
-        right_winner = new Node(_getData(records, offset+1), offset + 1, nullptr);
+        left_winner = new Node(records.at(offset), _recordSize,  offset, nullptr);
+        right_winner = new Node(records.at(offset+1), _recordSize, offset + 1, nullptr);
         std::tie(root, loser) = _contest(left_winner, right_winner);
     } else {
         u_int8_t numRecordsLeft = 2;
@@ -99,15 +99,8 @@ std::tuple<Node *, Node *> TournamentTree::_contest (Node * root_left, Node * ro
     if (winner->farthestLoser == nullptr) {
         winner->farthestLoser = loser;
     }
-    traceprintf("Winner %d, loser %d\n", winner->bufferNum, loser->bufferNum);
+    // traceprintf("Winner %d, loser %d\n", winner->bufferNum, loser->bufferNum);
     return std::make_tuple(winner, loser);
-}
-
-std::vector<byte> TournamentTree::_getData(std::vector<byte *> records, u_int8_t offset)
-{
-    std::vector<byte> data;
-    data.assign(records[offset], records[offset] + _recordSize);
-    return data;
 }
 
 Node * TournamentTree::_advanceToTop(Node * advancing, Node * incumbent)
@@ -167,7 +160,7 @@ void TournamentTree::inPlaceSort()
 
 byte * TournamentTree::poll()
 {
-    TRACE (true);
+    // TRACE (true);
     if (_root == nullptr) {
         return nullptr;
     }
@@ -200,10 +193,9 @@ byte * TournamentTree::poll()
             previousRoot = _advanceToTop(advancing, incumbent);
         }
     }
-    byte * polled = previousRoot->data.data();
-    traceprintf("Polled %d with data %s\n", previousRoot->bufferNum, rowToHexString(polled, _recordSize).c_str());
+    byte * polled = previousRoot->data;
+    traceprintf("Polled %d\n", previousRoot->bufferNum);
     delete previousRoot;
-    traceprintf("Polled %d with data %s\n", previousRoot->bufferNum, rowToHexString(polled, _recordSize).c_str());
     return polled;
 }
 
@@ -216,9 +208,7 @@ u_int8_t TournamentTree::peek()
 byte * TournamentTree::pushAndPoll(byte * record)
 {
     TRACE (true);
-    std::vector<byte> recordData;
-    recordData.assign(record, record + _recordSize);
-    Node * advancing = new Node(recordData, _root->bufferNum, nullptr);
+    Node * advancing = new Node(record, _recordSize, _root->bufferNum, nullptr);
     // The new record is intended to come from the same buffer as the root that is going to be popped
     Node * incumbent = _root->farthestLoser; 
     // farthest loser will never be a Node that is popped (it is a descendant of whatever Node)
@@ -226,7 +216,7 @@ byte * TournamentTree::pushAndPoll(byte * record)
     // Poll (advancing farthestLoser) and push (advancing new record) separately do not work.
     // As we are only polling one record, we cannot advance twice. A node never retreats to
     // lower levels, but only advances.
-    byte * polled = previousRoot->data.data();
+    byte * polled = previousRoot->data;
     traceprintf("Pushed %d and polled %d\n", advancing->bufferNum, previousRoot->bufferNum);
     delete previousRoot;
     return polled;

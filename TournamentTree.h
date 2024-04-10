@@ -6,13 +6,14 @@
 class Node
 {
 public:
-    std::vector<byte> data;
+    byte * data;
+    RowSize _size;
     Node * left;
     Node * right;
     Node * parent;
     u_int8_t bufferNum;
     Node * farthestLoser;
-    Node (std::vector<byte> data, u_int8_t bufferNum, Node * farthestLoser);
+    Node (byte * data, RowSize size, u_int8_t bufferNum, Node * farthestLoser);
     ~Node ();
 private:
 };

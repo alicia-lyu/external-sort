@@ -1,4 +1,5 @@
 #include "Sort.h"
+#include "utils.h"
 
 SortPlan::SortPlan (Plan * const input, u_int32_t recordCountPerRun, RowSize const size) : 
 	_input (input), _size (size), _countPerRun(recordCountPerRun)
@@ -53,10 +54,11 @@ SortIterator::~SortIterator ()
 
 byte * SortIterator::next ()
 {
-	TRACE (true);
 	// In-memory sort: Return sorted rows
-
 	byte * row = _tree->poll();
+	if (row == nullptr) return nullptr;
 	++ _produced;
+	traceprintf ("#%d produced %s\n", _produced,
+			rowToHexString(row, _plan->_size).c_str());
 	return row;
 } // SortIterator::next

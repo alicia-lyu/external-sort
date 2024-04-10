@@ -201,8 +201,9 @@ byte * TournamentTree::poll()
         }
     }
     byte * polled = previousRoot->data.data();
-    traceprintf("Polled %d\n", previousRoot->bufferNum);
+    traceprintf("Polled %d with data %s\n", previousRoot->bufferNum, rowToHexString(polled, _recordSize).c_str());
     delete previousRoot;
+    traceprintf("Polled %d with data %s\n", previousRoot->bufferNum, rowToHexString(polled, _recordSize).c_str());
     return polled;
 }
 

@@ -29,15 +29,14 @@ SortIterator::SortIterator (SortPlan const * const plan) :
 	// First: In-cache sort. Must happen in place, otherwise it will spill outside of cache line.
 	// Second: Out-of-cache but in-memory sort. Build a small tournament tree with one record from each cache run. In each next() call, tree levels is log(m), m being the number of cache runs.
 	std::vector<byte *> rows;
-	while (true) {
+	while (_consumed++ < _plan->_countPerRun) {
 		byte * received = _input->next ();
-		rows.push_back(received);
 		if (received == nullptr) break;
-		++ _consumed;
+		rows.push_back(received);
 	}
 	_tree = new TournamentTree(rows, _plan->_size);
 	// TODO: External sort
-	
+	_tree->printTree();
 	traceprintf ("consumed %lu rows\n",
 			(unsigned long) (_consumed));
 } // SortIterator::SortIterator

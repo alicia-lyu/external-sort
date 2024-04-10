@@ -49,6 +49,7 @@ TournamentTree::~TournamentTree ()
 
 std::tuple<Node *, Node *>  TournamentTree::_formRoot (std::vector<byte *> records, u_int8_t offset, u_int8_t numRecords)
 {
+    TRACE (true);
     if (numRecords == 1) {
         Node * root = new Node(_getData(records, offset), offset, nullptr);
         return std::make_tuple(root, nullptr);

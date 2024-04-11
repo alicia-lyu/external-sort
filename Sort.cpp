@@ -28,7 +28,7 @@ SortIterator::SortIterator (SortPlan const * const plan) :
 	// Build a huge tournament tree on all records in memory, In each next() call, tree levels is log(n), n being the number of records in memory.
 	// LATER:
 	// First: In-cache sort. Must happen in place, otherwise it will spill outside of cache line.
-	// Second: Out-of-cache but in-memory sort. Build a small tournament tree with one record from each cache run. In each next() call, tree levels is log(m), m being the number of cache runs.
+	// Second: Out-of-cache but in-memory sort. Build a small tournament tree with one record from each cache run. In each next() call, tree levels is log(m), m being the number of cache runs. log(n/m)
 	std::vector<byte *> rows;
 	while (_consumed++ < _plan->_countPerRun) {
 		byte * received = _input->next ();

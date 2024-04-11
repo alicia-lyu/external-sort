@@ -23,7 +23,7 @@ class TournamentTree
 public:
     TournamentTree (std::vector<byte *> records, RowSize recordSize); // records.size() u_int8_t max 256 records (min 5 MB, larger than 1 MB cache line)
     ~TournamentTree ();
-    void inPlaceSort(); // Needed for in-cache sorting
+    // void inPlaceSort(); // Needed for in-cache sorting
     byte * poll (); // Needed for in-memory sorting, or when there are no more records to be pushed while polling
     u_int8_t peek (); // Works with pushAndPoll for merge-sort. Returning from which buffer to fetch the next record (max. 2^8 = 256 buffers)
     byte * pushAndPoll (byte * record); // Needed for merge-sort. Expect a record from a certain buffer (readable from calling peek first)

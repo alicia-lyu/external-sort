@@ -152,12 +152,6 @@ Node * TournamentTree::_advanceToTop(Node * advancing, Node * incumbent)
     return previousRoot;
 }
 
-void TournamentTree::inPlaceSort()
-{
-    TRACE (true);
-    // TODO
-}
-
 byte * TournamentTree::poll()
 {
     // TRACE (true);

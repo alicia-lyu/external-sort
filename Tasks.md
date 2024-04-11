@@ -26,7 +26,7 @@ April 29, 2024    | Submission
 ### Sorting: By April 8
 
 - [x] Write and test the tournament tree @Alicia
-- [ ] Add in-memory sorting
+- [x] Add in-memory sorting @Alicia
 - [ ] Add Plan & Iterator that verify the order of the sorted rows
 - [ ] Test with 0, 1, 2, 3, 7 rows
 - [ ] Add in-cache sorting and test again: In addition to in-memory sorting, just make sure memory jump doesn't exceed cache line in one round of sorting

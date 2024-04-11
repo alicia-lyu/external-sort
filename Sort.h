@@ -25,4 +25,6 @@ private:
 	Iterator * const _input;
 	RowCount _consumed, _produced;
 	TournamentTree * _tree;
+	TournamentTree * _formInMemoryTree (); // Returns the tree where the top node is the smallest
+	std::vector<string> _createInitialRuns (); // Returns the names of the files created
 }; // class SortIterator

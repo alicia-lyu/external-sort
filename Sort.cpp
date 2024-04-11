@@ -29,14 +29,7 @@ SortIterator::SortIterator (SortPlan const * const plan) :
 	// LATER:
 	// First: In-cache sort. Must happen in place, otherwise it will spill outside of cache line.
 	// Second: Out-of-cache but in-memory sort. Build a small tournament tree with one record from each cache run. In each next() call, tree levels is log(m), m being the number of cache runs.
-	std::vector<byte *> rows;
-	while (_consumed++ < _plan->_countPerRun) {
-		byte * received = _input->next ();
-		if (received == nullptr) break;
-		rows.push_back(received);
-	}
-	_tree = new TournamentTree(rows, _plan->_size);
-	// TODO: External sort
+	_tree = _formInMemoryTree();
 	_tree->printTree();
 	traceprintf ("consumed %lu rows\n",
 			(unsigned long) (_consumed));
@@ -61,3 +54,31 @@ byte * SortIterator::next ()
 	// traceprintf ("#%d produced %s\n", _produced, rowToHexString(row, _plan->_size).c_str());
 	return row;
 } // SortIterator::next
+
+
+TournamentTree * SortIterator::_formInMemoryTree ()
+{
+	std::vector<byte *> rows;
+	while (_consumed++ < _plan->_countPerRun) {
+		byte * received = _input->next ();
+		if (received == nullptr) break;
+		rows.push_back(received);
+	}
+	// TODO: break rows into cache lines
+	// Build a tree for each cache line, log (n/m) levels, 
+	// Then build a tree for the root nodes of the cache line trees, log (m) levels
+	// n being the number of records in memory, m being the number of cache lines
+	_tree = new TournamentTree(rows, _plan->_size);
+	return _tree;
+}
+
+std::vector<string> SortIterator::_createInitialRuns ()
+{
+	std::vector<string> runNames;
+	// TODO: External sort
+	// Read rows from input, _formInMemoryTree
+	// Optional TODO: Unify the API for poll (a huge in-memory tree) and pushAndPoll (a tree with one record from each cache run)
+	// Output top record from tree one by one (will be in sorted order), write to a file
+	// Return the name of the file
+	return runNames;
+}

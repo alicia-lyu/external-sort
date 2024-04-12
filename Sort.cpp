@@ -1,10 +1,17 @@
 #include "Sort.h"
 #include "utils.h"
+#include <stdexcept>
 
-SortedRecordRenderer::SortedRecordRenderer (TournamentTree * tree, std::vector<TournamentTree *> cacheTrees) :
-	_tree (tree), _cacheTrees (cacheTrees)
+SortedRecordRenderer::SortedRecordRenderer (
+	TournamentTree * tree, 
+	std::vector<TournamentTree *> cacheTrees, 
+	std::vector<std::ifstream> inFileRuns) :
+	_tree (tree), _cacheTrees (cacheTrees), _inFileRuns (inFileRuns)
 {
 	TRACE (true);
+	if (_cacheTrees.size() != 0 && _inFileRuns.size() != 0) {
+		throw std::invalid_argument("Only either cache trees or in-file runs can be provided");
+	}
 	this->print();
 } // SortedRecordRenderer::SortedRecordRenderer
 
@@ -19,10 +26,10 @@ SortedRecordRenderer::~SortedRecordRenderer ()
 
 byte * SortedRecordRenderer::next ()
 {
-	if (_cacheTrees.size() == 1 && _cacheTrees.front() == nullptr) {
+	if (_cacheTrees.size() == 0 && _inFileRuns.size() == 0) {
 		// No cache trees, we only have one huge tree for all records in memory
 		return _tree->poll();
-	} else {
+	} else if (_inFileRuns.size() == 0) {
 		// We have cache trees, we have to merge them along the way of polling the huge tree
 		u_int8_t bufferNum = _tree->peek();
 		TournamentTree * cacheTree = _cacheTrees.at(bufferNum);
@@ -32,6 +39,9 @@ byte * SortedRecordRenderer::next ()
 		} else {
 			return _tree->pushAndPoll(row);
 		}
+	} else {
+		// TODO: We have in-file runs, we have to merge them along the way of polling the huge tree
+		return nullptr;
 	}
 } // SortedRecordRenderer::next
 
@@ -103,7 +113,7 @@ byte * SortIterator::next ()
 SortedRecordRenderer * SortIterator::_formInMemoryRenderer ()
 {
 	std::vector<byte *> rows;
-	while (_consumed++ < _plan->_countPerRun) {
+	while (_consumed++ < _plan->_count) {
 		byte * received = _input->next ();
 		if (received == nullptr) break;
 		rows.push_back(received);
@@ -113,23 +123,39 @@ SortedRecordRenderer * SortIterator::_formInMemoryRenderer ()
 	// Then build a tree for the root nodes of the cache line trees, log (m) levels
 	// n being the number of records in memory, m being the number of cache lines
 	TournamentTree * tree = new TournamentTree(rows, _plan->_size);
-	std::vector<TournamentTree *> cacheTrees = {nullptr};
-	SortedRecordRenderer * renderer = new SortedRecordRenderer(tree, cacheTrees);
+	std::vector<TournamentTree *> cacheTrees = {};
+	std::vector<std::ifstream> inFileRuns = {};
+	SortedRecordRenderer * renderer = new SortedRecordRenderer(tree, cacheTrees, inFileRuns);
 	return renderer;
 }
 
 std::vector<string> SortIterator::_createInitialRuns ()
 {
 	std::vector<string> runNames;
-	// TODO: External sort
-	// Read rows from input, _formInMemoryTree
-	// Optional TODO: Unify the API for poll (a huge in-memory tree) and pushAndPoll (a tree with one record from each cache run)
-	// Output top record from tree one by one (will be in sorted order), write to a file
-	// Return the name of the file
+	u_int32_t outputBufferSize = _plan->_countPerRun * _plan->_size; // max. 100 MB = 2^27
+	byte * outputBuffer = new byte[outputBufferSize];
+	while (_consumed < _plan->_count) {
+		string runName = "run" + std::to_string(_consumed / _plan->_countPerRun);
+		runNames.push_back(runName);
+		traceprintf ("Creating run file %s\n", runName.c_str());
+		SortedRecordRenderer * renderer = _formInMemoryRenderer();
+		while (true) {
+			byte * row = renderer->next();
+			if (row == nullptr) break;
+			memcpy(outputBuffer, row, _plan->_size);
+			outputBuffer += _plan->_size;
+		}
+		outputBuffer -= outputBufferSize;
+		std::ofstream runFile(runName, std::ios::binary);
+		runFile.write(reinterpret_cast<char *>(outputBuffer), outputBufferSize);
+		runFile.close();
+	}
 	return runNames;
 }
 
 SortedRecordRenderer * SortIterator::_mergeRuns (std::vector<string> runNames)
 {
+	u_int16_t flashPageSize = 20000; // 20 KB, 2^16 = 64 KB
+	// TODO
 	return nullptr;
 }

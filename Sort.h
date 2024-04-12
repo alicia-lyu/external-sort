@@ -1,16 +1,18 @@
 #include "Iterator.h"
 #include "TournamentTree.h"
+#include <fstream>
 
 class SortedRecordRenderer
 {
 public:
-	SortedRecordRenderer (TournamentTree * tree, std::vector<TournamentTree *> cacheTrees);
+	SortedRecordRenderer (TournamentTree * tree, std::vector<TournamentTree *> cacheTrees, std::vector<std::ifstream> inFileRuns);
 	~SortedRecordRenderer ();
 	byte * next ();
 	void print();
 private:
 	TournamentTree * _tree;
-	std::vector<TournamentTree *> _cacheTrees; // Can only consist of one nullptr
+	std::vector<TournamentTree *> _cacheTrees;
+	std::vector<std::ifstream> _inFileRuns;
 };
 
 class SortPlan : public Plan

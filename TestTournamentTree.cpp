@@ -8,11 +8,11 @@ int main (int argc, char * argv [])
 {
     RowSize recordSize = 20;
     u_int8_t recordCount = 10;
-    MemoryRun * run = new MemoryRun(recordCount, recordSize);
+    Buffer * buffer = new Buffer(recordCount, recordSize);
     std::vector<byte *> records;
     for (u_int8_t i = 0; i < recordCount; i++) {
-        run->fillRowRandomly(i);
-        records.push_back(run->getRow(i));
+        buffer->fillRandomly();
+        // records.push_back(buffer->getRow(i));
     }
     TournamentTree * tree = new TournamentTree(records, recordSize);
     tree->printTree();
@@ -28,5 +28,5 @@ int main (int argc, char * argv [])
     }
     delete tree;
     free(newRecord);
-    delete run;
+    delete buffer;
 }

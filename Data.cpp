@@ -1,28 +1,36 @@
 #include "Data.h"
 
-MemoryRun::MemoryRun (u_int16_t count, RowSize size):
+Buffer::Buffer (u_int16_t count, RowSize size):
     count (count), size (size)
 {
     TRACE (true);
     _rows = (byte *) malloc(size * count * sizeof(byte));
+    _filled = _rows;
     _engine.seed(_device());
 }
 
-MemoryRun::~MemoryRun ()
+Buffer::~Buffer ()
 {
     TRACE (true);
     free(_rows);
 }
 
-byte * MemoryRun::getRow (u_int16_t index)
+byte * Buffer::fillRandomly ()
 {
-    return _rows + index * size;
+    if (_filled >= _rows + size * count) {
+        _filled = _rows;
+    }
+    std::generate(_filled, _filled + size, std::ref(_engine));
+    _filled += size;
+    return _filled - size;
 }
 
-byte * MemoryRun::fillRowRandomly (u_int16_t index)
+byte * Buffer::copy (byte const * source)
 {
-    byte * beginByte = getRow(index);
-    byte * endByte = beginByte + size;
-    std::generate(beginByte, endByte, std::ref(_engine));
-    return beginByte;
+    if (_filled >= _rows + size * count) {
+        _filled = _rows;
+    }
+    std::copy(source, source + size, _filled);
+    _filled += size;
+    return _filled - size;
 }

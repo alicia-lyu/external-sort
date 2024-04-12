@@ -22,7 +22,7 @@ ScanIterator::ScanIterator (ScanPlan const * const plan) :
 	_plan (plan), _count (0), _scanCount(0), _countPerScan(18000000 / plan->_size)
 {
 	TRACE (true);
-	_run = new MemoryRun(_plan->_countPerRun, _plan->_size);
+	_run = new Buffer(_plan->_countPerRun, _plan->_size);
 	_inputFile = std::ofstream(_getInputFileName(), std::ios::binary);
 } // ScanIterator::ScanIterator
 
@@ -41,8 +41,7 @@ byte * ScanIterator::next ()
 	if (_count >= _plan->_count)
 		return nullptr;
 
-	RowCount runPosition = _count % _plan->_countPerRun;
-	byte * row = _run->fillRowRandomly(runPosition);
+	byte * row = _run->fillRandomly();
 
 	traceprintf ("produced %s\n", rowToHexString(row, _plan->_size).c_str());
 

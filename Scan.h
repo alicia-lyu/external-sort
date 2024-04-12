@@ -31,6 +31,6 @@ private:
 	u_int16_t _scanCount; // max. 2^16 = 65536, total 120 GB, each scan 1.8 MB
 	u_int32_t _countPerScan; // max. 1.8 MB / 20 B = 2^17
 	RowCount _count;
-	MemoryRun * _run;
+	Buffer * _run;
 	string _getInputFileName();
 }; // class ScanIterator

@@ -11,17 +11,18 @@ using random_bytes_engine = std::independent_bits_engine<
     std::default_random_engine, CHAR_BIT, byte>;
 using std::random_device;
 
-class MemoryRun // an in-memory run of rows
+class Buffer // an in-memory buffer
 {
 public:
     u_int16_t count; // max: 100 MB / 20 B = 5 * 10^3 = 2^13
     RowSize size;
-    MemoryRun (u_int16_t count, RowSize size);
-    ~MemoryRun ();
-    byte * getRow (u_int16_t index);
-    byte * fillRowRandomly(u_int16_t index);
+    Buffer (u_int16_t count, RowSize size);
+    ~Buffer ();
+    byte * fillRandomly();
+    byte * copy(byte const * source);
 private:
-    byte * _rows; // TODO: use boost::circular_buffer
+    byte * _filled;
+    byte * _rows;
     random_bytes_engine _engine;
     random_device _device;
 };

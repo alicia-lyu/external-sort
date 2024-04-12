@@ -84,26 +84,24 @@ SortedRecordRenderer * SortIterator::_formInMemoryRenderer (RowCount base)
 std::vector<string> SortIterator::_createInitialRuns ()
 {
 	std::vector<string> runNames;
-	byte * outputBuffer = new byte[_plan->_countPerRun * _plan->_size]; // TODO: Use boost::circle_buffer
+	Buffer * outputBuffer = new Buffer(_plan->_countPerRun, _plan->_size);
 	while (_consumed < _plan->_count) {
 		string runName = std::string(".") + SEPARATOR + std::string("spills") + SEPARATOR + std::string("pass0") + SEPARATOR + std::string("run") + std::to_string(_consumed / _plan->_countPerRun) + std::string(".txt");
 		runNames.push_back(runName);
 		traceprintf ("Creating run file %s\n", runName.c_str());
 		SortedRecordRenderer * renderer = _formInMemoryRenderer(_consumed);
-		int outputBufferSize = 0;
-		while (true) {
+		int i;
+		for (i = 0; i < _plan->_countPerRun; i++) {
 			byte * row = renderer->next();
 			if (row == nullptr) break;
-			memcpy(outputBuffer, row, _plan->_size);
-			outputBuffer += _plan->_size;
-			outputBufferSize += _plan->_size;
+			outputBuffer->copy(row);
 		}
-		outputBuffer -= outputBufferSize;
 		std::ofstream runFile(runName, std::ios::binary);
+		int outputBufferSize = i * _plan->_size;
 		runFile.write(reinterpret_cast<char *>(outputBuffer), outputBufferSize);
 		runFile.close();
 	}
-	delete[] outputBuffer;
+	delete outputBuffer;
 	return runNames;
 }
 

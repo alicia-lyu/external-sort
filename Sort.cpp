@@ -5,6 +5,7 @@ SortedRecordRenderer::SortedRecordRenderer (TournamentTree * tree, std::vector<T
 	_tree (tree), _cacheTrees (cacheTrees)
 {
 	TRACE (true);
+	this->print();
 } // SortedRecordRenderer::SortedRecordRenderer
 
 SortedRecordRenderer::~SortedRecordRenderer ()
@@ -40,8 +41,8 @@ void SortedRecordRenderer::print ()
 	_tree->printTree();
 } // SortedRecordRenderer::print
 
-SortPlan::SortPlan (Plan * const input, u_int32_t recordCountPerRun, RowSize const size) : 
-	_input (input), _size (size), _countPerRun(recordCountPerRun)
+SortPlan::SortPlan (Plan * const input, u_int32_t recordCountPerRun, RowSize const size, RowCount const count) : 
+	_input (input), _size (size), _countPerRun(recordCountPerRun), _count (count)
 {
 	TRACE (true);
 } // SortPlan::SortPlan
@@ -68,8 +69,12 @@ SortIterator::SortIterator (SortPlan const * const plan) :
 	// LATER:
 	// First: In-cache sort. Must happen in place, otherwise it will spill outside of cache line.
 	// Second: Out-of-cache but in-memory sort. Build a small tournament tree with one record from each cache run. In each next() call, tree levels is log(m), m being the number of cache runs.
-	_renderer = _formInMemoryRenderer();
-	_renderer->print();
+	if (_plan->_count <= _plan->_countPerRun) {
+		_renderer = _formInMemoryRenderer();
+	} else {
+		std::vector<string> runNames = _createInitialRuns();
+		_renderer = _mergeRuns(runNames);
+	}
 	traceprintf ("consumed %lu rows\n",
 			(unsigned long) (_consumed));
 } // SortIterator::SortIterator
@@ -122,4 +127,9 @@ std::vector<string> SortIterator::_createInitialRuns ()
 	// Output top record from tree one by one (will be in sorted order), write to a file
 	// Return the name of the file
 	return runNames;
+}
+
+SortedRecordRenderer * SortIterator::_mergeRuns (std::vector<string> runNames)
+{
+	return nullptr;
 }

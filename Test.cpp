@@ -22,7 +22,7 @@ int main (int argc, char * argv [])
 	// traceprintf("recordCountPerRun: %u, runCount: %u\n", recordCountPerRun, runCount);
 	Plan * const scanPlan = new ScanPlan (recordCount, recordSize, recordCountPerRun, inFile);
 	Plan * const witnessPlan = new WitnessPlan (scanPlan, recordSize);
-	Plan * const sortPlan = new SortPlan (witnessPlan, recordCountPerRun, recordSize);
+	Plan * const sortPlan = new SortPlan (witnessPlan, recordCountPerRun, recordSize, recordCount);
 	Plan * const witnessPlan2 = new WitnessPlan (sortPlan, recordSize);
 	Iterator * const it = witnessPlan2->init ();
 	it->run ();

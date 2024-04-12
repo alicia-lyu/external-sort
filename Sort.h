@@ -1,6 +1,18 @@
 #include "Iterator.h"
 #include "TournamentTree.h"
 
+class SortedRecordRenderer
+{
+public:
+	SortedRecordRenderer (TournamentTree * tree, std::vector<TournamentTree *> cacheTrees);
+	~SortedRecordRenderer ();
+	byte * next ();
+	void print();
+private:
+	TournamentTree * _tree;
+	std::vector<TournamentTree *> _cacheTrees; // Can only consist of one nullptr
+};
+
 class SortPlan : public Plan
 {
 	friend class SortIterator;
@@ -24,7 +36,7 @@ private:
 	SortPlan const * const _plan;
 	Iterator * const _input;
 	RowCount _consumed, _produced;
-	TournamentTree * _tree;
-	TournamentTree * _formInMemoryTree (); // Returns the tree where the top node is the smallest
+	SortedRecordRenderer * _renderer;
+	SortedRecordRenderer * _formInMemoryRenderer (); // Returns the tree where the top node is the smallest
 	std::vector<string> _createInitialRuns (); // Returns the names of the files created
 }; // class SortIterator

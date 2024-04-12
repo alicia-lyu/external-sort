@@ -43,7 +43,7 @@ byte * ScanIterator::next ()
 	byte * row = _run->fillRowRandomly(runPosition);
 
 	string hexString = rowToHexString(row, _plan->_size);
-	// traceprintf ("produced %s\n", hexString.c_str());
+	traceprintf ("produced %s\n", hexString.c_str());
 	ofstream_ptr inFile = _plan->_inFile;
 	if (inFile->good()) {
 		*inFile << hexString << "\n";

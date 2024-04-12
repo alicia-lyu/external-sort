@@ -190,6 +190,7 @@ byte * TournamentTree::poll()
     byte * polled = previousRoot->data;
     traceprintf("Polled %d\n", previousRoot->bufferNum);
     delete previousRoot;
+    this->printTree();
     return polled;
 }
 
@@ -213,6 +214,7 @@ byte * TournamentTree::pushAndPoll(byte * record)
     byte * polled = previousRoot->data;
     traceprintf("Pushed %d and polled %d\n", advancing->bufferNum, previousRoot->bufferNum);
     delete previousRoot;
+    this->printTree();
     return polled;
 }
 

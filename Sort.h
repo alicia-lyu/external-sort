@@ -28,7 +28,7 @@ private:
 	Iterator * const _input;
 	RowCount _consumed, _produced;
 	SortedRecordRenderer * _renderer;
-	SortedRecordRenderer * _formInMemoryRenderer (); // Returns the tree where the top node is the smallest
+	SortedRecordRenderer * _formInMemoryRenderer (RowCount base = 0); // Returns the tree where the top node is the smallest
 	std::vector<string> _createInitialRuns (); // Returns the names of the files created
 	SortedRecordRenderer * _mergeRuns (std::vector<string> runNames);
 	SortedRecordRenderer * _externalSort ();

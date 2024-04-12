@@ -78,8 +78,8 @@ void CacheOptimizedRenderer::print ()
 	_tree->printTree();
 } // CacheOptimizedRenderer::print
 
-ExternalRenderer::ExternalRenderer (std::vector<string> runFileNames, RowSize recordSize, u_int32_t pageSize, u_int64_t runSize) :  // 500 KB = 2^19
-	_runFileNames (runFileNames), _recordSize (recordSize), _pageSize (pageSize), _runSize (runSize),
+ExternalRenderer::ExternalRenderer (std::vector<string> runFileNames, RowSize recordSize, u_int32_t pageSize) :  // 500 KB = 2^19
+	_runFileNames (runFileNames), _recordSize (recordSize), _pageSize (pageSize),
     _runCount (runFileNames.size()), _currentPages (std::vector<int>(_runCount, 1)), _currentRecords (std::vector<int>(_runCount, 1))
 {
 	TRACE (true);
@@ -115,7 +115,7 @@ byte * ExternalRenderer::next ()
     int currentRecord = _currentRecords.at(bufferNum);
     if (currentRecord * _recordSize >= _pageSize) {
         int currentPage = _currentPages.at(bufferNum);
-        if (currentPage * _pageSize >= _runSize) {
+        if (currentPage * _pageSize >= std::filesystem::file_size(_runFileNames.at(bufferNum))) { // no new pages
             return _tree->poll();
         }
         std::ifstream runFile(_runFileNames.at(bufferNum), std::ios::binary);

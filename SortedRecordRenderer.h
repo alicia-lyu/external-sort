@@ -36,7 +36,7 @@ private:
 class ExternalRenderer : public SortedRecordRenderer
 {
 public:
-    ExternalRenderer (std::vector<string> runFileNames, RowSize recordSize, u_int32_t pageSize, u_int64_t runSize);
+    ExternalRenderer (std::vector<string> runFileNames, RowSize recordSize, u_int32_t pageSize);
     ~ExternalRenderer ();
     byte * next();
     void print();
@@ -44,7 +44,6 @@ private:
     std::vector<string> _runFileNames;
     RowSize _recordSize;
     u_int32_t _pageSize;
-    u_int64_t _runSize;
     int _runCount;
     TournamentTree * _tree;
     std::vector<byte *> _pages;

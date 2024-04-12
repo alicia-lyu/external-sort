@@ -20,8 +20,11 @@ public:
     ~Buffer ();
     byte * fillRandomly();
     byte * copy(byte const * source);
+    byte * next();
+    byte * data();
 private:
     byte * _filled;
+    byte * _read;
     byte * _rows;
     random_bytes_engine _engine;
     random_device _device;

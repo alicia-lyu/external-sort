@@ -2,6 +2,7 @@
 
 #include "TournamentTree.h"
 #include <vector>
+#include <fstream>
 
 class SortedRecordRenderer
 {
@@ -35,6 +36,20 @@ private:
     std::vector<TournamentTree *> _cacheTrees;
 };
 
+class ExternalRun
+{
+public:
+    Buffer * inMemoryPage;
+    ExternalRun (std::string runFileName, u_int32_t pageSize, RowSize recordSize);
+    ~ExternalRun ();
+    byte * next();
+private:
+    std::string _runFileName;
+    std::ifstream _runFile;
+    u_int32_t _read;
+    u_int32_t _pageSize;
+};
+
 class ExternalRenderer : public SortedRecordRenderer
 {
 public:
@@ -43,12 +58,8 @@ public:
     byte * next();
     void print();
 private:
-    std::vector<string> _runFileNames;
+    std::vector<ExternalRun *> _runs;
     RowSize _recordSize;
     u_int32_t _pageSize;
-    int _runCount;
     TournamentTree * _tree;
-    std::vector<byte *> _pages;
-    std::vector<u_int32_t> _currentPages; // Largest run possible 60 GB, page size 500 KB, pages per run 120000 = 2^17
-    std::vector<u_int16_t> _currentRecords; // Largest page possible 500 KB, record size min 20 bytes, records per page 25000 = 2^14
 };

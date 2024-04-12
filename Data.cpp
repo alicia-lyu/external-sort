@@ -34,3 +34,20 @@ byte * Buffer::copy (byte const * source)
     _filled += size;
     return _filled - size;
 }
+
+byte * Buffer::next ()
+{
+    if (_read > _filled) {
+        throw std::runtime_error("Attempted to read buffer space not filled yet.");
+    }
+    if (_read >= _rows + size * count) {
+        _read = _rows;
+    }
+    _read += size;
+    return _read - size;
+}
+
+byte * Buffer::data ()
+{
+    return _rows;
+}

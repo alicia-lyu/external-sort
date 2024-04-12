@@ -79,22 +79,48 @@ void CacheOptimizedRenderer::print ()
 	_tree->printTree();
 } // CacheOptimizedRenderer::print
 
+ExternalRun::ExternalRun (std::string runFileName, u_int32_t pageSize, RowSize recordSize) :
+    _runFileName (runFileName), _read (0), _pageSize (pageSize)
+{
+    TRACE (true);
+    _runFile = std::ifstream(runFileName, std::ios::binary);
+    if (!_runFile) {
+        throw std::invalid_argument("Run file does not exist");
+    }
+    inMemoryPage = new Buffer(pageSize / recordSize, recordSize);
+    _runFile.read((char *) inMemoryPage->data(), pageSize);
+} // ExternalRun::ExternalRun
+
+ExternalRun::~ExternalRun ()
+{
+    TRACE (true);
+    delete inMemoryPage;
+    _runFile.close();
+} // ExternalRun::~ExternalRun
+
+byte * ExternalRun::next ()
+{
+    byte * row = inMemoryPage->next();
+    if (row == nullptr) { // Reaches end of the run
+        traceprintf("End of run file %s\n", _runFileName.c_str());
+        return nullptr;
+    }
+    if (row == inMemoryPage->data()) { // Back to the start of the page---reaches the end of the page
+        traceprintf("Getting a new page for run file %s\n", _runFileName.c_str());
+        _runFile.read((char *) inMemoryPage->data(), _pageSize);
+    }
+    return row;
+} // ExternalRun::next
+
 ExternalRenderer::ExternalRenderer (std::vector<string> runFileNames, RowSize recordSize, u_int32_t pageSize) :  // 500 KB = 2^19
-    _runFileNames (runFileNames), _recordSize (recordSize), _pageSize (pageSize),
-    _runCount (runFileNames.size()), _currentPages(_runCount, 1), _currentRecords(_runCount, 1)
+    _recordSize (recordSize), _pageSize (pageSize)
 {
 	TRACE (true);
     std::vector<byte *> formingRows;
-    for (auto runFileName : _runFileNames) {
-        std::ifstream runFile(runFileName, std::ios::binary);
-        if (!runFile) {
-            throw std::invalid_argument("Run file does not exist");
-        }
-        byte * page = (byte *) malloc(pageSize * recordSize * sizeof(byte));
-        formingRows.push_back(page);
-        runFile.read((char *) page, pageSize * recordSize);
-        _pages.push_back(page);
-        runFile.close();
+    for (auto runFileName : runFileNames) {
+        ExternalRun * run = new ExternalRun(runFileName, _pageSize, _recordSize);
+        _runs.push_back(run);
+        formingRows.push_back(run->next());
     }
     _tree = new TournamentTree(formingRows, _recordSize);
 	this->print();
@@ -104,39 +130,24 @@ ExternalRenderer::~ExternalRenderer ()
 {
 	TRACE (true);
     delete _tree;
-    for (auto page : _pages) {
-        free(page);
+    for (auto run : _runs) {
+        free(run);
     }
 } // ExternalRenderer::~ExternalRenderer
 
 byte * ExternalRenderer::next ()
 {
 	u_int8_t bufferNum = _tree->peek();
-    byte * page = _pages.at(bufferNum);
-    int currentRecord = _currentRecords.at(bufferNum);
-    int currentPage = _currentPages.at(bufferNum);
-    #include <algorithm> // Include the <algorithm> header for std::min
-
-    string runFileName = _runFileNames.at(bufferNum);
-    int runSize = std::filesystem::file_size(runFileName);
-    int pageSize = std::min(_pageSize, runSize - (currentPage-1) * _pageSize);
-    traceprintf("Run %d, run size %d; page %d, page size %d, record %d\n", bufferNum, runSize, currentPage, _pageSize, currentRecord);
-    if (currentRecord * _recordSize >= pageSize) { // no new record in current page
-        if ((currentPage-1) * _pageSize + pageSize >= runSize) { // no new pages
-            return _tree->poll();
-        }
-        std::ifstream runFile(_runFileNames.at(bufferNum), std::ios::binary);
-        runFile.seekg(currentPage * _pageSize * _recordSize).read((char *) page, _pageSize * _recordSize);
-        runFile.close();
-        _currentPages.at(bufferNum)++;
+    ExternalRun * run = _runs.at(bufferNum);
+    byte * row = run->next();
+    if (row == nullptr) {
+        return _tree->poll();
     }
-    byte * row = page + currentRecord * _recordSize;
-    _currentRecords.at(bufferNum)++;
     return _tree->pushAndPoll(row);
 } // ExternalRenderer::next
 
 void ExternalRenderer::print ()
 {
-    traceprintf ("%d run files\n", _runCount);
+    traceprintf ("%d run files\n", _runs.size());
 	_tree->printTree();
 } // ExternalRenderer::print

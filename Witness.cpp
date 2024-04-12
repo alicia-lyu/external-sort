@@ -36,6 +36,7 @@ WitnessIterator::~WitnessIterator ()
 	TRACE (false);
 
 	delete _input;
+    traceprintf ("Final parity %s\n", rowToHexString(parity, _plan->_size).c_str());
 
 	traceprintf ("produced %lu of %lu rows\n",
 			(unsigned long) (_produced),
@@ -48,7 +49,6 @@ byte * WitnessIterator::next ()
 
     byte * received = _input->next ();
     if (received == nullptr) {
-        traceprintf ("Final parity %s\n", rowToHexString(parity, _plan->_size).c_str());
         return nullptr;
     } else {
         byte * row = received;

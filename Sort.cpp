@@ -2,55 +2,6 @@
 #include "utils.h"
 #include <stdexcept>
 
-SortedRecordRenderer::SortedRecordRenderer (
-	TournamentTree * tree, 
-	std::vector<TournamentTree *> cacheTrees, 
-	std::vector<std::ifstream> inFileRuns) :
-	_tree (tree), _cacheTrees (cacheTrees), _inFileRuns (inFileRuns)
-{
-	TRACE (true);
-	if (_cacheTrees.size() != 0 && _inFileRuns.size() != 0) {
-		throw std::invalid_argument("Only either cache trees or in-file runs can be provided");
-	}
-	this->print();
-} // SortedRecordRenderer::SortedRecordRenderer
-
-SortedRecordRenderer::~SortedRecordRenderer ()
-{
-	TRACE (true);
-	delete _tree;
-	for (auto cacheTree : _cacheTrees) {
-		delete cacheTree;
-	}
-} // SortedRecordRenderer::~SortedRecordRenderer
-
-byte * SortedRecordRenderer::next ()
-{
-	if (_cacheTrees.size() == 0 && _inFileRuns.size() == 0) {
-		// No cache trees, we only have one huge tree for all records in memory
-		return _tree->poll();
-	} else if (_inFileRuns.size() == 0) {
-		// We have cache trees, we have to merge them along the way of polling the huge tree
-		u_int8_t bufferNum = _tree->peek();
-		TournamentTree * cacheTree = _cacheTrees.at(bufferNum);
-		byte * row = cacheTree->poll();
-		if (row == nullptr) {
-			return _tree->poll();
-		} else {
-			return _tree->pushAndPoll(row);
-		}
-	} else {
-		// TODO: We have in-file runs, we have to merge them along the way of polling the huge tree
-		return nullptr;
-	}
-} // SortedRecordRenderer::next
-
-void SortedRecordRenderer::print ()
-{
-	traceprintf ("%d cache trees\n", _cacheTrees.size());
-	_tree->printTree();
-} // SortedRecordRenderer::print
-
 SortPlan::SortPlan (Plan * const input, u_int32_t recordCountPerRun, RowSize const size, RowCount const count) : 
 	_input (input), _size (size), _countPerRun(recordCountPerRun), _count (count)
 {
@@ -82,8 +33,7 @@ SortIterator::SortIterator (SortPlan const * const plan) :
 	if (_plan->_count <= _plan->_countPerRun) {
 		_renderer = _formInMemoryRenderer();
 	} else {
-		std::vector<string> runNames = _createInitialRuns();
-		_renderer = _mergeRuns(runNames);
+		_renderer = _externalSort();
 	}
 	traceprintf ("consumed %lu rows\n",
 			(unsigned long) (_consumed));
@@ -124,8 +74,8 @@ SortedRecordRenderer * SortIterator::_formInMemoryRenderer ()
 	// n being the number of records in memory, m being the number of cache lines
 	TournamentTree * tree = new TournamentTree(rows, _plan->_size);
 	std::vector<TournamentTree *> cacheTrees = {};
-	std::vector<std::ifstream> inFileRuns = {};
-	SortedRecordRenderer * renderer = new SortedRecordRenderer(tree, cacheTrees, inFileRuns);
+	std::vector<string> runFileNames = {};
+	SortedRecordRenderer * renderer = new SortedRecordRenderer(tree, cacheTrees, runFileNames);
 	return renderer;
 }
 
@@ -158,4 +108,10 @@ SortedRecordRenderer * SortIterator::_mergeRuns (std::vector<string> runNames)
 	u_int16_t flashPageSize = 20000; // 20 KB, 2^16 = 64 KB
 	// TODO
 	return nullptr;
+}
+
+SortedRecordRenderer * SortIterator::_externalSort ()
+{
+	std::vector<string> runNames = _createInitialRuns();
+	return _mergeRuns(runNames);
 }

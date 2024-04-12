@@ -73,9 +73,7 @@ SortedRecordRenderer * SortIterator::_formInMemoryRenderer ()
 	// Then build a tree for the root nodes of the cache line trees, log (m) levels
 	// n being the number of records in memory, m being the number of cache lines
 	TournamentTree * tree = new TournamentTree(rows, _plan->_size);
-	std::vector<TournamentTree *> cacheTrees = {};
-	std::vector<string> runFileNames = {};
-	SortedRecordRenderer * renderer = new SortedRecordRenderer(tree, cacheTrees, runFileNames);
+	SortedRecordRenderer * renderer = new NaiveRenderer(tree);
 	return renderer;
 }
 
@@ -106,7 +104,7 @@ std::vector<string> SortIterator::_createInitialRuns ()
 SortedRecordRenderer * SortIterator::_mergeRuns (std::vector<string> runNames)
 {
 	u_int16_t flashPageSize = 20000; // 20 KB, 2^16 = 64 KB
-	// TODO
+	// TODO: Multi-level merge
 	return nullptr;
 }
 

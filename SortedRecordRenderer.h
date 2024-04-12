@@ -4,12 +4,50 @@
 class SortedRecordRenderer
 {
 public:
-	SortedRecordRenderer (TournamentTree * tree, std::vector<TournamentTree *> cacheTrees, std::vector<string> runFileNames);
-	~SortedRecordRenderer ();
-	byte * next ();
-	void print();
+	SortedRecordRenderer ();
+	virtual ~SortedRecordRenderer ();
+	virtual byte * next () = 0;
+};
+
+class NaiveRenderer : public SortedRecordRenderer
+{
+public:
+    NaiveRenderer (TournamentTree * tree);
+    ~NaiveRenderer ();
+    byte * next ();
+    void print();
 private:
-	TournamentTree * _tree;
-	std::vector<TournamentTree *> _cacheTrees;
-	std::vector<string> _runFileNames;
+    TournamentTree * _tree;
+};
+
+class CacheOptimizedRenderer : public SortedRecordRenderer
+{
+public:
+    CacheOptimizedRenderer (std::vector<TournamentTree *> cacheTrees, RowSize recordSize);
+    ~CacheOptimizedRenderer ();
+    byte * next();
+    void print();
+private:
+    RowSize _recordSize;
+    TournamentTree * _tree;
+    std::vector<TournamentTree *> _cacheTrees;
+};
+
+class ExternalRenderer : public SortedRecordRenderer
+{
+public:
+    ExternalRenderer (std::vector<string> runFileNames, RowSize recordSize, u_int32_t pageSize, u_int64_t runSize);
+    ~ExternalRenderer ();
+    byte * next();
+    void print();
+private:
+    std::vector<string> _runFileNames;
+    RowSize _recordSize;
+    u_int32_t _pageSize;
+    u_int64_t _runSize;
+    int _runCount;
+    TournamentTree * _tree;
+    std::vector<byte *> _pages;
+    std::vector<int> _currentPages; // TODO: check int bits
+    std::vector<int> _currentRecords; // TODO: check int bits
 };

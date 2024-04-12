@@ -109,7 +109,7 @@ Node * TournamentTree::_advanceToTop(Node * advancing, Node * incumbent)
     Node * loser;
     Node * lastLoser = nullptr;
     bool incumbentIsLeft;
-    traceprintf("Advancing %d, incumbent %d\n", advancing->bufferNum, incumbent->bufferNum);
+    // traceprintf("Advancing %d, incumbent %d\n", advancing->bufferNum, incumbent->bufferNum);
     while (incumbent != _root) { // Guaranteed that incumbent arg is not root
         // Stop at root, as root is going to be polled -- it is already part of the history
         // Advancing cannot be larger than root; it is guaranteed by the logic outside tournament tree -- merge sort
@@ -196,13 +196,16 @@ byte * TournamentTree::poll()
 
 u_int8_t TournamentTree::peek()
 {
-    TRACE (true);
+    // TRACE (true);
+    if (_root == nullptr) {
+        return 0;
+    }
     return _root->bufferNum;
 }
 
 byte * TournamentTree::pushAndPoll(byte * record)
 {
-    TRACE (true);
+    // TRACE (true);
     Node * advancing = new Node(record, _recordSize, _root->bufferNum, nullptr);
     // The new record is intended to come from the same buffer as the root that is going to be popped
     Node * incumbent = _root->farthestLoser; 
@@ -220,7 +223,7 @@ byte * TournamentTree::pushAndPoll(byte * record)
 
 void TournamentTree::printTree ()
 {
-    TRACE (true);
+    // TRACE (true);
     if (_root == nullptr) {
         printf("Empty tree\n");
         return;

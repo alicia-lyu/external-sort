@@ -20,7 +20,7 @@ int main (int argc, char * argv [])
 	u_int32_t recordCountPerRun = maxRunSize / recordSize; // 25 K -- 2.5 M
 	// u_int16_t runCount = recordCount / recordCountPerRun; // 4000 -- 40
 	// traceprintf("recordCountPerRun: %u, runCount: %u\n", recordCountPerRun, runCount);
-	Plan * const scanPlan = new ScanPlan (recordCount, recordCountPerRun, recordSize, inFile);
+	Plan * const scanPlan = new ScanPlan (recordCount, recordSize, recordCountPerRun, inFile);
 	Plan * const witnessPlan = new WitnessPlan (scanPlan, recordSize);
 	Plan * const sortPlan = new SortPlan (witnessPlan, recordCountPerRun, recordSize, recordCount);
 	Plan * const witnessPlan2 = new WitnessPlan (sortPlan, recordSize);

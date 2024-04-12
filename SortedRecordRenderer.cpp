@@ -1,5 +1,6 @@
 #include "SortedRecordRenderer.h"
 #include <fstream>
+#include <algorithm>
 
 SortedRecordRenderer::SortedRecordRenderer ()
 {
@@ -113,9 +114,15 @@ byte * ExternalRenderer::next ()
 	u_int8_t bufferNum = _tree->peek();
     byte * page = _pages.at(bufferNum);
     int currentRecord = _currentRecords.at(bufferNum);
-    if (currentRecord * _recordSize >= _pageSize) {
-        int currentPage = _currentPages.at(bufferNum);
-        if (currentPage * _pageSize >= std::filesystem::file_size(_runFileNames.at(bufferNum))) { // no new pages
+    int currentPage = _currentPages.at(bufferNum);
+    #include <algorithm> // Include the <algorithm> header for std::min
+
+    string runFileName = _runFileNames.at(bufferNum);
+    int runSize = std::filesystem::file_size(runFileName);
+    int pageSize = std::min(_pageSize, runSize - (currentPage-1) * _pageSize);
+    traceprintf("Run %d, run size %d; page %d, page size %d, record %d\n", bufferNum, runSize, currentPage, _pageSize, currentRecord);
+    if (currentRecord * _recordSize >= pageSize) { // no new record in current page
+        if ((currentPage-1) * _pageSize + pageSize >= runSize) { // no new pages
             return _tree->poll();
         }
         std::ifstream runFile(_runFileNames.at(bufferNum), std::ios::binary);

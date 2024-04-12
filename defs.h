@@ -4,9 +4,11 @@
 #include <stdint.h>
 #include <cstdio>
 #include <string>
+#include <filesystem>
 
 typedef unsigned char byte;
 using string = std::string;
+#define SEPARATOR std::filesystem::path::preferred_separator
 
 #define slotsof(a)	(sizeof (a) / sizeof (a[0]))
 

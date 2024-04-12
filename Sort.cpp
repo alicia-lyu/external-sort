@@ -1,8 +1,6 @@
 #include "Sort.h"
 #include "utils.h"
 #include <stdexcept>
-#include <filesystem>
-#include <string>
 
 SortPlan::SortPlan (Plan * const input, u_int32_t recordCountPerRun, RowSize const size, RowCount const count) : 
 	_input (input), _size (size), _count (count), _countPerRun(recordCountPerRun)
@@ -86,10 +84,9 @@ SortedRecordRenderer * SortIterator::_formInMemoryRenderer (RowCount base)
 std::vector<string> SortIterator::_createInitialRuns ()
 {
 	std::vector<string> runNames;
-	byte * outputBuffer = new byte[_plan->_countPerRun * _plan->_size]; // TODO: Is this contiguous?
+	byte * outputBuffer = new byte[_plan->_countPerRun * _plan->_size]; // TODO: Use boost::circle_buffer
 	while (_consumed < _plan->_count) {
-		char separator = std::filesystem::path::preferred_separator;
-		string runName = "./pass0/run" + std::to_string(_consumed / _plan->_countPerRun) + ".txt";
+		string runName = std::string(".") + SEPARATOR + std::string("spills") + SEPARATOR + std::string("pass0") + SEPARATOR + std::string("run") + std::to_string(_consumed / _plan->_countPerRun) + std::string(".txt");
 		runNames.push_back(runName);
 		traceprintf ("Creating run file %s\n", runName.c_str());
 		SortedRecordRenderer * renderer = _formInMemoryRenderer(_consumed);

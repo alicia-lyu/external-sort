@@ -1,3 +1,5 @@
+#pragma once
+
 #include <vector>
 #include "Iterator.h"
 #include "Data.h"

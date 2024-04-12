@@ -4,5 +4,6 @@
 *.dSYM
 .vscode
 temp.*
-/logs/
-/pass*
+/logs/*
+/spills/*
+/inputs/*

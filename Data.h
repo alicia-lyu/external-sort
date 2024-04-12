@@ -21,7 +21,7 @@ public:
     byte * getRow (u_int16_t index);
     byte * fillRowRandomly(u_int16_t index);
 private:
-    byte * _rows;
+    byte * _rows; // TODO: use boost::circular_buffer
     random_bytes_engine _engine;
     random_device _device;
 };

@@ -40,11 +40,9 @@ std::tuple<int, int, string> getArgs(int argc, char* argv[])
     );
 }
 
-char separator = std::filesystem::path::preferred_separator;
-
 std::tuple<string, string> separatePath(string path)
 {
-    size_t lastSlash = path.rfind(separator);
+    size_t lastSlash = path.rfind(SEPARATOR);
 
     if (lastSlash == string::npos) {
         return std::make_tuple("", path);
@@ -52,22 +50,6 @@ std::tuple<string, string> separatePath(string path)
     
     return std::make_tuple(
         path.substr(0, lastSlash), path.substr(lastSlash+1));
-}
-
-ofstream_ptr getInFileStream(string outputPath)
-{
-    string dir, filename;
-    std::tie(dir, filename) = separatePath(outputPath);
-    string inputPath = dir + separator + "input.txt";
-
-    auto inFile = std::make_shared<std::ofstream>(inputPath);
-
-    if (!inFile->is_open()) {
-        std::cerr << "Failed to open input file: " << inputPath << std::endl;
-        exit(1);
-    }
-
-    return inFile;
 }
 
 string byteToHexString(byte byte) {

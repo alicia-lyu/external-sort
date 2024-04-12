@@ -80,8 +80,8 @@ void CacheOptimizedRenderer::print ()
 } // CacheOptimizedRenderer::print
 
 ExternalRenderer::ExternalRenderer (std::vector<string> runFileNames, RowSize recordSize, u_int32_t pageSize) :  // 500 KB = 2^19
-	_runFileNames (runFileNames), _recordSize (recordSize), _pageSize (pageSize),
-    _runCount (runFileNames.size()), _currentPages (std::vector<int>(_runCount, 1)), _currentRecords (std::vector<int>(_runCount, 1))
+    _runFileNames (runFileNames), _recordSize (recordSize), _pageSize (pageSize),
+    _runCount (runFileNames.size()), _currentPages(_runCount, 1), _currentRecords(_runCount, 1)
 {
 	TRACE (true);
     std::vector<byte *> formingRows;

@@ -2,8 +2,8 @@
 #include "utils.h"
 #include <memory>
 
-ScanPlan::ScanPlan (RowCount const count, RowSize const size, u_int32_t recordCountPerRun, ofstream_ptr const inFile) : 
-	_count (count), _size (size), _inFile (inFile), _countPerRun(recordCountPerRun)
+ScanPlan::ScanPlan (RowCount const count, RowSize const size, u_int32_t recordCountPerRun) : 
+	_count (count), _size (size), _countPerRun(recordCountPerRun)
 {
 	TRACE (true);
 } // ScanPlan::ScanPlan
@@ -19,15 +19,17 @@ Iterator * ScanPlan::init () const
 } // ScanPlan::init
 
 ScanIterator::ScanIterator (ScanPlan const * const plan) :
-	_plan (plan), _count (0)
+	_plan (plan), _count (0), _scanCount(0), _countPerScan(18000000 / plan->_size)
 {
 	TRACE (true);
 	_run = new MemoryRun(_plan->_countPerRun, _plan->_size);
+	_inputFile = std::ofstream(_getInputFileName(), std::ios::binary);
 } // ScanIterator::ScanIterator
 
 ScanIterator::~ScanIterator ()
 {
 	delete _run;
+	_inputFile.close();
 	traceprintf ("produced %lu of %lu rows\n",
 			(unsigned long) (_count),
 			(unsigned long) (_plan->_count));
@@ -42,13 +44,24 @@ byte * ScanIterator::next ()
 	RowCount runPosition = _count % _plan->_countPerRun;
 	byte * row = _run->fillRowRandomly(runPosition);
 
-	string hexString = rowToHexString(row, _plan->_size);
-	traceprintf ("produced %s\n", hexString.c_str());
-	ofstream_ptr inFile = _plan->_inFile;
-	if (inFile->good()) {
-		*inFile << hexString << "\n";
+	traceprintf ("produced %s\n", rowToHexString(row, _plan->_size).c_str());
+
+	RowCount rowCountInCurrentScan = _count - _scanCount * _countPerScan;
+	if (rowCountInCurrentScan >= _countPerScan) {
+		_inputFile.close();
+		_inputFile = std::ofstream(_getInputFileName(), std::ios::binary);
+		_scanCount++;
 	}
-	
+	if (_inputFile.good()) {
+		_inputFile.write(reinterpret_cast<char *>(row), _plan->_size);
+	} else {
+		throw std::runtime_error("Error writing to input file scan" + std::to_string(_scanCount));
+	}
 	++ _count;
 	return row;
 } // ScanIterator::next
+
+string ScanIterator::_getInputFileName()
+{
+	return std::string(".") + SEPARATOR + std::string("inputs") + SEPARATOR + std::string("scan") + std::to_string(_scanCount) + std::string(".txt");
+} // ScanIterator::_getInputFileName

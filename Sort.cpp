@@ -32,10 +32,10 @@ SortIterator::SortIterator (SortPlan const * const plan) :
 	// First: In-cache sort. Must happen in place, otherwise it will spill outside of cache line.
 	// Second: Out-of-cache but in-memory sort. Build a small tournament tree with one record from each cache run. In each next() call, tree levels is log(m), m being the number of cache runs.
 	if (_plan->_count <= _plan->_countPerRun) {
-		traceprintf ("%d records fit in memory (%d)\n", _plan->_count, _plan->_countPerRun);
+		traceprintf ("%llu records fit in memory (%d)\n", _plan->_count, _plan->_countPerRun);
 		_renderer = _formInMemoryRenderer();
 	} else {
-		traceprintf ("%d records do not fit in memory (%d)\n", _plan->_count, _plan->_countPerRun);
+		traceprintf ("%llu records do not fit in memory (%d)\n", _plan->_count, _plan->_countPerRun);
 		_renderer = _externalSort();
 	}
 	traceprintf ("consumed %lu rows\n",
@@ -86,19 +86,23 @@ std::vector<string> SortIterator::_createInitialRuns ()
 	std::vector<string> runNames;
 	Buffer * outputBuffer = new Buffer(_plan->_countPerRun, _plan->_size);
 	while (_consumed < _plan->_count) {
+		outputBuffer->reset();
 		string runName = std::string(".") + SEPARATOR + std::string("spills") + SEPARATOR + std::string("pass0") + SEPARATOR + std::string("run") + std::to_string(_consumed / _plan->_countPerRun) + std::string(".txt");
 		runNames.push_back(runName);
-		traceprintf ("Creating run file %s\n", runName.c_str());
 		SortedRecordRenderer * renderer = _formInMemoryRenderer(_consumed);
 		int i;
 		for (i = 0; i < _plan->_countPerRun; i++) {
 			byte * row = renderer->next();
 			if (row == nullptr) break;
-			outputBuffer->copy(row);
+			if (outputBuffer->copy(row) == nullptr) {
+				throw std::runtime_error("Output buffer overflows when creating initial run " + runName + ".\n");
+			}
+			// traceprintf ("#%d produced %s for runFile %s\n", i, rowToHexString(row, _plan->_size).c_str(), runName.c_str());
 		}
 		std::ofstream runFile(runName, std::ios::binary);
 		int outputBufferSize = i * _plan->_size;
-		runFile.write(reinterpret_cast<char *>(outputBuffer), outputBufferSize);
+		runFile.write(reinterpret_cast<char *>(outputBuffer->data()), outputBufferSize);
+		traceprintf ("Created run file %s with size %d\n", runName.c_str(), outputBufferSize);
 		runFile.close();
 	}
 	delete outputBuffer;

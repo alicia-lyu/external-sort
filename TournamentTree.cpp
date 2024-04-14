@@ -109,8 +109,8 @@ Node * TournamentTree::_advanceToTop(Node * advancing, Node * incumbent)
     Node * loser;
     Node * lastLoser = nullptr;
     bool incumbentIsLeft;
-    // traceprintf("Advancing %d, incumbent %d\n", advancing->bufferNum, incumbent->bufferNum);
     while (incumbent != _root) { // Guaranteed that incumbent arg is not root
+        // traceprintf("Advancing %d, incumbent %d\n", advancing->bufferNum, incumbent->bufferNum);
         // Stop at root, as root is going to be polled -- it is already part of the history
         // Advancing cannot be larger than root; it is guaranteed by the logic outside tournament tree -- merge sort
         std::tie(winner, loser) = _contest(incumbent, advancing);
@@ -158,6 +158,7 @@ byte * TournamentTree::poll()
     if (_root == nullptr) {
         return nullptr;
     }
+    traceprintf("Polling %d\n", _root->bufferNum);
     Node * advancing = _root->farthestLoser;
     Node * previousRoot;
     if (advancing == nullptr) {
@@ -188,7 +189,6 @@ byte * TournamentTree::poll()
         }
     }
     byte * polled = previousRoot->data;
-    traceprintf("Polled %d\n", previousRoot->bufferNum);
     delete previousRoot;
     this->printTree();
     return polled;
@@ -218,13 +218,13 @@ byte * TournamentTree::pushAndPoll(byte * record)
     Node * advancing = new Node(record, _recordSize, _root->bufferNum, nullptr);
     // The new record is intended to come from the same buffer as the root that is going to be popped
     Node * incumbent = _root->farthestLoser; 
+    traceprintf("Pushing %d and polling %d\n", advancing->bufferNum, _root->bufferNum);
     // farthest loser will never be a Node that is popped (it is a descendant of whatever Node)
     Node * previousRoot = _advanceToTop(advancing, incumbent);
     // Poll (advancing farthestLoser) and push (advancing new record) separately do not work.
     // As we are only polling one record, we cannot advance twice. A node never retreats to
     // lower levels, but only advances.
     byte * polled = previousRoot->data;
-    traceprintf("Pushed %d and polled %d\n", advancing->bufferNum, previousRoot->bufferNum);
     delete previousRoot;
     this->printTree();
     return polled;

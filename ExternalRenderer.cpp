@@ -12,7 +12,7 @@ ExternalRenderer::ExternalRenderer (std::vector<string> runFileNames, RowSize re
         formingRows.push_back(run->next());
     }
     _tree = new TournamentTree(formingRows, _recordSize);
-    outputBuffer = new Buffer(_pageSize / _recordSize, _recordSize); // TODO: 140 is a magic number
+    outputBuffer = new Buffer(140 / _recordSize, _recordSize); // TODO: 140 is a magic number
 	this->print();
 } // ExternalRenderer::ExternalRenderer
 
@@ -30,6 +30,7 @@ byte * ExternalRenderer::next ()
 {
     TRACE (true);
     byte * rendered = _tree->peekRoot();
+    if (rendered == nullptr) return nullptr;
     // Copy root before calling run.next()
     // For retrieving a new page will overwrite the current page, where root is in
     byte * output = outputBuffer->copy(rendered);
@@ -40,7 +41,6 @@ byte * ExternalRenderer::next ()
     }
     // Resume the tournament
 	u_int8_t bufferNum = _tree->peekTopBuffer();
-    traceprintf("Get the next record from buffer %d\n", bufferNum);
     ExternalRun * run = _runs.at(bufferNum);
     byte * retrieved = run->next();
     if (retrieved == nullptr) {
@@ -48,13 +48,12 @@ byte * ExternalRenderer::next ()
     } else {
         _tree->pushAndPoll(retrieved);
     }
-    byte * nextOutput = outputBuffer->next();
-    traceprintf("Output %s\n", (char *) nextOutput);
-    return nextOutput;
+    // traceprintf("Produced %s\n", rowToHexString(output, _recordSize).c_str());
+    return output;
 } // ExternalRenderer::next
 
 void ExternalRenderer::print ()
 {
-    traceprintf ("%d run files\n", _runs.size());
+    traceprintf ("%zu run files\n", _runs.size());
 	_tree->printTree();
 } // ExternalRenderer::print

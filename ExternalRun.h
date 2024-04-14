@@ -16,5 +16,5 @@ private:
     u_int32_t _pageSize; // max. 500 KB = 2^19
     RowSize _recordSize;
     u_int32_t _pageCount; // max. 120 GB / 50 KB = 2^21
-    void _fillPage();
+    u_int32_t _fillPage();
 };

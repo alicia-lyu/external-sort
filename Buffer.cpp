@@ -55,7 +55,7 @@ byte * Buffer::batchFillByOverwrite (u_int64_t toBeFilled)
     if (toBeFilled > size * count) {
         throw std::runtime_error("Buffer overflow");
     } else if (toBeFilled < size * count) {
-        traceprintf("Buffer under-filled.\n");
+        traceprintf("Buffer under-filled %llu / %d.\n", toBeFilled, size * count);
     }
     _filled = _rows + toBeFilled;
     _read = _rows;

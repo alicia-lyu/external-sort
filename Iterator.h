@@ -1,7 +1,7 @@
 #pragma once
 
 #include "defs.h"
-#include "Data.h"
+#include "Buffer.h"
 
 class Plan
 {

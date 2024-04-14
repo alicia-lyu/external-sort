@@ -2,7 +2,7 @@
 
 #include <vector>
 #include "Iterator.h"
-#include "Data.h"
+#include "Buffer.h"
 
 class WitnessPlan : public Plan
 {

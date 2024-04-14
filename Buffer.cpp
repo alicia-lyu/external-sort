@@ -1,4 +1,4 @@
-#include "Data.h"
+#include "Buffer.h"
 
 Buffer::Buffer (u_int16_t count, RowSize size):
     count (count), size (size)

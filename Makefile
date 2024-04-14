@@ -13,15 +13,18 @@ SCRS=
 # headers and code sources
 HDRS=	defs.h \
 		Iterator.h Scan.h Filter.h Sort.h \
-		utils.h Data.h Witness.h TournamentTree.h, SortedRecordRenderer.h
+		utils.h Buffer.h Witness.h TournamentTree.h, SortedRecordRenderer.h \
+		ExternalRenderer.h ExternalRun.h
 SRCS=	defs.cpp Assert.cpp Test.cpp \
 		Iterator.cpp Scan.cpp Filter.cpp Sort.cpp \
-		utils.cpp Data.cpp Witness.cpp TournamentTree.cpp SortedRecordRenderer.cpp
+		utils.cpp Buffer.cpp Witness.cpp TournamentTree.cpp SortedRecordRenderer.cpp \
+		ExternalRenderer.cpp ExternalRun.cpp
 
 # compilation targets
 OBJS=	defs.o Assert.o Test.o \
 		Iterator.o Scan.o Filter.o Sort.o \
-		utils.o Data.o Witness.o TournamentTree.o SortedRecordRenderer.o
+		utils.o Buffer.o Witness.o TournamentTree.o SortedRecordRenderer.o \
+		ExternalRenderer.o ExternalRun.o
 
 # RCS assists
 REV=-q -f
@@ -58,8 +61,8 @@ ExternalSort.exe: Makefile ExternalSort.cpp
 # ./ExternalSort.exe -c 120 -s 1000 -o trace0.txt  (Example values)
 
 $(OBJS) : Makefile defs.h
-Test.o : Iterator.h Scan.h Filter.h Sort.h utils.h Data.h Witness.h TournamentTree.h SortedRecordRenderer.h
-Iterator.o Scan.o Filter.o Sort.o utils.o Data.o Witness.o : Iterator.h Data.h
+Test.o : Iterator.h Scan.h Filter.h Sort.h utils.h Buffer.h Witness.h TournamentTree.h SortedRecordRenderer.h
+Iterator.o Scan.o Filter.o Sort.o utils.o Buffer.o Witness.o : Iterator.h Buffer.h
 Scan.o : Scan.h
 Filter.o : Filter.h
 Sort.o : Sort.h
@@ -67,6 +70,8 @@ utils.o: utils.h
 Witness.o: Witness.h
 TournamentTree.o: TournamentTree.h
 SortedRecordRenderer.o: SortedRecordRenderer.h
+ExternalRun.o: ExternalRun.h
+ExternalRenderer.o: ExternalRenderer.h ExternalRun.h SortedRecordRenderer.h
 
 list : Makefile
 	echo Makefile $(HDRS) $(SRCS) $(DOCS) $(SCRS) > list
@@ -91,7 +96,7 @@ temp.out : temp.exe
 
 TestTTHDRS=	TournamentTree.h defs.h
 TestTTSRCS=	TournamentTree.cpp defs.cpp
-TestTTOBJS=	TournamentTree.o utils.o Data.o defs.o
+TestTTOBJS=	TournamentTree.o utils.o Buffer.o defs.o
 
 TestTT.exe : TestTournamentTree.cpp $(TestTTOBJS) $(TestTTHDRS) $(TestTTSRCS)
 	g++ $(CPPFLAGS) -o TestTT.exe TestTournamentTree.cpp $(TestTTOBJS)

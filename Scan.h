@@ -4,7 +4,7 @@
 #include "Iterator.h"
 #include "utils.h"
 #include "defs.h"
-#include "Data.h"
+#include "Buffer.h"
 
 class ScanPlan : public Plan
 {

@@ -1,5 +1,6 @@
 #include "Sort.h"
 #include "utils.h"
+#include "ExternalRenderer.h"
 #include <stdexcept>
 
 SortPlan::SortPlan (Plan * const input, u_int32_t recordCountPerRun, RowSize const size, RowCount const count) : 

@@ -4,7 +4,7 @@
 #include <fstream>
 #include <memory>
 #include "defs.h"
-#include "Data.h"
+#include "Buffer.h"
 
 std::tuple<int, int, string> getArgs(int argc, char* argv[]);
 std::tuple<string, string> separatePath(string path);

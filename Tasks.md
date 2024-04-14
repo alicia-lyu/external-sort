@@ -30,15 +30,16 @@ April 29, 2024    | Submission
 - [ ] Add Plan & Iterator that verify the order of the sorted rows
 - [ ] Test with 0, 1, 2, 3, 7 rows
 - [ ] Add in-cache sorting and test again: In addition to in-memory sorting, just make sure memory jump doesn't exceed cache line in one round of sorting
-- [ ] Add external sort that spills to SSD (including metrics)
-- [ ] Test with 0, 1, 2, 3, 10, 29, 100, 576, 1000 rows
-- [ ] Add external sort that spills to HDD (including metrics)
-- [ ] Test with 10^3 * 50 (50M), 10^3 * 125 (125M), 10^5 * 120 (12 G), 10^6 * 120 (120 G) (rows, record size)
+- [x] Add external sort @Alicia
+- [ ] Add multi-level external sort that spills to SSD
+- [ ] Add SSD metrics, Test with 0, 1, 2, 3, 10, 29, 100, 576, 1000 rows
+- [ ] Add external sort that spills to HDD
+- [ ] Add HDD metrics, Test with 10^3 * 50 (50M), 10^3 * 125 (125M), 10^5 * 120 (12 G), 10^6 * 120 (120 G) (rows, record size)
 
 ### Optimization and bonus points: By April 29
 
-- [ ] Add predicate evaluation (e.g. parity) to FilterIterator
 - [ ] Add duplicate removal and evaluate performance (distinct)
   - [ ] In stream (after sort)
   - [ ] In sort
 - [ ] Add graceful degradation
+- [ ] Add 2 read-ahead buffers

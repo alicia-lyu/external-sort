@@ -1,10 +1,28 @@
 #include "ExternalRenderer.h"
 #include "utils.h"
 
-ExternalRenderer::ExternalRenderer (std::vector<string> runFileNames, RowSize recordSize, u_int32_t pageSize) :  // 500 KB = 2^19
-    _recordSize (recordSize), _pageSize (pageSize), _outputCount (0)
+ExternalRenderer::ExternalRenderer (std::vector<string> runFileNames, RowSize recordSize, u_int32_t pageSize, u_int64_t memorySpace, u_int16_t rendererNumber = 0) :  // 500 KB = 2^19
+    _recordSize (recordSize), _pageSize (pageSize), _inputBufferCount (memorySpace / pageSize - 1 - _readAheadBufferCount), _pass (1), _rendererNumber (rendererNumber)
 {
 	TRACE (true);
+    // Multi-pass merge
+    while (runFileNames.size() > _inputBufferCount) {
+        int rendererCount = 0;
+        _pass++;
+        std::vector<string> mergedRunNames;
+        for (int i = 0; i < runFileNames.size(); i += _inputBufferCount) {
+            rendererCount++;
+            std::vector<string> subRunFileNames(
+                runFileNames.begin() + i, 
+                runFileNames.begin() + std::min(i + _inputBufferCount, (int) runFileNames.size())
+            );
+            ExternalRenderer * renderer = new ExternalRenderer(subRunFileNames, recordSize, pageSize, memorySpace, rendererCount);
+            mergedRunNames.push_back(renderer->run());
+            delete renderer;
+        }
+        runFileNames = mergedRunNames;
+    }
+    // Ready to render sorted records
     std::vector<byte *> formingRows;
     for (auto runFileName : runFileNames) {
         ExternalRun * run = new ExternalRun(runFileName, _pageSize, _recordSize);
@@ -36,7 +54,7 @@ byte * ExternalRenderer::next ()
     // For retrieving a new page will overwrite the current page, where root is in
     byte * output = outputBuffer->copy(rendered);
     while (output == nullptr) {
-        traceprintf("#%d Output buffer is full, write to disk\n", _outputCount); 
+        traceprintf("Output buffer is full, write to disk\n"); 
         _writeOutputToDisk(_pageSize);
         output = outputBuffer->copy(rendered);
     }
@@ -53,6 +71,21 @@ byte * ExternalRenderer::next ()
     return output;
 } // ExternalRenderer::next
 
+string ExternalRenderer::run ()
+{
+    TRACE (true);
+    byte * row = next();
+    while (row != nullptr) {
+        row = next();
+    }
+    return _getOutputFileName();
+} // ExternalRenderer::run
+
+string ExternalRenderer::_getOutputFileName ()
+{
+    return std::string(".") + SEPARATOR + std::string("outputs") + SEPARATOR + std::to_string(_pass) + SEPARATOR + std::to_string(_rendererNumber) + std::string("output.bin");
+} // ExternalRenderer::getOutputFileName
+
 void ExternalRenderer::print ()
 {
     traceprintf ("%zu run files\n", _runs.size());
@@ -61,9 +94,8 @@ void ExternalRenderer::print ()
 
 void ExternalRenderer::_writeOutputToDisk (u_int32_t writeSize)
 {
-    string outputFileName = std::string(".") + SEPARATOR + std::string("outputs") + SEPARATOR + std::to_string(_outputCount++) + std::string(".bin"); 
-    // TODO: In multi-level merge, need to spill intermediate results to disk
-    std::ofstream outputFile(outputFileName, std::ios::binary);
+    // TODO: split to multiple output files
+    std::ofstream outputFile(_getOutputFileName(), std::ios::binary | std::ios::app);
     outputFile.write((char *) outputBuffer->data(), writeSize);
     outputFile.close();
 } // ExternalRenderer::writeOutputToDisk

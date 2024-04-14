@@ -22,15 +22,17 @@ ExternalRun::~ExternalRun ()
 
 byte * ExternalRun::next ()
 {
+    traceprintf("Reading from run file %s\n", _runFileName.c_str());
     if (_runFile.eof()) {
         // Reaches end of the run
         traceprintf("End of run file %s\n", _runFileName.c_str());
         return nullptr;
     }
     byte * row = inMemoryPage->next();
-    if (row == nullptr) {
+    while (row == nullptr) {
         // Reaches end of the page
         _fillPage();
+        row = inMemoryPage->next();
     }
     traceprintf("Read %s from run file %s\n", rowToHexString(row, _recordSize).c_str(), _runFileName.c_str());
     return row;

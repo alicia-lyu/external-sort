@@ -2,7 +2,7 @@
 #include "utils.h"
 
 ExternalRun::ExternalRun (std::string runFileName, u_int32_t pageSize, RowSize recordSize) :
-    _runFileName (runFileName), _read (0), _pageSize (pageSize), _recordSize (recordSize), _pageCount (1)
+    _runFileName (runFileName), _pageSize (pageSize), _recordSize (recordSize), _pageCount (1)
 {
     TRACE (false);
     _runFile = std::ifstream(runFileName, std::ios::binary);

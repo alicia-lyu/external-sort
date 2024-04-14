@@ -19,7 +19,7 @@ Iterator * ScanPlan::init () const
 } // ScanPlan::init
 
 ScanIterator::ScanIterator (ScanPlan const * const plan) :
-	_plan (plan), _count (0), _scanCount(0), _countPerScan(18000000 / plan->_size)
+	_plan (plan), _scanCount(0), _countPerScan(18000000 / plan->_size), _count (0)
 {
 	TRACE (true);
 	_run = new Buffer(_plan->_countPerRun, _plan->_size);
@@ -62,5 +62,5 @@ byte * ScanIterator::next ()
 
 string ScanIterator::_getInputFileName()
 {
-	return std::string(".") + SEPARATOR + std::string("inputs") + SEPARATOR + std::string("scan") + std::to_string(_scanCount) + std::string(".txt");
+	return std::string(".") + SEPARATOR + std::string("inputs") + SEPARATOR + std::string("scan") + std::to_string(_scanCount) + std::string(".bin");
 } // ScanIterator::_getInputFileName

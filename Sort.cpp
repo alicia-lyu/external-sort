@@ -87,7 +87,7 @@ std::vector<string> SortIterator::_createInitialRuns ()
 	Buffer * outputBuffer = new Buffer(_plan->_countPerRun, _plan->_size);
 	while (_consumed < _plan->_count) {
 		outputBuffer->reset();
-		string runName = std::string(".") + SEPARATOR + std::string("spills") + SEPARATOR + std::string("pass0") + SEPARATOR + std::string("run") + std::to_string(_consumed / _plan->_countPerRun) + std::string(".txt");
+		string runName = std::string(".") + SEPARATOR + std::string("spills") + SEPARATOR + std::string("pass0") + SEPARATOR + std::string("run") + std::to_string(_consumed / _plan->_countPerRun) + std::string(".bin");
 		runNames.push_back(runName);
 		SortedRecordRenderer * renderer = _formInMemoryRenderer(_consumed);
 		int i;

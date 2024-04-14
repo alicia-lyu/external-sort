@@ -12,7 +12,6 @@ public:
 private:
     std::string _runFileName;
     std::ifstream _runFile;
-    u_int32_t _read;
     u_int32_t _pageSize; // max. 500 KB = 2^19
     RowSize _recordSize;
     u_int32_t _pageCount; // max. 120 GB / 50 KB = 2^21

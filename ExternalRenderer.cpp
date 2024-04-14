@@ -2,7 +2,7 @@
 #include "utils.h"
 
 ExternalRenderer::ExternalRenderer (std::vector<string> runFileNames, RowSize recordSize, u_int32_t pageSize) :  // 500 KB = 2^19
-    _recordSize (recordSize), _pageSize (pageSize)
+    _recordSize (recordSize), _pageSize (pageSize), _outputCount (0)
 {
 	TRACE (true);
     std::vector<byte *> formingRows;
@@ -12,13 +12,14 @@ ExternalRenderer::ExternalRenderer (std::vector<string> runFileNames, RowSize re
         formingRows.push_back(run->next());
     }
     _tree = new TournamentTree(formingRows, _recordSize);
-    outputBuffer = new Buffer(140 / _recordSize, _recordSize); // TODO: 140 is a magic number
+    outputBuffer = new Buffer(_pageSize / _recordSize, _recordSize);
 	this->print();
 } // ExternalRenderer::ExternalRenderer
 
 ExternalRenderer::~ExternalRenderer ()
 {
 	TRACE (true);
+    _writeOutputToDisk(outputBuffer->sizeFilled());
     delete _tree;
     for (auto run : _runs) {
         delete run;
@@ -35,8 +36,8 @@ byte * ExternalRenderer::next ()
     // For retrieving a new page will overwrite the current page, where root is in
     byte * output = outputBuffer->copy(rendered);
     while (output == nullptr) {
-        // Output buffer is full
-        // TODO: Write to disk
+        traceprintf("#%d Output buffer is full, write to disk\n", _outputCount); 
+        _writeOutputToDisk(_pageSize);
         output = outputBuffer->copy(rendered);
     }
     // Resume the tournament
@@ -57,3 +58,12 @@ void ExternalRenderer::print ()
     traceprintf ("%zu run files\n", _runs.size());
 	_tree->printTree();
 } // ExternalRenderer::print
+
+void ExternalRenderer::_writeOutputToDisk (u_int32_t writeSize)
+{
+    string outputFileName = std::string(".") + SEPARATOR + std::string("outputs") + SEPARATOR + std::to_string(_outputCount++) + std::string(".bin"); 
+    // TODO: In multi-level merge, need to spill intermediate results to disk
+    std::ofstream outputFile(outputFileName, std::ios::binary);
+    outputFile.write((char *) outputBuffer->data(), writeSize);
+    outputFile.close();
+} // ExternalRenderer::writeOutputToDisk

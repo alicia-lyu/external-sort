@@ -24,6 +24,7 @@ public:
     byte * batchFillByOverwrite(u_int64_t toBeFilled); // Returning the beginning of the buffer, and set _filled to the last byte filled. Overwrite existing buffer. Expect to have the designated memory space filled immediately after being called.
     void reset() { _read = _rows; _filled = _rows; };
     byte * data() { return _rows; };
+    u_int64_t sizeFilled() { return _filled - _rows; };
 private:
     byte * _filled;
     byte * _read;

@@ -7,3 +7,4 @@ temp.*
 /logs/*
 /spills/*
 /inputs/*
+/outputs/*

@@ -194,13 +194,22 @@ byte * TournamentTree::poll()
     return polled;
 }
 
-u_int8_t TournamentTree::peek()
+u_int8_t TournamentTree::peekTopBuffer()
 {
     // TRACE (true);
     if (_root == nullptr) {
         return 0;
     }
     return _root->bufferNum;
+}
+
+byte * TournamentTree::peekRoot()
+{
+    // TRACE (true);
+    if (_root == nullptr) {
+        return nullptr;
+    }
+    return _root->data;
 }
 
 byte * TournamentTree::pushAndPoll(byte * record)

@@ -53,7 +53,6 @@ SortIterator::~SortIterator ()
 
 byte * SortIterator::next ()
 {
-	// In-memory sort: Return sorted rows
 	byte * row = _renderer->next();
 	if (row == nullptr) return nullptr;
 	++ _produced;
@@ -108,7 +107,7 @@ std::vector<string> SortIterator::_createInitialRuns ()
 SortedRecordRenderer * SortIterator::_mergeRuns (std::vector<string> runNames)
 {
 	traceprintf ("Merging %zu runs\n", runNames.size());
-	u_int16_t flashPageSize = 40; // 20 KB, 2^16 = 64 KB
+	u_int16_t flashPageSize = 20; // 20 KB, 2^16 = 64 KB
 	// TODO: Multi-level merge
 	SortedRecordRenderer * renderer = new ExternalRenderer(runNames, _plan->_size, flashPageSize);
 	return renderer;

@@ -18,10 +18,11 @@ public:
     RowSize size;
     Buffer (u_int16_t count, RowSize size);
     ~Buffer ();
-    byte * fillRandomly();
-    byte * copy(byte const * source);
-    byte * next();
-    byte * data();
+    byte * fillRandomly(); // Fill the first bytes not filled yet with random bytes. Return the pointer to the filled bytes.
+    byte * copy(byte const * source); // Copy the source to the first bytes not filled yet. Return the pointer to the filled bytes.
+    byte * next(); // Read the next row after _read. If _read is at the end of the buffer, return nullptr, and set _read to the beginning of the buffer.
+    byte * batchFillByOverwrite(u_int64_t toBeFilled); // Returning the beginning of the buffer, and set _filled to the last byte filled. Overwrite existing buffer. Expect to have the designated memory space filled immediately after being called.
+    byte * data() { return _rows; };
 private:
     byte * _filled;
     byte * _read;

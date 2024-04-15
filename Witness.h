@@ -1,6 +1,5 @@
 #pragma once
 
-#include <vector>
 #include "Iterator.h"
 #include "Buffer.h"
 
@@ -12,7 +11,7 @@ public:
 	~WitnessPlan ();
 	Iterator * init () const;
 private:
-	Plan * const _input;
+	Plan * const _inputPlan;
 	RowSize const _size;
 }; // class WitnessPlan
 
@@ -25,6 +24,6 @@ public:
 	byte * next ();
 private:
 	WitnessPlan const * const _plan;
-	Iterator * const _input;
+	Iterator * const _inputIterator;
 	RowCount _consumed, _produced;
 }; // class WitnessIterator

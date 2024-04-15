@@ -4,6 +4,7 @@
 #include "Sort.h"
 #include "utils.h"
 #include "Witness.h"
+#include "Verify.h"
 
 int main (int argc, char * argv [])
 {

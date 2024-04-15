@@ -14,11 +14,11 @@ SCRS=
 HDRS=	defs.h \
 		Iterator.h Scan.h Filter.h Sort.h \
 		utils.h Buffer.h Witness.h TournamentTree.h, SortedRecordRenderer.h \
-		ExternalRenderer.h ExternalRun.h
+		ExternalRenderer.h ExternalRun.h Verify.h
 SRCS=	defs.cpp Assert.cpp Test.cpp \
 		Iterator.cpp Scan.cpp Filter.cpp Sort.cpp \
 		utils.cpp Buffer.cpp Witness.cpp TournamentTree.cpp SortedRecordRenderer.cpp \
-		ExternalRenderer.cpp ExternalRun.cpp
+		ExternalRenderer.cpp ExternalRun.cpp Verify.cpp
 
 # compilation targets
 OBJS=	defs.o Assert.o Test.o \

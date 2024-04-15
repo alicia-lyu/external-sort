@@ -68,12 +68,14 @@ byte * SortIterator::next ()
 
 SortedRecordRenderer * SortIterator::_formInMemoryRenderer (RowCount base)
 {
+	traceprintf ("Forming in-memory renderer with %llu rows\n", _plan->_recordCountPerRun);
 	std::vector<byte *> rows;
 	while (_consumed - base < _plan->_recordCountPerRun) {
 		byte * received = _input->next ();
 		if (received == nullptr) break;
 		rows.push_back(received);
 		++ _consumed;
+		traceprintf ("#%llu consumed %s\n", _consumed, rowToHexString(received, _plan->_size).c_str());
 	}
 	// traceprintf ("Formed in-memory renderer with %lu rows\n", rows.size());
 	// TODO: break rows into cache lines

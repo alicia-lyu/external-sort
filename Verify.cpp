@@ -54,7 +54,7 @@ byte * VerifyIterator::next()
         lastRow = row;
         ++ _produced;
 
-        traceprintf ("#%llu consumed %s\n", _consumed, rowToHexString(received, _plan->_size).c_str());
+        // traceprintf ("#%llu consumed %s\n", _consumed, rowToHexString(received, _plan->_size).c_str());
         
         return row;
     }

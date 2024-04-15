@@ -21,7 +21,7 @@ byte * ExternalRun::next ()
 {
     if (_runFile.eof()) {
         // Reaches end of the run
-        traceprintf("End of run file %s\n", _runFileName.c_str());
+        // traceprintf("End of run file %s\n", _runFileName.c_str());
         return nullptr;
     }
     byte * row = inMemoryPage->next();
@@ -44,7 +44,7 @@ u_int32_t ExternalRun::_fillPage ()
     if (_runFile.good() == false) {
         throw std::invalid_argument("Error reading from run file.");
     }
-    traceprintf("Filling #%d page from run file %s\n", _pageCount, _runFileName.c_str());
+    // traceprintf("Filling #%d page from run file %s\n", _pageCount, _runFileName.c_str());
     _runFile.read((char *) inMemoryPage->data(), _pageSize);
     _pageCount++;
     u_int32_t readCount = _runFile.gcount(); // Same scale as _pageSize

@@ -19,7 +19,8 @@ Buffer::~Buffer ()
 byte * Buffer::fillRandomly ()
 {
     if (_filled >= _rows + size * count) {
-        traceprintf("Buffer is full, overwriting the first row\n");
+        // traceprintf("Buffer is full, overwriting the first row\n");
+        // TODO: uniformize the behavior of overwriting the first row (return nullptr to indicate)
         _filled = _rows;
     }
     std::generate(_filled, _filled + size, std::ref(_engine));
@@ -30,7 +31,7 @@ byte * Buffer::fillRandomly ()
 byte * Buffer::copy (byte const * source)
 {
     if (_filled >= _rows + size * count) {
-        traceprintf("Buffer is full.\n");
+        // traceprintf("Buffer is full.\n");
         _filled = _rows;
         return nullptr;
     }

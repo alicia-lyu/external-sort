@@ -64,6 +64,7 @@ string byteToHexString(byte byte) {
 }
 
 string rowToHexString(byte * rowContent, RowSize size) {
+    size = std::max(size, (RowSize) 20); // Curtail long output/logs
     string result = "";
     for (int i = 0; i < size; ++i) {
 		byte byte = rowContent[i];

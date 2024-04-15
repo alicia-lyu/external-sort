@@ -158,7 +158,7 @@ byte * TournamentTree::poll()
     if (_root == nullptr) {
         return nullptr;
     }
-    traceprintf("Polling %d\n", _root->bufferNum);
+    // traceprintf("Polling %d\n", _root->bufferNum);
     Node * advancing = _root->farthestLoser;
     Node * previousRoot;
     if (advancing == nullptr) {
@@ -174,9 +174,8 @@ byte * TournamentTree::poll()
             // Advancing breaks tie to become a free node
             Node * child;
             if (advancing->left != nullptr && advancing->right != nullptr) {
-                traceprintf("Advancing %d has two children %d and %d\n", advancing->bufferNum, advancing->left->bufferNum, advancing->right->bufferNum);
                 // Farthest loser of root should have reached further down the tree.
-                exit(1);
+                throw std::runtime_error("Advancing has two children" + std::to_string(advancing->bufferNum) + " " + std::to_string(advancing->left->bufferNum) + " " + std::to_string(advancing->right->bufferNum));
             } else if (advancing->left != nullptr) {
                 child = advancing->left;
             } else {
@@ -217,13 +216,20 @@ byte * TournamentTree::pushAndPoll(byte * record)
     // TRACE (true);
     Node * advancing = new Node(record, _recordSize, _root->bufferNum, nullptr);
     // The new record is intended to come from the same buffer as the root that is going to be popped
-    Node * incumbent = _root->farthestLoser; 
-    traceprintf("Pushing %d and polling %d\n", advancing->bufferNum, _root->bufferNum);
-    // farthest loser will never be a Node that is popped (it is a descendant of whatever Node)
-    Node * previousRoot = _advanceToTop(advancing, incumbent);
-    // Poll (advancing farthestLoser) and push (advancing new record) separately do not work.
-    // As we are only polling one record, we cannot advance twice. A node never retreats to
-    // lower levels, but only advances.
+    Node * incumbent = _root->farthestLoser;
+    Node * previousRoot;
+    if (incumbent == nullptr) {
+        // Happens when a node becomes a root by winning no contest, because higher nodes are all polled
+        previousRoot = _root;
+        _root = advancing;
+    } else {
+        // traceprintf("Pushing %d and polling %d\n", advancing->bufferNum, _root->bufferNum);
+        // farthest loser will never be a Node that is popped (it is a descendant of whatever Node)
+        previousRoot = _advanceToTop(advancing, incumbent);
+        // Poll (advancing farthestLoser) and push (advancing new record) separately do not work.
+        // As we are only polling one record, we cannot advance twice. A node never retreats to
+        // lower levels, but only advances.
+    }
     byte * polled = previousRoot->data;
     delete previousRoot;
     this->printTree();

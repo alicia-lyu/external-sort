@@ -33,10 +33,10 @@ SortIterator::SortIterator (SortPlan const * const plan) :
 	// First: In-cache sort. Must happen in place, otherwise it will spill outside of cache line.
 	// Second: Out-of-cache but in-memory sort. Build a small tournament tree with one record from each cache run. In each next() call, tree levels is log(m), m being the number of cache runs.
 	if (_plan->_count <= _plan->_recordCountPerRun) {
-		traceprintf ("%llu records fit in memory (%d)\n", _plan->_count, _plan->_recordCountPerRun);
+		// traceprintf ("%llu records fit in memory (%d)\n", _plan->_count, _plan->_recordCountPerRun);
 		_renderer = _formInMemoryRenderer();
 	} else {
-		traceprintf ("%llu records do not fit in memory (%d)\n", _plan->_count, _plan->_recordCountPerRun);
+		// traceprintf ("%llu records do not fit in memory (%d)\n", _plan->_count, _plan->_recordCountPerRun);
 		_renderer = _externalSort();
 	}
 	traceprintf ("consumed %lu rows\n",
@@ -75,7 +75,6 @@ SortedRecordRenderer * SortIterator::_formInMemoryRenderer (RowCount base)
 		rows.push_back(received);
 		++ _consumed;
 	}
-	traceprintf ("Forming in-memory renderer with %zu rows\n", rows.size());
 	// TODO: break rows into cache lines
 	// Build a tree for each cache line, log (n/m) levels, 
 	// Then build a tree for the root nodes of the cache line trees, log (m) levels
@@ -115,8 +114,7 @@ std::vector<string> SortIterator::_createInitialRuns ()
 
 SortedRecordRenderer * SortIterator::_mergeRuns (std::vector<string> runNames)
 {
-	traceprintf ("Merging %zu runs\n", runNames.size());
-	u_int16_t flashPageSize = 20; // 20 KB, 2^16 = 64 KB
+	u_int16_t flashPageSize = 2000; // Param: 20 KB, 2^16 = 64 KB
 	SortedRecordRenderer * renderer = new ExternalRenderer(runNames, _plan->_size, flashPageSize, _plan->_memorySpace);
 	return renderer;
 }

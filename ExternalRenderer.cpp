@@ -1,14 +1,15 @@
 #include "ExternalRenderer.h"
 #include "utils.h"
 
-ExternalRenderer::ExternalRenderer (std::vector<string> runFileNames, RowSize recordSize, u_int32_t pageSize, u_int64_t memorySpace, u_int16_t rendererNumber = 0) :  // 500 KB = 2^19
+ExternalRenderer::ExternalRenderer (std::vector<string> runFileNames, RowSize recordSize, u_int32_t pageSize, u_int64_t memorySpace, u_int16_t rendererNumber) :  // 500 KB = 2^19
     _recordSize (recordSize), _pageSize (pageSize), _inputBufferCount (memorySpace / pageSize - 1 - _readAheadBufferCount), _pass (1), _rendererNumber (rendererNumber)
 {
-	TRACE (true);
+    traceprintf("Renderer %d in pass %d, merging %d run files with %d input buffers\n", _rendererNumber, _pass, runFileNames.size(), _inputBufferCount);
     // Multi-pass merge
     while (runFileNames.size() > _inputBufferCount) {
         int rendererCount = 0;
         _pass++;
+        traceprintf("Pass %d\n", _pass);
         std::vector<string> mergedRunNames;
         for (int i = 0; i < runFileNames.size(); i += _inputBufferCount) {
             rendererCount++;
@@ -31,7 +32,7 @@ ExternalRenderer::ExternalRenderer (std::vector<string> runFileNames, RowSize re
     }
     _tree = new TournamentTree(formingRows, _recordSize);
     outputBuffer = new Buffer(_pageSize / _recordSize, _recordSize);
-	this->print();
+	// this->print();
 } // ExternalRenderer::ExternalRenderer
 
 ExternalRenderer::~ExternalRenderer ()
@@ -54,7 +55,7 @@ byte * ExternalRenderer::next ()
     // For retrieving a new page will overwrite the current page, where root is in
     byte * output = outputBuffer->copy(rendered);
     while (output == nullptr) {
-        traceprintf("Output buffer is full, write to disk\n"); 
+        // traceprintf("Output buffer is full, write to disk\n"); 
         _writeOutputToDisk(_pageSize);
         output = outputBuffer->copy(rendered);
     }

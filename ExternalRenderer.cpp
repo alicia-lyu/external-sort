@@ -4,7 +4,7 @@
 ExternalRenderer::ExternalRenderer (std::vector<string> runFileNames, RowSize recordSize, u_int32_t pageSize, u_int64_t memorySpace, u_int16_t rendererNumber) :  // 500 KB = 2^19
     _recordSize (recordSize), _pageSize (pageSize), _inputBufferCount (memorySpace / pageSize - 1 - _readAheadBufferCount), _pass (1), _rendererNumber (rendererNumber)
 {
-    traceprintf("Renderer %d in pass %d, merging %d run files with %d input buffers\n", _rendererNumber, _pass, runFileNames.size(), _inputBufferCount);
+    traceprintf("Renderer %d in pass %d, merging %zu run files with %d input buffers\n", _rendererNumber, _pass, runFileNames.size(), _inputBufferCount);
     // Multi-pass merge
     while (runFileNames.size() > _inputBufferCount) {
         int rendererCount = 0;
@@ -60,7 +60,7 @@ byte * ExternalRenderer::next ()
         output = outputBuffer->copy(rendered);
     }
     // Resume the tournament
-	u_int8_t bufferNum = _tree->peekTopBuffer();
+	u_int16_t bufferNum = _tree->peekTopBuffer();
     ExternalRun * run = _runs.at(bufferNum);
     byte * retrieved = run->next();
     if (retrieved == nullptr) {

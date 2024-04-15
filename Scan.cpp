@@ -43,7 +43,7 @@ byte * ScanIterator::next ()
 
 	byte * row = _run->fillRandomly();
 
-	traceprintf ("produced %s\n", rowToHexString(row, _plan->_size).c_str());
+	// traceprintf ("produced %s\n", rowToHexString(row, _plan->_size).c_str());
 
 	RowCount rowCountInCurrentScan = _count - _scanCount * _countPerScan;
 	if (rowCountInCurrentScan >= _countPerScan) {

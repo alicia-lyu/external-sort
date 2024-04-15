@@ -16,7 +16,7 @@ int main (int argc, char * argv [])
     }
     TournamentTree * tree = new TournamentTree(records, recordSize);
     tree->printTree();
-    u_int8_t bufferNum = tree->peekTopBuffer();
+    u_int16_t bufferNum = tree->peekTopBuffer();
     printf("Peeked %d\n", bufferNum);
     byte * newRecord = (byte *) malloc(recordSize * sizeof(byte));
     std::copy(records.front(), records.front() + recordSize, newRecord);

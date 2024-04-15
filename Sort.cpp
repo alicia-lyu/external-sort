@@ -7,7 +7,7 @@ SortPlan::SortPlan (Plan * const input, u_int64_t memorySpace, RowSize const siz
 	_input (input), _size (size), _count (count), _memorySpace(memorySpace), _recordCountPerRun(memorySpace / (2 * size)) 
 	// TODO: Verify the need for an output buffer when creating in-memory runs
 {
-	TRACE (true);
+	traceprintf ("SortPlan: memory space %llu, record per run %d\n", _memorySpace, _recordCountPerRun);
 } // SortPlan::SortPlan
 
 SortPlan::~SortPlan ()
@@ -75,6 +75,7 @@ SortedRecordRenderer * SortIterator::_formInMemoryRenderer (RowCount base)
 		rows.push_back(received);
 		++ _consumed;
 	}
+	// traceprintf ("Formed in-memory renderer with %lu rows\n", rows.size());
 	// TODO: break rows into cache lines
 	// Build a tree for each cache line, log (n/m) levels, 
 	// Then build a tree for the root nodes of the cache line trees, log (m) levels
@@ -100,7 +101,6 @@ std::vector<string> SortIterator::_createInitialRuns ()
 			if (outputBuffer->copy(row) == nullptr) {
 				throw std::runtime_error("Output buffer overflows when creating initial run " + runName + ".\n");
 			}
-			// traceprintf ("#%d produced %s for runFile %s\n", i, rowToHexString(row, _plan->_size).c_str(), runName.c_str());
 		}
 		std::ofstream runFile(runName, std::ios::binary);
 		int outputBufferSize = i * _plan->_size;

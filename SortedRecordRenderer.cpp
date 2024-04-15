@@ -65,7 +65,7 @@ CacheOptimizedRenderer::~CacheOptimizedRenderer ()
 
 byte * CacheOptimizedRenderer::next ()
 {
-	u_int8_t bufferNum = _tree->peekTopBuffer();
+	u_int16_t bufferNum = _tree->peekTopBuffer();
 	TournamentTree * cacheTree = _cacheTrees.at(bufferNum);
 	byte * row = cacheTree->poll();
 	if (row == nullptr) {

@@ -11,7 +11,6 @@ WitnessPlan::WitnessPlan (Plan * const input, RowSize const size) :
 WitnessPlan::~WitnessPlan ()
 {
 	TRACE (false);
-    // why? We did not create a new object before
 	delete _input;
 } // WitnessPlan::~WitnessPlan
 

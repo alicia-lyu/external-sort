@@ -11,7 +11,7 @@ public:
 	~WitnessPlan ();
 	Iterator * init () const;
 private:
-	Plan * const _inputPlan;
+	Plan * const _input;
 	RowSize const _size;
 }; // class WitnessPlan
 
@@ -24,6 +24,6 @@ public:
 	byte * next ();
 private:
 	WitnessPlan const * const _plan;
-	Iterator * const _inputIterator;
+	Iterator * const _input;
 	RowCount _consumed, _produced;
 }; // class WitnessIterator

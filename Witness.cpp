@@ -3,7 +3,7 @@
 #include "Witness.h"
 
 WitnessPlan::WitnessPlan (Plan * const input, RowSize const size) : 
-    _inputPlan (input), _size (size)
+    _input (input), _size (size)
 {
 	TRACE (false);
 } // WitnessPlan::WitnessPlan
@@ -12,7 +12,7 @@ WitnessPlan::~WitnessPlan ()
 {
 	TRACE (false);
     // why? We did not create a new object before
-	delete _inputPlan;
+	delete _input;
 } // WitnessPlan::~WitnessPlan
 
 Iterator * WitnessPlan::init () const
@@ -22,7 +22,7 @@ Iterator * WitnessPlan::init () const
 } // WitnessPlan::init
 
 WitnessIterator::WitnessIterator (WitnessPlan const * const plan) :
-	_plan (plan), _inputIterator (plan->_inputPlan->init ()), _consumed (0), _produced (0)
+	_plan (plan), _input (plan->_input->init ()), _consumed (0), _produced (0)
 {
 	TRACE (false);
     parity = new byte[_plan->_size];
@@ -36,7 +36,7 @@ WitnessIterator::~WitnessIterator ()
 {
 	TRACE (false);
 
-	delete _inputIterator;
+	delete _input;
     traceprintf ("Final parity %s\n", rowToHexString(parity, _plan->_size).c_str());
 
 	traceprintf ("produced %lu of %lu rows\n",
@@ -48,7 +48,7 @@ byte * WitnessIterator::next ()
 {
 	TRACE (false);
 
-    byte * received = _inputIterator->next ();
+    byte * received = _input->next ();
     if (received == nullptr) {
         return nullptr;
     } else {

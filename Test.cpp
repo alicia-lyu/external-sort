@@ -21,7 +21,7 @@ int main (int argc, char * argv [])
 	// traceprintf("recordCountPerRun: %u, runCount: %u\n", recordCountPerRun, runCount);
 	Plan * const scanPlan = new ScanPlan (recordCount, recordSize, recordCountPerRun);
 	Plan * const witnessPlan = new WitnessPlan (scanPlan, recordSize);
-	Plan * const sortPlan = new SortPlan (witnessPlan, maxRunSize, recordSize, recordCount);
+	Plan * const sortPlan = new SortPlan (witnessPlan, maxMemory, recordSize, recordCount);
 	Plan * const verifyPlan = new VerifyPlan (sortPlan, recordSize);
 	Plan * const witnessPlan2 = new WitnessPlan (verifyPlan, recordSize);
 	Iterator * const it = witnessPlan2->init ();

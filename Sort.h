@@ -7,15 +7,14 @@ class SortPlan : public Plan
 {
 	friend class SortIterator;
 public:
-	SortPlan (Plan * const input, u_int64_t memorySpace, RowSize const size, RowCount const count);
+	SortPlan (Plan * const input, RowSize const size, RowCount const count);
 	~SortPlan ();
 	Iterator * init () const;
 private:
 	Plan * const _input;
 	RowSize const _size;
 	RowCount const _count;
-	u_int64_t const _memorySpace;
-	u_int32_t const _recordCountPerRun;
+	u_int32_t _recordCountPerRun; // Changes when spill to HDD
 }; // class SortPlan
 
 class SortIterator : public Iterator

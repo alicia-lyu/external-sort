@@ -2,8 +2,8 @@
 #include "utils.h"
 #include <memory>
 
-ScanPlan::ScanPlan (RowCount const count, RowSize const size, u_int32_t recordCountPerRun) : 
-	_count (count), _size (size), _countPerRun(recordCountPerRun)
+ScanPlan::ScanPlan (RowCount const count, RowSize const size) : 
+	_count (count), _size (size), _countPerRun (getRecordCountPerRun(size, true)) // TODO: introduce HDD
 {
 	TRACE (true);
 } // ScanPlan::ScanPlan

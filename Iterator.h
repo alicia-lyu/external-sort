@@ -1,5 +1,6 @@
 #pragma once
 
+#include "params.h"
 #include "defs.h"
 #include "Buffer.h"
 

@@ -3,11 +3,11 @@
 #include "ExternalRenderer.h"
 #include <stdexcept>
 
-SortPlan::SortPlan (Plan * const input, u_int64_t memorySpace, RowSize const size, RowCount const count) : 
-	_input (input), _size (size), _count (count), _memorySpace(memorySpace), _recordCountPerRun(memorySpace / (2 * size)) 
+SortPlan::SortPlan (Plan * const input, RowSize const size, RowCount const count) : 
+	_input (input), _size (size), _count (count), _recordCountPerRun (getRecordCountPerRun(size, true)) // TODO: introduce HDD
 	// TODO: Verify the need for an output buffer when creating in-memory runs
 {
-	traceprintf ("SortPlan: memory space %llu, record per run %d\n", _memorySpace, _recordCountPerRun);
+	traceprintf ("SortPlan: memory space %d, record per run %d\n", MEMORY_SIZE, _recordCountPerRun);
 } // SortPlan::SortPlan
 
 SortPlan::~SortPlan ()
@@ -116,8 +116,7 @@ std::vector<string> SortIterator::_createInitialRuns ()
 
 SortedRecordRenderer * SortIterator::_mergeRuns (std::vector<string> runNames)
 {
-	u_int16_t flashPageSize = 2000; // Param: 20 KB, 2^16 = 64 KB
-	SortedRecordRenderer * renderer = new ExternalRenderer(runNames, _plan->_size, flashPageSize, _plan->_memorySpace);
+	SortedRecordRenderer * renderer = new ExternalRenderer(runNames, _plan->_size, SSD_PAGE_SIZE, MEMORY_SIZE);
 	return renderer;
 }
 

@@ -10,7 +10,7 @@ class ScanPlan : public Plan
 {
 	friend class ScanIterator;
 public:
-	ScanPlan (RowCount const count, RowSize const size, u_int32_t recordCountPerRun);
+	ScanPlan (RowCount const count, RowSize const size);
 	~ScanPlan ();
 	Iterator * init () const;
 private:

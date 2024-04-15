@@ -73,3 +73,8 @@ string rowToHexString(byte * rowContent, RowSize size) {
 	}
     return result;
 }
+
+u_int32_t getRecordCountPerRun(RowSize recordSize, bool inSSD) {
+    u_int32_t recordCountPerRun = inSSD ? (MEMORY_SIZE - SSD_PAGE_SIZE) / recordSize : (MEMORY_SIZE - HDD_PAGE_SIZE) / recordSize;
+    return recordCountPerRun;
+}

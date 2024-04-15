@@ -35,38 +35,47 @@ MSG=no message
 Test.exe : Makefile $(OBJS)
 	g++ $(CPPFLAGS) -o Test.exe $(OBJS)
 
-OUTPUT_DIR=./logs/${TIMESTAMP}
-OUTPUT_FILE=$(OUTPUT_DIR)/trace
+LOG_DIR=./logs/${TIMESTAMP}
+LOG_FILE=$(LOG_DIR)/trace
 
-$(OUTPUT_DIR) : 
-	mkdir -p $(OUTPUT_DIR)
+$(LOG_DIR) : 
+	mkdir -p $(LOG_DIR)
 
-test : Test.exe Makefile $(OUTPUT_DIR)
-	echo $(TIMESTAMP) > $(OUTPUT_FILE)
-	./Test.exe -c 7 -s 20 -o $(OUTPUT_FILE) >> $(OUTPUT_FILE)
+./inputs/ : 
+	mkdir -p ./inputs/
+
+./spills/pass0: 
+	mkdir -p ./spills/pass0
+
+./spills/pass1:
+	mkdir -p ./spills/pass1
+
+test : Test.exe Makefile $(LOG_DIR) ./inputs/
+	echo $(TIMESTAMP) > $(LOG_FILE)
+	./Test.exe -c 7 -s 20 -o $(LOG_FILE) >> $(LOG_FILE)
 
 # Moderate test plan: Memory size = 100 KB, Record size = 20 B, SSD page size = 2 KB
 # 50 pages per buffer, 50 KB per memory run
-external: Test.exe Makefile $(OUTPUT_DIR)
-	echo $(TIMESTAMP) > $(OUTPUT_FILE)
-	./Test.exe -c 10000 -s 20 -o $(OUTPUT_FILE) >> $(OUTPUT_FILE)
+external: Test.exe Makefile $(LOG_DIR) ./inputs/ ./spills/pass0
+	echo $(TIMESTAMP) > $(LOG_FILE)
+	./Test.exe -c 10000 -s 20 -o $(LOG_FILE) >> $(LOG_FILE)
 # 200 KB data, 4 initial runs, 1 pass
 
-external-lldb: Test.exe Makefile $(OUTPUT_DIR)
-	lldb -- ./Test.exe -c 10000 -s 20 -o $(OUTPUT_FILE)
+external-lldb: Test.exe Makefile $(LOG_DIR) ./inputs/ ./spills/pass0
+	lldb -- ./Test.exe -c 10000 -s 20 -o $(LOG_FILE)
 
-external-2: Test.exe Makefile $(OUTPUT_DIR)
-	echo $(TIMESTAMP) > $(OUTPUT_FILE)
-	./Test.exe -c 20000 -s 200 -o $(OUTPUT_FILE) >> $(OUTPUT_FILE)
+external-2: Test.exe Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1
+	echo $(TIMESTAMP) > $(LOG_FILE)
+	./Test.exe -c 20000 -s 200 -o $(LOG_FILE) >> $(LOG_FILE)
 # 4 MB data, 80 initial runs, 2 pass
 
-external-2-lldb: Test.exe Makefile $(OUTPUT_DIR)
-	lldb -- ./Test.exe -c 20000 -s 200 -o $(OUTPUT_FILE)
+external-2-lldb: Test.exe Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1
+	lldb -- ./Test.exe -c 20000 -s 200 -o $(LOG_FILE)
 
 # external-sort on HDD: 100 MB can be divided into 200 pages of 500KB each
 
-lldb : Test.exe $(OUTPUT_DIR)
-	lldb -- ./Test.exe -c 7 -s 20 -o $(OUTPUT_FILE)
+lldb : Test.exe $(LOG_DIR)
+	lldb -- ./Test.exe -c 7 -s 20 -o $(LOG_FILE)
 
 ExternalSort.exe: Makefile ExternalSort.cpp
 	g++ $(CPPFLAGS) -o ExternalSort.exe ExternalSort.cpp

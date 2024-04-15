@@ -9,7 +9,7 @@ ExternalRenderer::ExternalRenderer (std::vector<string> runFileNames, RowSize re
     while (runFileNames.size() > _inputBufferCount) {
         u_int16_t rendererCount = 0;
         _pass++;
-        traceprintf("Pass %zu\n", _pass);
+        traceprintf("Pass %hhu\n", _pass);
         std::vector<string> mergedRunNames;
         for (int i = 0; i < runFileNames.size(); i += _inputBufferCount) {
             rendererCount++;

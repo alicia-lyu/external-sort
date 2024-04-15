@@ -19,7 +19,6 @@ NaiveRenderer::NaiveRenderer (TournamentTree * tree) :
 	_tree (tree)
 {
 	TRACE (true);
-	this->print();
 } // NaiveRenderer::NaiveRenderer
 
 NaiveRenderer::~NaiveRenderer ()

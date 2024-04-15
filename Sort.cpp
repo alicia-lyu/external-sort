@@ -12,7 +12,7 @@ SortPlan::SortPlan (Plan * const input, u_int64_t memorySpace, RowSize const siz
 
 SortPlan::~SortPlan ()
 {
-	TRACE (true);
+	TRACE (false);
 	delete _input;
 } // SortPlan::~SortPlan
 
@@ -61,7 +61,7 @@ byte * SortIterator::next ()
 	// is done before the first next() call
 	if (row == nullptr) return nullptr;
 	++ _produced;
-	traceprintf ("#%llu produced %s\n", _produced, rowToHexString(row, _plan->_size).c_str());
+	// traceprintf ("#%llu produced %s\n", _produced, rowToHexString(row, _plan->_size).c_str());
 	return row;
 } // SortIterator::next
 

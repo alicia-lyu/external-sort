@@ -28,11 +28,11 @@ April 29, 2024    | Submission
 - [x] Write and test the tournament tree @Alicia
 - [x] Add in-memory sorting @Alicia
 - [ ] Add Plan & Iterator that verify the order of the sorted rows
-- [ ] Test with 0, 1, 2, 3, 7 rows
+- [x] Test with 0, 1, 2, 3, 7 rows @Alicia
 - [ ] Add in-cache sorting and test again: In addition to in-memory sorting, just make sure memory jump doesn't exceed cache line in one round of sorting
 - [x] Add external sort @Alicia
-- [ ] Add multi-level external sort that spills to SSD
-- [ ] Add SSD metrics, Test with 0, 1, 2, 3, 10, 29, 100, 576, 1000 rows
+- [x] Add multi-level external sort that spills to SSD @Alicia
+- [x] Add SSD metrics, Test with 0, 1, 2, 3, 10, 29, 100, 576, 1000 rows @Alicia
 - [ ] Add external sort that spills to HDD
 - [ ] Add HDD metrics, Test with 10^3 * 50 (50M), 10^3 * 125 (125M), 10^5 * 120 (12 G), 10^6 * 120 (120 G) (rows, record size)
 

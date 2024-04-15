@@ -23,7 +23,7 @@ Node::~Node ()
 TournamentTree::TournamentTree (std::vector<byte *> records, RowSize recordSize)
 : _recordSize (recordSize)
 {
-    TRACE (true);
+    TRACE (false);
     Node * root;
     Node * second;
     // traceprintf("Forming tree with %zu records\n", records.size());
@@ -160,7 +160,7 @@ byte * TournamentTree::poll()
     if (_root == nullptr) {
         return nullptr;
     }
-    traceprintf("Polling %d\n", _root->bufferNum);
+    // traceprintf("Polling %d\n", _root->bufferNum);
     Node * advancing = _root->farthestLoser;
     Node * previousRoot;
     if (advancing == nullptr) {
@@ -218,7 +218,7 @@ byte * TournamentTree::pushAndPoll(byte * record)
     // TRACE (true);
     Node * advancing = new Node(record, _recordSize, _root->bufferNum, nullptr);
     // The new record is intended to come from the same buffer as the root that is going to be popped
-    traceprintf("Pushing %d and polling %d\n", advancing->bufferNum, _root->bufferNum);
+    // traceprintf("Pushing %d and polling %d\n", advancing->bufferNum, _root->bufferNum);
     Node * incumbent = _root->farthestLoser;
     Node * previousRoot;
     if (incumbent == nullptr) {

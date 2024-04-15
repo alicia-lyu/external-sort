@@ -4,7 +4,7 @@
 ExternalRun::ExternalRun (std::string runFileName, u_int32_t pageSize, RowSize recordSize) :
     _runFileName (runFileName), _pageSize (pageSize), _recordSize (recordSize), _pageCount (1)
 {
-    TRACE (false);
+    traceprintf("Creating run from file %s\n", runFileName.c_str());
     _runFile = std::ifstream(runFileName, std::ios::binary);
     inMemoryPage = new Buffer(pageSize / recordSize, recordSize);
     _fillPage();
@@ -19,6 +19,7 @@ ExternalRun::~ExternalRun ()
 
 byte * ExternalRun::next ()
 {
+    TRACE (false);
     if (_runFile.eof()) {
         // Reaches end of the run
         // traceprintf("End of run file %s\n", _runFileName.c_str());
@@ -48,6 +49,6 @@ u_int32_t ExternalRun::_fillPage ()
     _runFile.read((char *) inMemoryPage->data(), _pageSize);
     _pageCount++;
     u_int32_t readCount = _runFile.gcount(); // Same scale as _pageSize
-    inMemoryPage->batchFillByOverwrite(_runFile.gcount());
+    inMemoryPage->batchFillByOverwrite(readCount);
     return readCount;
 } // ExternalRun::_fillPage

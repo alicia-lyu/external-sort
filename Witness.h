@@ -1,6 +1,5 @@
 #pragma once
 
-#include <vector>
 #include "Iterator.h"
 #include "Buffer.h"
 

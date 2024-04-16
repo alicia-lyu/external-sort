@@ -14,17 +14,17 @@ SCRS=
 HDRS=	defs.h params.h\
 		Iterator.h Scan.h Filter.h Sort.h \
 		utils.h Buffer.h Witness.h TournamentTree.h, SortedRecordRenderer.h \
-		ExternalRenderer.h ExternalRun.h
+		ExternalRenderer.h ExternalRun.h Verify.h
 SRCS=	defs.cpp Assert.cpp Test.cpp \
 		Iterator.cpp Scan.cpp Filter.cpp Sort.cpp \
 		utils.cpp Buffer.cpp Witness.cpp TournamentTree.cpp SortedRecordRenderer.cpp \
-		ExternalRenderer.cpp ExternalRun.cpp
+		ExternalRenderer.cpp ExternalRun.cpp Verify.cpp
 
 # compilation targets
 OBJS=	defs.o Assert.o Test.o \
 		Iterator.o Scan.o Filter.o Sort.o \
 		utils.o Buffer.o Witness.o TournamentTree.o SortedRecordRenderer.o \
-		ExternalRenderer.o ExternalRun.o
+		ExternalRenderer.o ExternalRun.o Verify.o
 
 # RCS assists
 REV=-q -f
@@ -86,14 +86,15 @@ ExternalSort.exe: Makefile ExternalSort.cpp
 # "-o" is the trace of your program run 
 # ./ExternalSort.exe -c 120 -s 1000 -o trace0.txt  (Example values)
 
-$(OBJS) : Makefile defs.h params.h
-Test.o : Iterator.h Scan.h Filter.h Sort.h utils.h Buffer.h Witness.h TournamentTree.h SortedRecordRenderer.h
-Iterator.o Scan.o Filter.o Sort.o utils.o Buffer.o Witness.o : Iterator.h Buffer.h
+$(OBJS) : Makefile defs.h
+Test.o : Iterator.h Scan.h Filter.h Sort.h utils.h Buffer.h Witness.h TournamentTree.h SortedRecordRenderer.h Verify.h
+Iterator.o Scan.o Filter.o Sort.o utils.o Buffer.o Witness.o Verify.o: Iterator.h Buffer.h
 Scan.o : Scan.h
 Filter.o : Filter.h
 Sort.o : Sort.h
 utils.o: utils.h
 Witness.o: Witness.h
+Verify.o: Verify.h
 TournamentTree.o: TournamentTree.h
 SortedRecordRenderer.o: SortedRecordRenderer.h
 ExternalRun.o: ExternalRun.h

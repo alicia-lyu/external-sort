@@ -91,13 +91,18 @@ std::tuple<Node *, Node *> TournamentTree::_contest (Node * root_left, Node * ro
     TRACE (false);
     Node * winner;
     Node * loser;
-    if (root_left->data <= root_right->data) {
+
+    int compareResult = memcmp(root_left->data, root_right->data, _recordSize);
+
+    // if less or equal, left wins
+    if (compareResult <= 0) {
         winner = root_left;
         loser = root_right;
     } else {
         winner = root_right;
         loser = root_left;
     }
+
     if (winner->farthestLoser == nullptr) {
         winner->farthestLoser = loser;
     }

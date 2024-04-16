@@ -4,6 +4,7 @@
 #include "Sort.h"
 #include "utils.h"
 #include "Witness.h"
+#include "Verify.h"
 
 int main (int argc, char * argv [])
 {
@@ -18,9 +19,13 @@ int main (int argc, char * argv [])
 	Plan * const scanPlan = new ScanPlan (recordCount, recordSize);
 	Plan * const witnessPlan = new WitnessPlan (scanPlan, recordSize);
 	Plan * const sortPlan = new SortPlan (witnessPlan, recordSize, recordCount);
-	Plan * const witnessPlan2 = new WitnessPlan (sortPlan, recordSize);
+	Plan * const verifyPlan = new VerifyPlan (sortPlan, recordSize);
+	Plan * const witnessPlan2 = new WitnessPlan (verifyPlan, recordSize);
 	Iterator * const it = witnessPlan2->init ();
 	it->run ();
+
+	// we only delete the last Plan, since it will delete its inner plan
+	// in its destructor, and so on
 	delete it;
 	delete witnessPlan2;
 

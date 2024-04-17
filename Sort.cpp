@@ -4,8 +4,10 @@
 #include <stdexcept>
 
 SortPlan::SortPlan (Plan * const input, RowSize const size, RowCount const count) : 
-	_input (input), _size (size), _count (count), _recordCountPerRun (getRecordCountPerRun(size, true)) // TODO: introduce HDD
+	_input (input), _size (size), _count (count), _recordCountPerRun (getRecordCountPerRun(size, true))
 {
+	// TODO: introduce HDD --- preliminary thought: Just add predicates to indicate whether SSD is full.
+	// Use appropriate metrics. No change in code logic except page size
 	traceprintf ("SortPlan: memory space %d, record per run %d\n", MEMORY_SIZE, _recordCountPerRun);
 } // SortPlan::SortPlan
 
@@ -117,7 +119,8 @@ SortedRecordRenderer * SortIterator::_formInMemoryRenderer (RowCount base)
 void SortIterator::_createInitialRuns (vector<string> &runNames)
 {
 	runNames.clear();
-	Buffer * outputBuffer = new Buffer(_plan->_recordCountPerRun, _plan->_size);
+	Buffer * outputBuffer = new Buffer(_plan->_recordCountPerRun, _plan->_size); 
+	// CODE IMPROVEMENT: Have outputBuffer as a member variable of SortedRecordRenderer, to be consistent with ExternalRenderer
 	while (_consumed < _plan->_count) {
 		outputBuffer->reset();
 		string runName = string(".") + SEPARATOR + string("spills") + SEPARATOR + string("pass0") + SEPARATOR + string("run") + std::to_string(_consumed / _plan->_recordCountPerRun) + string(".bin");

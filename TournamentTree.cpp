@@ -93,7 +93,6 @@ tuple<Node *, Node *> TournamentTree::_contest (Node * root_left, Node * root_ri
     Node * loser;
 
     int compareResult = memcmp(root_left->data, root_right->data, _recordSize);
-
     // if less or equal, left wins
     if (compareResult <= 0) {
         winner = root_left;
@@ -162,6 +161,14 @@ Node * TournamentTree::_advanceToTop(Node * advancing, Node * incumbent)
 byte * TournamentTree::poll()
 {
     // TRACE (true);
+    // TODO: Add in-sort duplicate removal
+    // Eliminating duplicates with every _contest introduces a huge overhead
+    // w.r.t. code logic, as the structure of the tree is changed along the way
+    // and any node in the tree could be deleted. 
+    // We can simply check the last polled record and the current record when calling
+    // poll() and pushAndPoll() methods. --- A wrapper function in TournamentTree or 
+    // SortedRecordRenderer with a boolean flag to indicate whether to check for 
+    // duplicates or not.
     if (_root == nullptr) {
         return nullptr;
     }

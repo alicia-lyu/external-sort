@@ -3,9 +3,13 @@
 #include <memory>
 
 ScanPlan::ScanPlan (RowCount const count, RowSize const size) : 
-	_count (count), _size (size), _countPerRun (getRecordCountPerRun(size, true)) // TODO: introduce HDD
+	_count (count), _size (size), _countPerRun (getRecordCountPerRun(size, true))
+	// TODO: Provide the option to read from a input file, so that we can test against sample input
 {
 	TRACE (true);
+	// CHECK WITH TA: Do we need to evaluate the metrics of data read & final write? 
+	// Since they are the same across different implementation, may as well only evaluate the spills
+	// This way, we also don't need to modify Scan when introducing HDD
 } // ScanPlan::ScanPlan
 
 ScanPlan::~ScanPlan ()

@@ -17,7 +17,7 @@ public:
     string run();
     void print();
 private:
-    u_int8_t const _readAheadBufferCount = 0; // TODO: Implement read-ahead buffer
+    u_int8_t const _readAheadBufferCount = 0; // TODO: Implement read-ahead buffers
     vector<ExternalRun *> _runs;
     RowSize const _recordSize;
     u_int32_t const _pageSize;

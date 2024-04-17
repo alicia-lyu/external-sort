@@ -2,6 +2,7 @@ CPPOPT=-g -Og -D_DEBUG
 # -O2 -Os -Ofast
 # -fprofile-generate -fprofile-use
 CPPFLAGS=$(CPPOPT) -Wall -ansi -pedantic -std=c++17 -DVERBOSEL1
+# TODO: Add flag to turn on duplicate removal
 DEBUGFLAGS=-DCMAKE_BUILD_TYPE=Debug -DLLDB_EXPORT_ALL_SYMBOLS=ON -std=c++17
 # -Wparentheses -Wno-unused-parameter -Wformat-security
 # -fno-rtti -std=c++11 -std=c++98
@@ -73,11 +74,14 @@ external-2: Test.exe Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1
 external-2-lldb: Test.exe Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1
 	lldb -- ./Test.exe -c 40000 -s 200 -o $(LOG_FILE)
 
-# external-sort on HDD: 100 MB can be divided into 200 pages of 500KB each
+# TODO: external-sort on HDD: 100 MB can be divided into 200 pages of 500KB each
+
+# TODO: Add more test cases 10^3 * 50 (50M), 10^3 * 125 (125M), 10^5 * 120 (12 G), 10^6 * 120 (120 G) (rows, record size) and sample input by TA
 
 lldb : Test.exe $(LOG_DIR)
 	lldb -- ./Test.exe -c 7 -s 20 -o $(LOG_FILE)
 
+# TODO: We eventually need a ExternalSort.exe target
 ExternalSort.exe: Makefile ExternalSort.cpp
 	g++ $(CPPFLAGS) -o ExternalSort.exe ExternalSort.cpp
 # Where, 

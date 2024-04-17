@@ -1,7 +1,7 @@
 CPPOPT=-g -Og -D_DEBUG
 # -O2 -Os -Ofast
 # -fprofile-generate -fprofile-use
-CPPFLAGS=$(CPPOPT) -Wall -ansi -pedantic -std=c++17 -DVERBOSE
+CPPFLAGS=$(CPPOPT) -Wall -ansi -pedantic -std=c++17 -DVERBOSEL1
 DEBUGFLAGS=-DCMAKE_BUILD_TYPE=Debug -DLLDB_EXPORT_ALL_SYMBOLS=ON -std=c++17
 # -Wparentheses -Wno-unused-parameter -Wformat-security
 # -fno-rtti -std=c++11 -std=c++98

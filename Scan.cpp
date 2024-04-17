@@ -43,7 +43,7 @@ byte * ScanIterator::next ()
 
 	byte * row = _run->fillRandomly();
 
-	#ifdef VERBOSE
+	#ifdef VERBOSEL2
 	traceprintf ("produced %s\n", rowToString(row, _plan->_size).c_str());
 	#endif
 

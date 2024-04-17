@@ -68,32 +68,61 @@ byte * SortIterator::next ()
 
 SortedRecordRenderer * SortIterator::_formInMemoryRenderer (RowCount base)
 {
+	#if defined(VERBOSEL1) || defined(VERBOSEL2)
 	traceprintf ("Forming in-memory renderer with %u rows\n", _plan->_recordCountPerRun);
-	std::vector<byte *> rows;
+	#endif
+
+	vector<byte *> rows;
 	while (_consumed - base < _plan->_recordCountPerRun) {
 		byte * received = _input->next ();
 		if (received == nullptr) break;
 		rows.push_back(received);
 		++ _consumed;
-		// traceprintf ("#%llu consumed %s\n", _consumed, rowToHexString(received, _plan->_size).c_str());
+
+		#ifdef VERBOSEL2
+		traceprintf ("#%llu consumed %s\n", _consumed, rowToString(received, _plan->_size).c_str());
+		#endif
 	}
-	// traceprintf ("Formed in-memory renderer with %lu rows\n", rows.size());
-	// TODO: break rows into cache lines
-	// Build a tree for each cache line, log (n/m) levels, 
-	// Then build a tree for the root nodes of the cache line trees, log (m) levels
-	// n being the number of records in memory, m being the number of cache lines
+
+	#if defined(VERBOSEL1) || defined(VERBOSEL2)
+	traceprintf ("Formed in-memory renderer with %lu rows\n", rows.size());
+	#endif
+
+	// break rows by cache size
+	// _plan->_size: size of each row
+	// CACHE_SIZE: size of cache
+	int rowsPerCache = CACHE_SIZE / _plan->_size;
+	int numCaches = (rows.size() + rowsPerCache - 1) / rowsPerCache;
+
+	#if defined(VERBOSEL1) || defined(VERBOSEL2)
+	traceprintf ("In-memory renderer acquired %d in-cache trees, each with %d rows\n",
+		numCaches, rowsPerCache);
+	#endif
+
+	// vector<TournamentTree *> cacheTrees;
+	// for (int i = 0; i < numCaches; i++) {
+	// 	vector<byte *> formingRows;
+	// 	for (int j = 0; j < rowsPerCache; j++) {
+	// 		int index = i * rowsPerCache + j;
+	// 		if (index >= rows.size()) break;
+	// 		formingRows.push_back(rows[index]);
+	// 	}
+	// 	TournamentTree * cacheTree = new TournamentTree(formingRows, _plan->_size);
+	// 	cacheTrees.push_back(cacheTree);
+	// }
+
 	TournamentTree * tree = new TournamentTree(rows, _plan->_size);
 	SortedRecordRenderer * renderer = new NaiveRenderer(tree);
 	return renderer;
 }
 
-std::vector<string> SortIterator::_createInitialRuns ()
+void SortIterator::_createInitialRuns (vector<string> &runNames)
 {
-	std::vector<string> runNames;
+	runNames.clear();
 	Buffer * outputBuffer = new Buffer(_plan->_recordCountPerRun, _plan->_size);
 	while (_consumed < _plan->_count) {
 		outputBuffer->reset();
-		string runName = std::string(".") + SEPARATOR + std::string("spills") + SEPARATOR + std::string("pass0") + SEPARATOR + std::string("run") + std::to_string(_consumed / _plan->_recordCountPerRun) + std::string(".bin");
+		string runName = string(".") + SEPARATOR + string("spills") + SEPARATOR + string("pass0") + SEPARATOR + string("run") + std::to_string(_consumed / _plan->_recordCountPerRun) + string(".bin");
 		runNames.push_back(runName);
 		SortedRecordRenderer * renderer = _formInMemoryRenderer(_consumed);
 		int i;
@@ -111,17 +140,19 @@ std::vector<string> SortIterator::_createInitialRuns ()
 		runFile.close();
 	}
 	delete outputBuffer;
-	return runNames;
 }
 
-SortedRecordRenderer * SortIterator::_mergeRuns (std::vector<string> runNames)
+SortedRecordRenderer * SortIterator::_mergeRuns (vector<string> &runNames)
 {
+	// runNames is passed to the constructor of ExternalRenderer by value
+	// so that the original runNames is not modified
 	SortedRecordRenderer * renderer = new ExternalRenderer(runNames, _plan->_size, SSD_PAGE_SIZE, MEMORY_SIZE);
 	return renderer;
 }
 
 SortedRecordRenderer * SortIterator::_externalSort ()
 {
-	std::vector<string> runNames = _createInitialRuns();
+	vector<string> runNames;
+	_createInitialRuns(runNames);
 	return _mergeRuns(runNames);
 }

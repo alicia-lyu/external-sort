@@ -54,8 +54,8 @@ byte * VerifyIterator::next()
         lastRow = row;
         ++ _produced;
 
-        #ifdef VERBOSE
-        traceprintf ("#%llu consumed %s\n", _consumed, rowToHexString(received, _plan->_size).c_str());
+        #ifdef VERBOSEL2
+        traceprintf ("#%llu consumed %s\n", _consumed, rowToString(received, _plan->_size).c_str());
         #endif
         
         return row;

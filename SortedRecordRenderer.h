@@ -4,6 +4,8 @@
 #include <vector>
 #include <fstream>
 
+using std::vector;
+
 class SortedRecordRenderer
 {
 public:
@@ -26,12 +28,12 @@ private:
 class CacheOptimizedRenderer : public SortedRecordRenderer
 {
 public:
-    CacheOptimizedRenderer (std::vector<TournamentTree *> cacheTrees, RowSize recordSize);
+    CacheOptimizedRenderer (vector<TournamentTree *> &cacheTrees, RowSize recordSize);
     ~CacheOptimizedRenderer ();
     byte * next();
     void print();
 private:
     RowSize _recordSize;
     TournamentTree * _tree;
-    std::vector<TournamentTree *> _cacheTrees;
+    vector<TournamentTree *> _cacheTrees;
 };

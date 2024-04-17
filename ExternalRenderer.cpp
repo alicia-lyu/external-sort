@@ -1,7 +1,8 @@
 #include "ExternalRenderer.h"
 #include "utils.h"
 
-ExternalRenderer::ExternalRenderer (std::vector<string> runFileNames, RowSize recordSize, u_int32_t pageSize, u_int64_t memorySpace, u_int16_t rendererNumber) :  // 500 KB = 2^19
+// this function will modify runFileNames, so it is passed by value
+ExternalRenderer::ExternalRenderer (vector<string> runFileNames, RowSize recordSize, u_int32_t pageSize, u_int64_t memorySpace, u_int16_t rendererNumber) :  // 500 KB = 2^19
     _recordSize (recordSize), _pageSize (pageSize), _inputBufferCount (memorySpace / pageSize - 1 - _readAheadBufferCount), _pass (1), _rendererNumber (rendererNumber)
 {
     traceprintf("Renderer %d, merging %zu run files with %hu input buffers\n", _rendererNumber, runFileNames.size(), _inputBufferCount);
@@ -10,10 +11,10 @@ ExternalRenderer::ExternalRenderer (std::vector<string> runFileNames, RowSize re
         u_int16_t rendererCount = 0;
         _pass++;
         traceprintf("Pass %hhu\n", _pass);
-        std::vector<string> mergedRunNames;
+        vector<string> mergedRunNames;
         for (int i = 0; i < runFileNames.size(); i += _inputBufferCount) {
             rendererCount++;
-            std::vector<string> subRunFileNames(
+            vector<string> subRunFileNames(
                 runFileNames.begin() + i,
                 runFileNames.begin() + std::min(i + _inputBufferCount, (int) runFileNames.size())
             );
@@ -28,7 +29,7 @@ ExternalRenderer::ExternalRenderer (std::vector<string> runFileNames, RowSize re
         runFileNames = mergedRunNames;
     }
     // Ready to render sorted records
-    std::vector<byte *> formingRows;
+    vector<byte *> formingRows;
     for (auto runFileName : runFileNames) {
         ExternalRun * run = new ExternalRun(runFileName, _pageSize, _recordSize);
         _runs.push_back(run);
@@ -36,7 +37,7 @@ ExternalRenderer::ExternalRenderer (std::vector<string> runFileNames, RowSize re
     }
     _tree = new TournamentTree(formingRows, _recordSize);
     outputBuffer = new Buffer(_pageSize / _recordSize, _recordSize);
-    _outputFile = std::ofstream(_getOutputFileName(), std::ios::binary);
+    _outputFile = ofstream(_getOutputFileName(), std::ios::binary);
 	// this->print();
 } // ExternalRenderer::ExternalRenderer
 
@@ -91,7 +92,7 @@ string ExternalRenderer::run ()
 string ExternalRenderer::_getOutputFileName ()
 {
     string topDir;
-    return std::string(".") + SEPARATOR + std::string("spills") + SEPARATOR + std::string("pass") +std::to_string(_pass) + SEPARATOR + std::string("run") + std::to_string(_rendererNumber) + std::string(".bin");
+    return string(".") + SEPARATOR + string("spills") + SEPARATOR + string("pass") +std::to_string(_pass) + SEPARATOR + string("run") + std::to_string(_rendererNumber) + string(".bin");
 } // ExternalRenderer::getOutputFileName
 
 void ExternalRenderer::print ()

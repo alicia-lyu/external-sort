@@ -62,7 +62,7 @@ byte * ExternalRenderer::next ()
     byte * output = outputBuffer->copy(rendered);
     while (output == nullptr) {
         // traceprintf("Output buffer is full, write to disk\n"); 
-        _outputFile.write((char *) outputBuffer->data(), _pageSize);
+        _outputFile.write((char *) outputBuffer->data(), _pageSize); // metrics
         output = outputBuffer->copy(rendered);
     }
     // Resume the tournament

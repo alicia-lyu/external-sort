@@ -116,7 +116,7 @@ SortedRecordRenderer * SortIterator::_formInMemoryRenderer (RowCount base)
 	return renderer;
 }
 
-void SortIterator::_createInitialRuns (vector<string> &runNames)
+void SortIterator::_createInitialRuns (vector<string> &runNames) // metrics
 {
 	runNames.clear();
 	Buffer * outputBuffer = new Buffer(_plan->_recordCountPerRun, _plan->_size); 

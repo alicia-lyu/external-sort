@@ -18,7 +18,7 @@ public:
     void print();
 private:
     u_int8_t const _readAheadBufferCount = 0; // TODO: Implement read-ahead buffers
-    vector<ExternalRun *> _runs;
+    vector<ExternalRun *> _runs; // 497 runs (1 input buffer), 1 output buffer, 2 read-ahead buffers
     RowSize const _recordSize;
     u_int32_t const _pageSize;
     u_int16_t const _inputBufferCount; // max. 100 MB / 20 KB = 5000 = 2^13

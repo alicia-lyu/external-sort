@@ -37,7 +37,7 @@ byte * ExternalRun::next ()
     return row;
 } // ExternalRun::next
 
-u_int32_t ExternalRun::_fillPage ()
+u_int32_t ExternalRun::_fillPage () // metrics
 {
     if (_runFile.eof()) {
         throw std::invalid_argument("Reaches end of the run file unexpectedly.");

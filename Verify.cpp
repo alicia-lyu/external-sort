@@ -48,6 +48,7 @@ byte * VerifyIterator::next()
         ++ _consumed;
         if (lastRow != nullptr) {
             if (memcmp(lastRow, row, _plan->_size) > 0) {
+                // TODO: Add in-stream duplicate removal
                 isSorted = false;
             }
         }

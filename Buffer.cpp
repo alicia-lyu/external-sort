@@ -45,7 +45,7 @@ byte * Buffer::fillRandomly ()
 {
     if (_filled >= _rows + size * count) {
         // traceprintf("Buffer is full, overwriting the first row\n");
-        // TODO: uniformize the behavior of overwriting the first row (return nullptr to indicate)
+        // CODE IMPROVEMENT: uniformize the behavior of overwriting the first row (return nullptr to indicate the end of the buffer)
         _filled = _rows;
     }
     std::generate(_filled, _filled + size, [this](){ return getRandomAlphaNumeric(); });

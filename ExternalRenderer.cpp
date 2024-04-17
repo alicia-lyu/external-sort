@@ -22,7 +22,7 @@ ExternalRenderer::ExternalRenderer (vector<string> runFileNames, RowSize recordS
                 traceprintf("Sub-run file %s\n", subRunFileName.c_str());
             }
             ExternalRenderer * renderer = new ExternalRenderer(subRunFileNames, recordSize, pageSize, memorySpace, rendererCount); // subRunFileNames will be copied
-            mergedRunNames.push_back(renderer->run());
+            mergedRunNames.push_back(renderer->run()); // TODO: Graceful degradation
             delete renderer;
         }
         runFileNames = mergedRunNames;

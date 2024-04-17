@@ -7,9 +7,9 @@
 typedef uint64_t RowCount;
 typedef u_int16_t RowSize; // 20-2000, unit: 
 
-using random_bytes_engine = std::independent_bits_engine<
-    std::default_random_engine, CHAR_BIT, byte>;
 using std::random_device;
+using std::default_random_engine;
+using std::uniform_int_distribution;
 
 class Buffer // an in-memory buffer
 {
@@ -25,10 +25,16 @@ public:
     void reset() { _read = _rows; _filled = _rows; };
     byte * data() { return _rows; };
     u_int64_t sizeFilled() { return _filled - _rows; };
+
+    // alpha numeric characters
+    static byte toAlphaNumeric(const byte randomByte);
 private:
     byte * _filled;
     byte * _read;
     byte * _rows;
-    random_bytes_engine _engine;
+    default_random_engine _engine;
     random_device _device;
+    uniform_int_distribution<byte> _distribution;
+    byte getRandomAlphaNumeric();
+    static const int RANDOM_BYTE_UPPER_BOUND = (26+26+10); // 26 upper case, 26 lower case, 10 digits
 };

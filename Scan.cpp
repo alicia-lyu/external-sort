@@ -43,7 +43,9 @@ byte * ScanIterator::next ()
 
 	byte * row = _run->fillRandomly();
 
-	// traceprintf ("produced %s\n", rowToHexString(row, _plan->_size).c_str());
+	#ifdef VERBOSEL2
+	traceprintf ("produced %s\n", rowToString(row, _plan->_size).c_str());
+	#endif
 
 	RowCount rowCountInCurrentScan = _count - _scanCount * _countPerScan;
 	if (rowCountInCurrentScan >= _countPerScan) {

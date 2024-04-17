@@ -5,6 +5,9 @@
 #include "Buffer.h"
 #include <tuple>
 
+using std::vector;
+using std::tuple;
+
 class Node
 {
 public:
@@ -23,7 +26,7 @@ private:
 class TournamentTree
 {
 public:
-    TournamentTree (std::vector<byte *> records, RowSize recordSize);
+    TournamentTree (const vector<byte *> &records, RowSize recordSize);
     ~TournamentTree ();
     byte * poll (); // Needed for in-memory sorting, or when there are no more records to be pushed while polling
     u_int16_t peekTopBuffer (); // Works with pushAndPoll for merge-sort. Returning from which buffer to fetch the next record (max. 2^8 = 256 buffers)
@@ -33,9 +36,9 @@ public:
 private:
     Node * _root;
     RowSize _recordSize;
-    std::tuple<Node *, Node *> _formRoot (std::vector<byte *> records, u_int16_t offset, u_int16_t numRecords);
+    tuple<Node *, Node *> _formRoot (const vector<byte *> &records, u_int16_t offset, u_int16_t numRecords);
     // max records.size() = 100 MB / 20 KB = 2^13
-    std::tuple<Node *, Node *> _contest(Node * root_left, Node * root_right);
+    tuple<Node *, Node *> _contest(Node * root_left, Node * root_right);
     Node * _advanceToTop(Node * advancing, Node * incumbent); // Called when _root is going to be polled, returns the previous root
     void _printNode (Node * node, string prefix, bool isLeft);
     void _printRoot ();

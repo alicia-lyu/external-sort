@@ -37,10 +37,12 @@ void NaiveRenderer::print ()
 	_tree->printTree();
 } // NaiveRenderer::print
 
-CacheOptimizedRenderer::CacheOptimizedRenderer (std::vector<TournamentTree *> cacheTrees, RowSize recordSize) :
+// will modify the given cacheTrees
+CacheOptimizedRenderer::CacheOptimizedRenderer (vector<TournamentTree *> &cacheTrees, RowSize recordSize) :
 	_recordSize (recordSize), _cacheTrees (cacheTrees)
 {
 	TRACE (true);
+
     std::vector<byte *> formingRows;
     for (auto cacheTree : _cacheTrees) {
         byte * row = cacheTree->poll();
@@ -50,7 +52,13 @@ CacheOptimizedRenderer::CacheOptimizedRenderer (std::vector<TournamentTree *> ca
         formingRows.push_back(row);
     }
     _tree = new TournamentTree(formingRows, _recordSize);
+
+	#if defined(VERBOSEL1) || defined(VERBOSEL2)
+	traceprintf ("Formed cache-optimized renderer with %lu cache trees\n", _cacheTrees.size());
+	#endif
+	#if defined(VERBOSEL2)
 	this->print();
+	#endif
 } // CacheOptimizedRenderer::CacheOptimizedRenderer
 
 CacheOptimizedRenderer::~CacheOptimizedRenderer ()

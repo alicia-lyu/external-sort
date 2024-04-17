@@ -78,3 +78,25 @@ u_int32_t getRecordCountPerRun(RowSize recordSize, bool inSSD) {
     u_int32_t recordCountPerRun = inSSD ? (MEMORY_SIZE - SSD_PAGE_SIZE) / recordSize : (MEMORY_SIZE - HDD_PAGE_SIZE) / recordSize;
     return recordCountPerRun;
 }
+
+// convert a row of bytes to a string
+// the bytes are already converted to alphanumeric characters
+string rowToString(byte * rowContent, RowSize size) {
+    string result(size, ' ');
+    for (int i = 0; i < size; ++i) {
+        byte byte = rowContent[i];
+        result[i] = byte;
+    }
+    return result;
+}
+
+// convert a row of bytes to a string
+// where the bytes are represented as their raw values
+string rowRawValueToString(byte * rowContent, RowSize size) {
+    string result;
+    for (int i = 0; i < size; ++i) {
+        byte byte = rowContent[i];
+        result += std::to_string(byte) + " ";
+    }
+    return result;
+}

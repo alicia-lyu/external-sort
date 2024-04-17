@@ -20,7 +20,7 @@ Node::~Node ()
     // traceprintf("Node deleted with bufferNum %d\n", bufferNum);
 }
 
-TournamentTree::TournamentTree (std::vector<byte *> records, RowSize recordSize)
+TournamentTree::TournamentTree (const vector<byte *> &records, RowSize recordSize)
 : _recordSize (recordSize)
 {
     TRACE (false);
@@ -48,7 +48,7 @@ TournamentTree::~TournamentTree ()
     }
 }
 
-std::tuple<Node *, Node *> TournamentTree::_formRoot (std::vector<byte *> records, u_int16_t offset, u_int16_t numRecords)
+tuple<Node *, Node *> TournamentTree::_formRoot (const vector<byte *> &records, u_int16_t offset, u_int16_t numRecords)
 {
     // TRACE (true);
     // traceprintf("Forming root with offset %d and numRecords %d\n", offset, numRecords);
@@ -86,7 +86,7 @@ std::tuple<Node *, Node *> TournamentTree::_formRoot (std::vector<byte *> record
     return std::make_tuple(root, loser);
 }
 
-std::tuple<Node *, Node *> TournamentTree::_contest (Node * root_left, Node * root_right)
+tuple<Node *, Node *> TournamentTree::_contest (Node * root_left, Node * root_right)
 {
     TRACE (false);
     Node * winner;

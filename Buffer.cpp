@@ -1,7 +1,7 @@
 #include "Buffer.h"
 
 Buffer::Buffer (u_int16_t count, RowSize size):
-    count (count), size (size), _device(), _engine(_device()), _distribution(0, RANDOM_BYTE_UPPER_BOUND - 1)
+    count (count), size (size), _engine(_device()), _device(), _distribution(0, RANDOM_BYTE_UPPER_BOUND - 1)
 {
     TRACE (false);
     _rows = (byte *) malloc(size * count * sizeof(byte));

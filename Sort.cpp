@@ -92,27 +92,33 @@ SortedRecordRenderer * SortIterator::_formInMemoryRenderer (RowCount base)
 	// _plan->_size: size of each row
 	// CACHE_SIZE: size of cache
 	int rowsPerCache = CACHE_SIZE / _plan->_size;
-	int numCaches = (rows.size() + rowsPerCache - 1) / rowsPerCache;
+	RowCount numCaches = (rows.size() + rowsPerCache - 1) / rowsPerCache;
 
 	#if defined(VERBOSEL1) || defined(VERBOSEL2)
-	traceprintf ("In-memory renderer acquired %d in-cache trees, each with %d rows\n",
-		numCaches, rowsPerCache);
+	traceprintf ("Cache size %d, row size %hu, rows per cache %d, number of caches %llu\n",
+		CACHE_SIZE, _plan->_size, rowsPerCache, numCaches);
 	#endif
 
-	// vector<TournamentTree *> cacheTrees;
-	// for (int i = 0; i < numCaches; i++) {
-	// 	vector<byte *> formingRows;
-	// 	for (int j = 0; j < rowsPerCache; j++) {
-	// 		int index = i * rowsPerCache + j;
-	// 		if (index >= rows.size()) break;
-	// 		formingRows.push_back(rows[index]);
-	// 	}
-	// 	TournamentTree * cacheTree = new TournamentTree(formingRows, _plan->_size);
-	// 	cacheTrees.push_back(cacheTree);
-	// }
+	vector<TournamentTree *> cacheTrees;
+	for (int i = 0; i < numCaches; i++) {
+		// start is inclusive, end is exclusive
+		int start = i * rowsPerCache;
+		int end = std::min((i + 1) * rowsPerCache, (int) rows.size());
+		vector<byte *> cacheRows(rows.begin() + start, rows.begin() + end);
 
-	TournamentTree * tree = new TournamentTree(rows, _plan->_size);
-	SortedRecordRenderer * renderer = new NaiveRenderer(tree);
+		#ifdef VERBOSEL2
+		traceprintf ("In-memory renderer forming cache tree %d with rows #%d-#%d\n",
+			i, start, end - 1);
+		#endif
+
+		TournamentTree * tree = new TournamentTree(cacheRows, _plan->_size);
+		cacheTrees.push_back(tree);
+	}
+
+	SortedRecordRenderer * renderer = new CacheOptimizedRenderer(cacheTrees, _plan->_size);
+
+	// TournamentTree * tree = new TournamentTree(rows, _plan->_size);
+	// SortedRecordRenderer * renderer = new NaiveRenderer(tree);
 	return renderer;
 }
 

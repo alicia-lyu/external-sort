@@ -1,7 +1,6 @@
 #include "ExternalRenderer.h"
 #include "utils.h"
 
-// this function will modify runFileNames, so it is passed by value
 ExternalRenderer::ExternalRenderer (vector<string> runFileNames, RowSize recordSize, u_int32_t pageSize, u_int64_t memorySpace, u_int16_t rendererNumber) :  // 500 KB = 2^19
     _recordSize (recordSize), _pageSize (pageSize), _inputBufferCount (memorySpace / pageSize - 1 - _readAheadBufferCount), _pass (1), _rendererNumber (rendererNumber)
 {
@@ -22,7 +21,7 @@ ExternalRenderer::ExternalRenderer (vector<string> runFileNames, RowSize recordS
             for (auto subRunFileName : subRunFileNames) {
                 traceprintf("Sub-run file %s\n", subRunFileName.c_str());
             }
-            ExternalRenderer * renderer = new ExternalRenderer(subRunFileNames, recordSize, pageSize, memorySpace, rendererCount);
+            ExternalRenderer * renderer = new ExternalRenderer(subRunFileNames, recordSize, pageSize, memorySpace, rendererCount); // subRunFileNames will be copied
             mergedRunNames.push_back(renderer->run());
             delete renderer;
         }

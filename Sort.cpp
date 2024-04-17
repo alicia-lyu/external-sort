@@ -5,7 +5,6 @@
 
 SortPlan::SortPlan (Plan * const input, RowSize const size, RowCount const count) : 
 	_input (input), _size (size), _count (count), _recordCountPerRun (getRecordCountPerRun(size, true)) // TODO: introduce HDD
-	// TODO: Verify the need for an output buffer when creating in-memory runs
 {
 	traceprintf ("SortPlan: memory space %d, record per run %d\n", MEMORY_SIZE, _recordCountPerRun);
 } // SortPlan::SortPlan
@@ -26,17 +25,9 @@ SortIterator::SortIterator (SortPlan const * const plan) :
 	_plan (plan), _input (plan->_input->init ()), _consumed (0), _produced (0)
 {
 	TRACE (true);
-	// In-memory sort: Read all rows from input, form a tournament tree that is ready to render the next record
-	// NOW:
-	// Build a huge tournament tree on all records in memory, In each next() call, tree levels is log(n), n being the number of records in memory.
-	// LATER:
-	// First: In-cache sort. Must happen in place, otherwise it will spill outside of cache line.
-	// Second: Out-of-cache but in-memory sort. Build a small tournament tree with one record from each cache run. In each next() call, tree levels is log(m), m being the number of cache runs.
 	if (_plan->_count <= _plan->_recordCountPerRun) {
-		// traceprintf ("%llu records fit in memory (%d)\n", _plan->_count, _plan->_recordCountPerRun);
 		_renderer = _formInMemoryRenderer();
 	} else {
-		// traceprintf ("%llu records do not fit in memory (%d)\n", _plan->_count, _plan->_recordCountPerRun);
 		_renderer = _externalSort();
 	}
 	traceprintf ("consumed %lu rows\n",
@@ -116,7 +107,8 @@ SortedRecordRenderer * SortIterator::_formInMemoryRenderer (RowCount base)
 	}
 
 	SortedRecordRenderer * renderer = new CacheOptimizedRenderer(cacheTrees, _plan->_size);
-
+	
+	// NaiveRenderer: Not cache-optimized
 	// TournamentTree * tree = new TournamentTree(rows, _plan->_size);
 	// SortedRecordRenderer * renderer = new NaiveRenderer(tree);
 	return renderer;
@@ -148,17 +140,10 @@ void SortIterator::_createInitialRuns (vector<string> &runNames)
 	delete outputBuffer;
 }
 
-SortedRecordRenderer * SortIterator::_mergeRuns (vector<string> &runNames)
-{
-	// runNames is passed to the constructor of ExternalRenderer by value
-	// so that the original runNames is not modified
-	SortedRecordRenderer * renderer = new ExternalRenderer(runNames, _plan->_size, SSD_PAGE_SIZE, MEMORY_SIZE);
-	return renderer;
-}
-
 SortedRecordRenderer * SortIterator::_externalSort ()
 {
 	vector<string> runNames;
-	_createInitialRuns(runNames);
-	return _mergeRuns(runNames);
+	_createInitialRuns(runNames); // runNames is modified in this function, as it is passed by reference
+	SortedRecordRenderer * renderer = new ExternalRenderer(runNames, _plan->_size, SSD_PAGE_SIZE, MEMORY_SIZE); // runNames is passed by value
+	return renderer;
 }

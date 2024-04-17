@@ -28,7 +28,7 @@ private:
 class CacheOptimizedRenderer : public SortedRecordRenderer
 {
 public:
-    CacheOptimizedRenderer (vector<TournamentTree *> &cacheTrees, RowSize recordSize);
+    CacheOptimizedRenderer (vector<TournamentTree *> &cacheTrees, RowSize recordSize); // will modify the given cacheTrees, but it won't be reused
     ~CacheOptimizedRenderer ();
     byte * next();
     void print();

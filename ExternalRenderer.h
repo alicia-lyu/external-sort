@@ -11,7 +11,7 @@ class ExternalRenderer : public SortedRecordRenderer
 {
 public:
     Buffer * outputBuffer;
-    ExternalRenderer (vector<string> runFileNames, RowSize recordSize, u_int32_t pageSize, u_int64_t memorySpace, u_int16_t rendererNumber = 0);
+    ExternalRenderer (vector<string> runFileNames, RowSize recordSize, u_int32_t pageSize, u_int64_t memorySpace, u_int16_t rendererNumber = 0); // this function will modify runFileNames, so it is passed by value
     ~ExternalRenderer ();
     byte * next();
     string run();

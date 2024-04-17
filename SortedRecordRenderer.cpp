@@ -37,7 +37,6 @@ void NaiveRenderer::print ()
 	_tree->printTree();
 } // NaiveRenderer::print
 
-// will modify the given cacheTrees
 CacheOptimizedRenderer::CacheOptimizedRenderer (vector<TournamentTree *> &cacheTrees, RowSize recordSize) :
 	_recordSize (recordSize), _cacheTrees (cacheTrees)
 {

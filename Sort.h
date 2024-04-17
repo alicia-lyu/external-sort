@@ -32,6 +32,5 @@ private:
 	SortedRecordRenderer * _renderer;
 	SortedRecordRenderer * _formInMemoryRenderer (RowCount base = 0); // Returns the tree where the top node is the smallest
 	void _createInitialRuns (vector<string> &runNames); // Returns the names of the files created
-	SortedRecordRenderer * _mergeRuns (vector<string> &runNames);
 	SortedRecordRenderer * _externalSort ();
 }; // class SortIterator

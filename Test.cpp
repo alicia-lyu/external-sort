@@ -12,8 +12,14 @@ int main (int argc, char * argv [])
 	RowCount recordCount;
 	RowSize recordSize; // 20-2000 bytes
 	string outputPath;
+	string inputPath;
+	bool removeDuplicate;
 
-	std::tie(recordCount, recordSize, outputPath) = getArgs(argc, argv);
+	Config config = getArgs(argc, argv);
+	recordCount = config.recordCount;
+	recordSize = config.recordSize;
+	outputPath = config.outputPath;
+
 	// u_int16_t runCount = recordCount / recordCountPerRun; // 4000 -- 40
 	// traceprintf("recordCountPerRun: %u, runCount: %u\n", recordCountPerRun, runCount);
 	Plan * const scanPlan = new ScanPlan (recordCount, recordSize);

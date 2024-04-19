@@ -3,7 +3,7 @@
 #include "ExternalRenderer.h"
 #include <stdexcept>
 
-SortPlan::SortPlan (Plan * const input, RowSize const size, RowCount const count, bool removeDuplicates = false) : 
+SortPlan::SortPlan (Plan * const input, RowSize const size, RowCount const count, bool removeDuplicates) : 
 	_input (input), _size (size), _count (count), _removeDuplicates (removeDuplicates),
 	_recordCountPerRun (getRecordCountPerRun(size, true))
 {
@@ -105,7 +105,7 @@ SortedRecordRenderer * SortIterator::_formInMemoryRenderer (RowCount base, u_int
 		cacheTrees.push_back(tree);
 	}
 
-	SortedRecordRenderer * renderer = new CacheOptimizedRenderer(_plan->_size, cacheTrees, runNumber);
+	SortedRecordRenderer * renderer = new CacheOptimizedRenderer(_plan->_size, cacheTrees, runNumber, _plan->_removeDuplicates);
 	
 	// NaiveRenderer: Not cache-optimized
 	// TournamentTree * tree = new TournamentTree(rows, _plan->_size);

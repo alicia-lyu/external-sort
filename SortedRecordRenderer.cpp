@@ -87,8 +87,9 @@ void NaiveRenderer::print ()
 	_tree->printTree();
 } // NaiveRenderer::print
 
-CacheOptimizedRenderer::CacheOptimizedRenderer (RowSize recordSize, vector<TournamentTree *> &cacheTrees, u_int16_t runNumber) : 
-	SortedRecordRenderer(recordSize, 0, runNumber), _cacheTrees (cacheTrees)
+CacheOptimizedRenderer::CacheOptimizedRenderer (RowSize recordSize, 
+	vector<TournamentTree *> &cacheTrees, u_int16_t runNumber, bool removeDuplicates) : 
+	SortedRecordRenderer(recordSize, 0, runNumber), _cacheTrees (cacheTrees), _removeDuplicates (removeDuplicates)
 {
 	TRACE (true);
     std::vector<byte *> formingRows;
@@ -100,6 +101,9 @@ CacheOptimizedRenderer::CacheOptimizedRenderer (RowSize recordSize, vector<Tourn
         formingRows.push_back(row);
     }
     _tree = new TournamentTree(formingRows, _recordSize);
+
+	lastRow = nullptr;
+	_removed = 0;
 
 	#if VERBOSEL1 || VERBOSEL2
 	traceprintf ("Formed cache-optimized renderer with %lu cache trees\n", _cacheTrees.size());
@@ -116,20 +120,61 @@ CacheOptimizedRenderer::~CacheOptimizedRenderer ()
     for (auto cacheTree : _cacheTrees) {
         delete cacheTree;
     }
+
+	#if defined(VERBOSEL1) || defined(VERBOSEL2)
+	traceprintf("Produced %llu rows\n", _produced);
+	if (_removeDuplicates) {
+		traceprintf ("Removed %llu rows\n", _removed);
+	}
+	#endif
 } // CacheOptimizedRenderer::~CacheOptimizedRenderer
 
 byte * CacheOptimizedRenderer::next ()
 {
-	u_int16_t bufferNum = _tree->peekTopBuffer();
-	TournamentTree * cacheTree = _cacheTrees.at(bufferNum);
-	byte * retrieved = cacheTree->poll();
-	byte * rendered;
-	if (retrieved == nullptr) {
-		rendered = _tree->poll();
-	} else {
-		rendered = _tree->pushAndPoll(retrieved);
+	byte * rendered, * retrieved;
+	u_int16_t bufferNum;
+	TournamentTree * cacheTree;
+
+	while (true) {
+		bufferNum = _tree->peekTopBuffer();
+		cacheTree = _cacheTrees.at(bufferNum);
+		retrieved = cacheTree->poll();
+
+		if (retrieved == nullptr) {
+			rendered = _tree->poll();
+		} else {
+			rendered = _tree->pushAndPoll(retrieved);
+		}
+
+		// if no more rows, jump out
+		if (rendered == nullptr) break;
+
+		// if not removing duplicates, jump out
+		if (!_removeDuplicates) break;
+
+		// if last row is null, jump out
+		if (lastRow == nullptr) break;
+
+		auto cmp = memcmp(lastRow, rendered, _recordSize);
+		if (cmp == 0) {
+			#if defined(VERBOSEL2)
+			traceprintf ("#%llu removed with value %s\n", _produced, rowToString(rendered, _recordSize).c_str());
+			#endif
+			++ _removed;
+			continue;
+		}
+		else {
+			#if defined(VERBOSEL2)
+			traceprintf ("#%llu produced %s, different from %s\n", _produced, 
+				rowToString(rendered, _recordSize).c_str(),
+				rowToString(lastRow, _recordSize).c_str());
+			#endif
+			break;
+		}
 	}
 	_addRowToOutputBuffer(rendered);
+	lastRow = rendered;
+	++ _produced;
 	return rendered;
 } // CacheOptimizedRenderer::next
 

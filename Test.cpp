@@ -20,23 +20,15 @@ int main (int argc, char * argv [])
 	recordCount = config.recordCount;
 	recordSize = config.recordSize;
 	outputPath = config.outputPath;
+	inputPath = config.inputPath;
+	removeDuplicate = config.removeDuplicates;
 
 	// u_int16_t runCount = recordCount / recordCountPerRun; // 4000 -- 40
 	// traceprintf("recordCountPerRun: %u, runCount: %u\n", recordCountPerRun, runCount);
 	Plan * const scanPlan = new ScanPlan (recordCount, recordSize);
 	Plan * const witnessPlan = new WitnessPlan (scanPlan, recordSize);
-	Plan * const sortPlan = new SortPlan (witnessPlan, recordSize, recordCount);
-
-	// if need to remove duplicates, apply in-stream duplicate removal
-	Plan * verifyPlan;
-	if (config.removeDuplicates) {
-		Plan * const removePlan = new InStreamRemovePlan (sortPlan, recordSize);
-		verifyPlan = new VerifyPlan (removePlan, recordSize);
-	}
-	else {
-		verifyPlan = new VerifyPlan (sortPlan, recordSize);
-	}
-	
+	Plan * const sortPlan = new SortPlan (witnessPlan, recordSize, recordCount, removeDuplicate);
+	Plan * const verifyPlan = new VerifyPlan (sortPlan, recordSize);
 	Plan * const witnessPlan2 = new WitnessPlan (verifyPlan, recordSize);
 
 	Iterator * const it = witnessPlan2->init ();

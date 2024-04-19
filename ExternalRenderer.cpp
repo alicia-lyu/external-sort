@@ -11,7 +11,7 @@ ExternalRenderer::ExternalRenderer (RowSize recordSize, vector<string> runFileNa
     if (runFileNames.size() > inputBufferCount) {
         u_int16_t rendererCount = 0;
         _pass++;
-        int runCountNextPass = std::ceil(runFileNames.size() / inputBufferCount); 
+        int runCountNextPass = (runFileNames.size() + inputBufferCount - 1) / inputBufferCount; 
         // if still too many runs, will be merged in the constructors next pass
         vector<string> mergedRunNames;
         for (int i = 0; i < runFileNames.size(); i += runCountNextPass) {

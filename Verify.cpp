@@ -62,7 +62,6 @@ byte * VerifyIterator::next()
                 #endif
             }
             else if (cmp == 0) {
-                // TODO: Add in-stream duplicate removal
                 hasDuplicates = true;
 
                 #ifdef VERBOSEL2

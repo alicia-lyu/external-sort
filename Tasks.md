@@ -38,7 +38,7 @@ April 29, 2024    | Submission
 
 - [x] Add in-cache sorting and test again: In addition to in-memory sorting @Yuheng
 - [ ] Add duplicate removal and evaluate performance (distinct)
-  - [ ] In stream (after sort)
+  - [x] In stream (after sort) @Yuheng
   - [ ] In sort
 - [ ] Add graceful degradation
 - [ ] Add 2 read-ahead buffers

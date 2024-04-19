@@ -15,7 +15,9 @@ ExternalRun::~ExternalRun ()
     TRACE (false);
     delete inMemoryPage;
     _runFile.close();
+    #ifdef VERBOSEL2
     traceprintf("Produced %lu rows from run file %s\n", _produced, _runFileName.c_str());
+    #endif
 } // ExternalRun::~ExternalRun
 
 byte * ExternalRun::next ()

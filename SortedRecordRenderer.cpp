@@ -49,7 +49,7 @@ byte * SortedRecordRenderer::_addRowToOutputBuffer(byte * row)
 	byte * output = _outputBuffer->copy(row);
 	while (output == nullptr) { // Output buffer is full
 		_outputFile.write(reinterpret_cast<char *>(_outputBuffer->data()), SSD_PAGE_SIZE);
-		#if defined(VERBOSEL1)
+		#if defined(VERBOSEL2)
 		traceprintf ("Run %d: output buffer flushed with %llu rows produced\n", _runNumber, _produced);
 		#endif
 		output = _outputBuffer->copy(row);

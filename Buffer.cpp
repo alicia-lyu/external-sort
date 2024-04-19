@@ -1,10 +1,10 @@
 #include "Buffer.h"
 
-Buffer::Buffer (u_int16_t count, RowSize size):
-    count (count), size (size), _engine(_device()), _device(),_distribution(0, RANDOM_BYTE_UPPER_BOUND - 1)
+Buffer::Buffer (u_int16_t recordCount, RowSize recordSize):
+    recordCount (recordCount), recordSize (recordSize), _engine(_device()), _device(),_distribution(0, RANDOM_BYTE_UPPER_BOUND - 1)
 {
     TRACE (false);
-    _rows = (byte *) malloc(size * count * sizeof(byte));
+    _rows = (byte *) malloc(recordSize * recordCount * sizeof(byte));
     _read = _rows;
     _filled = _rows;
 }
@@ -43,45 +43,46 @@ byte Buffer::getRandomAlphaNumeric ()
 
 byte * Buffer::fillRandomly ()
 {
-    if (_filled >= _rows + size * count) {
-        // traceprintf("Buffer is full, overwriting the first row\n");
+    if (_filled >= _rows + recordSize * recordCount) {
         // CODE IMPROVEMENT: uniformize the behavior of overwriting the first row (return nullptr to indicate the end of the buffer)
         _filled = _rows;
     }
-    std::generate(_filled, _filled + size, [this](){ return getRandomAlphaNumeric(); });
-    _filled += size;
-    return _filled - size;
+    std::generate(_filled, _filled + recordSize, [this](){ return getRandomAlphaNumeric(); });
+    _filled += recordSize;
+    return _filled - recordSize;
 }
 
 byte * Buffer::copy (byte const * source)
 {
-    if (_filled >= _rows + size * count) {
+    if (_filled >= _rows + recordSize * recordCount) {
         // traceprintf("Buffer is full.\n");
         _filled = _rows;
         return nullptr;
     }
-    std::copy(source, source + size, _filled);
-    _filled += size;
-    return _filled - size;
+    std::copy(source, source + recordSize, _filled);
+    _filled += recordSize;
+    return _filled - recordSize;
 }
 
 byte * Buffer::next ()
 {
-    if (_read >= _rows + size * count || _read > _filled) { 
+    if (_read >= _rows + recordSize * recordCount || _read > _filled) { 
         // If reaches the end of the buffer, return nullptr and reset _read to the beginning of the buffer.
         _read = _rows;
         return nullptr;
     }
-    _read += size;
-    return _read - size;
+    _read += recordSize;
+    return _read - recordSize;
 }
 
 byte * Buffer::batchFillByOverwrite (u_int64_t toBeFilled)
 {
-    if (toBeFilled > size * count) {
+    if (toBeFilled > recordSize * recordCount) {
         throw std::runtime_error("Buffer overflow");
-    } else if (toBeFilled < size * count) {
-        traceprintf("Buffer under-filled %llu / %d.\n", toBeFilled, size * count);
+    } else if (toBeFilled < recordSize * recordCount) {
+        #if defined(VERBOSEL1) || defined(VERBOSEL2)
+        traceprintf("Buffer under-filled %llu / %d.\n", toBeFilled, recordSize * recordCount);
+        #endif
     }
     _filled = _rows + toBeFilled;
     _read = _rows;

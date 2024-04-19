@@ -129,7 +129,7 @@ vector<string> SortIterator::_createInitialRuns () // metrics
 SortedRecordRenderer * SortIterator::_externalSort ()
 {
 	vector<string> runNames = _createInitialRuns(); // runNames is modified in this function, as it is passed by reference
-	u_int16_t inputBufferCount = MEMORY_SIZE / SSD_PAGE_SIZE - 1 - READ_AHEAD_BUFFERS; // TODO: Implement read-ahead buffers
+	u_int16_t inputBufferCount = MEMORY_SIZE / SSD_PAGE_SIZE - 1 - READ_AHEAD_BUFFERS_MIN; // TODO: Implement read-ahead buffers
 	u_int8_t totalPasses = std::ceil(std::log(runNames.size()) / std::log(inputBufferCount));
 	traceprintf ("Total passes: %d\n", totalPasses);
 	SortedRecordRenderer * renderer = new ExternalRenderer(_plan->_size, runNames, totalPasses); // last pass: output

@@ -14,9 +14,9 @@ using std::uniform_int_distribution;
 class Buffer // an in-memory buffer
 {
 public:
-    u_int16_t count; // max: 100 MB / 20 B = 5 * 10^3 = 2^13
-    RowSize size;
-    Buffer (u_int16_t count, RowSize size);
+    u_int16_t const recordCount; // max: 100 MB / 20 B = 5 * 10^3 = 2^13
+    RowSize const recordSize;
+    Buffer (u_int16_t recordCount, RowSize recordSize);
     ~Buffer ();
     byte * fillRandomly(); // Fill the first bytes not filled yet with random bytes. Return the pointer to the filled bytes.
     byte * copy(byte const * source); // Copy the source to the first bytes not filled yet. Return the pointer to the filled bytes.
@@ -25,7 +25,7 @@ public:
     void reset() { _read = _rows; _filled = _rows; };
     byte * data() { return _rows; };
     u_int64_t sizeFilled() { return _filled - _rows; };
-
+    u_int64_t sizeRead() { return _read - _rows; };
     // alpha numeric characters
     static byte toAlphaNumeric(const byte randomByte);
 private:

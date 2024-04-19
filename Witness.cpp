@@ -28,7 +28,11 @@ WitnessIterator::WitnessIterator (WitnessPlan const * const plan) :
     for (RowSize i = 0; i < _plan->_size; ++i) {
         parity[i] = 0xFF;
     }
-    // traceprintf ("Initialized parity %s\n", rowToHexString(parity, _plan->_size).c_str());
+
+    #if defined(VERBOSEL2) || defined(VERBOSEL1)
+    traceprintf ("Initialized parity with size %d: %s\n", 
+        _plan->_size, rowToHexString(parity, _plan->_size).c_str());
+    #endif
 } // WitnessIterator::WitnessIterator
 
 WitnessIterator::~WitnessIterator ()

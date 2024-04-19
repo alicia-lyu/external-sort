@@ -57,7 +57,7 @@ test : Test.exe Makefile $(LOG_DIR) ./inputs/
 
 dup : Test.exe Makefile $(LOG_DIR) ./inputs/
 	echo $(TIMESTAMP) > $(LOG_FILE)
-	./Test.exe -c 100 -s 1 -o $(LOG_FILE) -d >> $(LOG_FILE)
+	./Test.exe -c 4000 -s 2 -o $(LOG_FILE) -d >> $(LOG_FILE)
 
 # Small test plan: Memory size = 100 KB, SSD page size = 2 KB
 # 50 pages per buffer, 98 KB per memory run

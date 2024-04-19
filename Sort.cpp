@@ -121,7 +121,6 @@ vector<string> SortIterator::_createInitialRuns () // metrics
 	vector<string> runNames;
 	while (_consumed < _plan->_count) {
 		SortedRecordRenderer * renderer = _formInMemoryRenderer(_consumed);
-		int i;
 		string runName = renderer->run();
 		runNames.push_back(runName);
 	}

@@ -38,11 +38,13 @@ string SortedRecordRenderer::run ()
 
 byte * SortedRecordRenderer::_addRowToOutputBuffer(byte * row)
 {
+	if (row == nullptr) return nullptr;
 	byte * output = _outputBuffer->copy(row);
 	while (output == nullptr) { // Output buffer is full
 		_outputFile.write((char *) _outputBuffer->data(), SSD_PAGE_SIZE);
 		output = _outputBuffer->copy(row);
 	}
+	return output;
 } // SortedRecordRenderer::_addRowToOutputBuffer
 
 NaiveRenderer::NaiveRenderer (RowSize recordSize, TournamentTree * tree, u_int16_t runNumber) :
@@ -75,7 +77,7 @@ void NaiveRenderer::print ()
 } // NaiveRenderer::print
 
 CacheOptimizedRenderer::CacheOptimizedRenderer (RowSize recordSize, vector<TournamentTree *> &cacheTrees, u_int16_t runNumber) : 
-	SortedRecordRenderer(recordSize, _getOutputFileName()), _recordSize (recordSize), _cacheTrees (cacheTrees), _runNumber (runNumber)
+	SortedRecordRenderer(recordSize, _getOutputFileName()), _recordSize (recordSize), _runNumber (runNumber), _cacheTrees (cacheTrees)
 {
 	TRACE (true);
     std::vector<byte *> formingRows;

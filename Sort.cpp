@@ -124,6 +124,9 @@ vector<string> SortIterator::_createInitialRuns () // metrics
 		string runName = renderer->run();
 		runNames.push_back(runName);
 	}
+	#ifdef VERBOSEL1
+	traceprintf ("Created %lu initial runs\n", runNames.size());
+	#endif
 	return runNames;
 }
 

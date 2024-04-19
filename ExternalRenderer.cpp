@@ -2,7 +2,7 @@
 #include "utils.h"
 
 ExternalRenderer::ExternalRenderer (RowSize recordSize, vector<string> runFileNames, u_int32_t pageSize, u_int64_t memorySpace, u_int16_t rendererNumber) :  // 500 KB = 2^19
-    SortedRecordRenderer(recordSize, _getOutputDir(), rendererNumber), _pageSize (pageSize), _inputBufferCount (memorySpace / pageSize - 1 - _readAheadBufferCount), _pass (1)
+    _pageSize (pageSize), _inputBufferCount (memorySpace / pageSize - 1 - _readAheadBufferCount), _pass (1), SortedRecordRenderer(recordSize, 1, rendererNumber)
 {
     traceprintf("Renderer %d, merging %zu run files with %hu input buffers\n", _runNumber, runFileNames.size(), _inputBufferCount);
     // Multi-pass merge
@@ -69,7 +69,6 @@ byte * ExternalRenderer::next ()
 
 string ExternalRenderer::_getOutputDir ()
 {
-    string topDir;
     return string(".") + SEPARATOR + string("spills") + SEPARATOR + string("pass") +std::to_string(_pass);
 } // ExternalRenderer::getOutputFileName
 

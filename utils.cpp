@@ -65,8 +65,9 @@ Config getArgs(int argc, char* argv[])
 
     // check record size range
     if (config.recordSize < 20 || config.recordSize > 2000) {
-        std::cerr << "Expected record size between 20 and 2000, got " << config.recordSize << '\n';
-        exit(1);
+        std::cerr << "Warning: Expected record size between 20 and 2000, got " << config.recordSize << '\n';
+        // do not exit, let the program continue
+        // exit(1);
     }
 
     return config;

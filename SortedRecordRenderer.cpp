@@ -5,12 +5,16 @@
 #include <filesystem>
 #include <cmath>
 
-SortedRecordRenderer::SortedRecordRenderer (RowSize recordSize, string outputFileName) :
-	_recordSize (recordSize), _outputFileName (outputFileName)
+SortedRecordRenderer::SortedRecordRenderer (RowSize recordSize, string outputDir, u_int16_t runNumber) :
+	_recordSize (recordSize), _runNumber (runNumber)
 {
 	TRACE (false);
 	_outputBuffer = new Buffer(SSD_PAGE_SIZE, _recordSize);
-	_outputFile = ofstream(outputFileName, std::ios::binary);
+	_outputFileName = _getOutputFileName(outputDir);
+	_outputFile = ofstream(_outputFileName, std::ios::binary);
+	#ifdef VERBOSEL1 || VERBOSEL2
+	traceprintf ("Run %d: output file %s\n", _runNumber, _outputFileName.c_str());
+	#endif
 } // SortedRecordRenderer::SortedRecordRenderer
 
 SortedRecordRenderer::~SortedRecordRenderer ()
@@ -47,8 +51,13 @@ byte * SortedRecordRenderer::_addRowToOutputBuffer(byte * row)
 	return output;
 } // SortedRecordRenderer::_addRowToOutputBuffer
 
+string SortedRecordRenderer::_getOutputFileName (string outputDir)
+{
+	return outputDir + SEPARATOR + string("run") + std::to_string(_runNumber) + string(".bin");
+} // SortedRecordRenderer::_getOutputFileName
+
 NaiveRenderer::NaiveRenderer (RowSize recordSize, TournamentTree * tree, u_int16_t runNumber) :
-	SortedRecordRenderer(recordSize, _getOutputFileName()), _tree(tree), _runNumber (runNumber)
+	SortedRecordRenderer(recordSize, _getOutputDir(), runNumber), _tree(tree)
 {
 	TRACE (true);
 } // NaiveRenderer::NaiveRenderer
@@ -66,9 +75,9 @@ byte * NaiveRenderer::next ()
 	return row;
 } // NaiveRenderer::next
 
-string NaiveRenderer::_getOutputFileName ()
+string NaiveRenderer::_getOutputDir ()
 {
-	return string(".") + SEPARATOR + string("spills") + SEPARATOR + string("pass") + std::to_string(0) + SEPARATOR + string("run") + std::to_string(_runNumber) + string(".bin");
+	return string(".") + SEPARATOR + string("spills") + SEPARATOR + string("pass") + std::to_string(0);
 } // NaiveRenderer::_getOutputFileName
 
 void NaiveRenderer::print ()
@@ -77,7 +86,7 @@ void NaiveRenderer::print ()
 } // NaiveRenderer::print
 
 CacheOptimizedRenderer::CacheOptimizedRenderer (RowSize recordSize, vector<TournamentTree *> &cacheTrees, u_int16_t runNumber) : 
-	SortedRecordRenderer(recordSize, _getOutputFileName()), _recordSize (recordSize), _runNumber (runNumber), _cacheTrees (cacheTrees)
+	SortedRecordRenderer(recordSize, _getOutputDir(), runNumber), _cacheTrees (cacheTrees)
 {
 	TRACE (true);
     std::vector<byte *> formingRows;
@@ -122,9 +131,9 @@ byte * CacheOptimizedRenderer::next ()
 	return rendered;
 } // CacheOptimizedRenderer::next
 
-string CacheOptimizedRenderer::_getOutputFileName ()
+string CacheOptimizedRenderer::_getOutputDir ()
 {
-	return string(".") + SEPARATOR + string("spills") + SEPARATOR + string("pass") + std::to_string(0) + SEPARATOR + string("run") + std::to_string(_runNumber) + string(".bin");
+	return string(".") + SEPARATOR + string("spills") + SEPARATOR + string("pass") + std::to_string(0);
 } // CacheOptimizedRenderer::_getOutputFileName
 
 void CacheOptimizedRenderer::print ()

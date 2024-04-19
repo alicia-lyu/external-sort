@@ -2,9 +2,9 @@
 #include "utils.h"
 
 ExternalRenderer::ExternalRenderer (RowSize recordSize, vector<string> runFileNames, u_int32_t pageSize, u_int64_t memorySpace, u_int16_t rendererNumber) :  // 500 KB = 2^19
-    SortedRecordRenderer(recordSize, _getOutputFileName()), _pageSize (pageSize), _inputBufferCount (memorySpace / pageSize - 1 - _readAheadBufferCount), _pass (1), _rendererNumber (rendererNumber)
+    SortedRecordRenderer(recordSize, _getOutputDir(), rendererNumber), _pageSize (pageSize), _inputBufferCount (memorySpace / pageSize - 1 - _readAheadBufferCount), _pass (1)
 {
-    traceprintf("Renderer %d, merging %zu run files with %hu input buffers\n", _rendererNumber, runFileNames.size(), _inputBufferCount);
+    traceprintf("Renderer %d, merging %zu run files with %hu input buffers\n", _runNumber, runFileNames.size(), _inputBufferCount);
     // Multi-pass merge
     while (runFileNames.size() > _inputBufferCount) {
         u_int16_t rendererCount = 0;
@@ -67,10 +67,10 @@ byte * ExternalRenderer::next ()
     return output;
 } // ExternalRenderer::next
 
-string ExternalRenderer::_getOutputFileName ()
+string ExternalRenderer::_getOutputDir ()
 {
     string topDir;
-    return string(".") + SEPARATOR + string("spills") + SEPARATOR + string("pass") +std::to_string(_pass) + SEPARATOR + string("run") + std::to_string(_rendererNumber) + string(".bin");
+    return string(".") + SEPARATOR + string("spills") + SEPARATOR + string("pass") +std::to_string(_pass);
 } // ExternalRenderer::getOutputFileName
 
 void ExternalRenderer::print ()

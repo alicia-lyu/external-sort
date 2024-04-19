@@ -59,7 +59,7 @@ byte * SortIterator::next ()
 } // SortIterator::next
 
 
-SortedRecordRenderer * SortIterator::_formInMemoryRenderer (RowCount base)
+SortedRecordRenderer * SortIterator::_formInMemoryRenderer (RowCount base, u_int16_t runNumber)
 {
 	#if defined(VERBOSEL1) || defined(VERBOSEL2)
 	traceprintf ("Forming in-memory renderer with %u rows\n", _plan->_recordCountPerRun);
@@ -108,7 +108,7 @@ SortedRecordRenderer * SortIterator::_formInMemoryRenderer (RowCount base)
 		cacheTrees.push_back(tree);
 	}
 
-	SortedRecordRenderer * renderer = new CacheOptimizedRenderer(_plan->_size, cacheTrees);
+	SortedRecordRenderer * renderer = new CacheOptimizedRenderer(_plan->_size, cacheTrees, runNumber);
 	
 	// NaiveRenderer: Not cache-optimized
 	// TournamentTree * tree = new TournamentTree(rows, _plan->_size);
@@ -120,7 +120,7 @@ vector<string> SortIterator::_createInitialRuns () // metrics
 {
 	vector<string> runNames;
 	while (_consumed < _plan->_count) {
-		SortedRecordRenderer * renderer = _formInMemoryRenderer(_consumed);
+		SortedRecordRenderer * renderer = _formInMemoryRenderer(_consumed, runNames.size());
 		string runName = renderer->run();
 		runNames.push_back(runName);
 	}

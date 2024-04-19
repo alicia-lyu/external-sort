@@ -10,8 +10,6 @@ Node::Node (byte * data, RowSize size, u_int16_t bufferNum, Node * farthestLoser
     bufferNum (bufferNum), farthestLoser (farthestLoser)
 {   
     TRACE (false);
-    string recordContent = rowToHexString(data, _size);
-    // traceprintf("Node created with bufferNum %d and data %s\n", bufferNum, recordContent.c_str());
 }
 
 Node::~Node ()

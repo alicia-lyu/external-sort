@@ -11,7 +11,7 @@ using std::ofstream;
 class SortedRecordRenderer
 {
 public:
-	SortedRecordRenderer (RowSize recordSize, string outputFileName);
+	SortedRecordRenderer (RowSize recordSize, string outputDir, u_int16_t runNumber);
 	virtual ~SortedRecordRenderer ();
 	virtual byte * next () = 0;
     string run(); // Render all sorted records and store to a file, return the file name
@@ -20,7 +20,9 @@ protected:
     ofstream _outputFile;
     RowSize _recordSize;
     string _outputFileName;
-    virtual string _getOutputFileName() = 0;
+    u_int16_t _runNumber;
+    virtual string _getOutputDir() = 0;
+    string _getOutputFileName(string outputDir);
     byte * _addRowToOutputBuffer(byte * row); // return pointer to the row in output buffer
 };
 
@@ -33,8 +35,7 @@ public:
     void print();
 private:
     TournamentTree * _tree;
-    u_int16_t _runNumber;
-    string _getOutputFileName();
+    string _getOutputDir();
 };
 
 class CacheOptimizedRenderer : public SortedRecordRenderer
@@ -45,9 +46,7 @@ public:
     byte * next();
     void print();
 private:
-    RowSize _recordSize;
-    u_int16_t _runNumber;
     TournamentTree * _tree;
     vector<TournamentTree *> _cacheTrees;
-    string _getOutputFileName();
+    string _getOutputDir();
 };

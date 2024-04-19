@@ -15,17 +15,17 @@ SCRS=
 HDRS=	defs.h params.h\
 		Iterator.h Scan.h Filter.h Sort.h \
 		utils.h Buffer.h Witness.h TournamentTree.h, SortedRecordRenderer.h \
-		ExternalRenderer.h ExternalRun.h Verify.h
+		ExternalRenderer.h ExternalRun.h Verify.h Remove.h
 SRCS=	defs.cpp Assert.cpp Test.cpp \
 		Iterator.cpp Scan.cpp Filter.cpp Sort.cpp \
 		utils.cpp Buffer.cpp Witness.cpp TournamentTree.cpp SortedRecordRenderer.cpp \
-		ExternalRenderer.cpp ExternalRun.cpp Verify.cpp
+		ExternalRenderer.cpp ExternalRun.cpp Verify.cpp Remove.cpp
 
 # compilation targets
 OBJS=	defs.o Assert.o Test.o \
 		Iterator.o Scan.o Filter.o Sort.o \
 		utils.o Buffer.o Witness.o TournamentTree.o SortedRecordRenderer.o \
-		ExternalRenderer.o ExternalRun.o Verify.o
+		ExternalRenderer.o ExternalRun.o Verify.o Remove.o
 
 # RCS assists
 REV=-q -f
@@ -53,7 +53,11 @@ $(LOG_DIR) :
 
 test : Test.exe Makefile $(LOG_DIR) ./inputs/
 	echo $(TIMESTAMP) > $(LOG_FILE)
-	./Test.exe -c 7 -s 20 -o $(LOG_FILE) >> $(LOG_FILE)
+	./Test.exe -c 7 -s 20 -o $(LOG_FILE) -d >> $(LOG_FILE)
+
+dup : Test.exe Makefile $(LOG_DIR) ./inputs/
+	echo $(TIMESTAMP) > $(LOG_FILE)
+	./Test.exe -c 4000 -s 2 -o $(LOG_FILE) -d >> $(LOG_FILE)
 
 # Small test plan: Memory size = 100 KB, SSD page size = 2 KB
 # 50 pages per buffer, 98 KB per memory run
@@ -99,6 +103,7 @@ Sort.o : Sort.h
 utils.o: utils.h
 Witness.o: Witness.h
 Verify.o: Verify.h
+Remove.o: Remove.h
 TournamentTree.o: TournamentTree.h
 SortedRecordRenderer.o: SortedRecordRenderer.h
 ExternalRun.o: ExternalRun.h

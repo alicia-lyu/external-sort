@@ -4,7 +4,9 @@
 ExternalRun::ExternalRun (std::string runFileName, u_int32_t pageSize, RowSize recordSize, u_int16_t & readAheadBuffers, double readAheadThreshold) :
     _readAheadBuffers (readAheadBuffers), _readAheadThreshold (readAheadThreshold), _readAheadPage (nullptr), _runFileName (runFileName), _pageSize (pageSize), _recordSize (recordSize), _produced (0)
 {
+    #ifdef VERBOSEL2
     traceprintf("Creating run from file %s\n", runFileName.c_str());
+    #endif
     _runFile = std::ifstream(runFileName, std::ios::binary);
     _currentPage = new Buffer(pageSize / recordSize, recordSize);
     _fillPage(_currentPage);
@@ -34,7 +36,7 @@ byte * ExternalRun::next ()
             _currentPage = _readAheadPage;
             _readAheadPage = nullptr;
             ++ _readAheadBuffers;
-            #if defined(VERBOSEL1) || defined(VERBOSEL2)
+            #if defined(VERBOSEL2)
             traceprintf("Switching to read-ahead page, remaining read ahead buffers: %d\n", _readAheadBuffers);
             #endif
         } else { // We need to read a new page (blocking I/O)
@@ -61,7 +63,7 @@ u_int32_t ExternalRun::_fillPage (Buffer * page) // metrics
     TRACE (false);
     if (_runFile.eof()) throw std::invalid_argument("Reaches end of the run file unexpectedly.");
     if (_runFile.good() == false) throw std::invalid_argument("Error reading from run file.");
-    #if defined(VERBOSEL1) || defined(VERBOSEL2)
+    #if defined(VERBOSEL2)
     traceprintf("Filling %s page from run file %s\n", page == _currentPage ? "current" : "read-ahead", _runFileName.c_str());
     #endif
     _runFile.read((char *) page->data(), _pageSize);

@@ -80,7 +80,7 @@ byte * Buffer::batchFillByOverwrite (u_int64_t toBeFilled)
     if (toBeFilled > recordSize * recordCount) {
         throw std::runtime_error("Buffer overflow");
     } else if (toBeFilled < recordSize * recordCount) {
-        #if defined(VERBOSEL1) || defined(VERBOSEL2)
+        #if defined(VERBOSEL2)
         traceprintf("Buffer under-filled %llu / %d.\n", toBeFilled, recordSize * recordCount);
         #endif
     }

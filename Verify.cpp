@@ -1,27 +1,31 @@
 #include "Verify.h"
 #include "utils.h"
 
-VerifyPlan::VerifyPlan(Plan * const input, RowSize const size)
-    : _input(input), _size(size)
+VerifyPlan::VerifyPlan(Plan * const input, RowSize const size, bool descending)
+    : _input(input), _size(size), _descending(descending)
 {
+    TRACE(false);
 } // VerifyPlan::VerifyPlan
 
 VerifyPlan::~VerifyPlan()
 {
+    TRACE(false);
     // delete the input plan as in the chain deletion
     delete _input;
 } // VerifyPlan::~VerifyPlan
 
 Iterator * VerifyPlan::init() const
 {
+    TRACE(false);
     return new VerifyIterator(this);
 } // VerifyPlan::init
 
 VerifyIterator::VerifyIterator(VerifyPlan const * const plan)
-    : _plan(plan), _input(_plan->_input->init()), _consumed(0), _produced(0)
+    : _plan(plan), _input(_plan->_input->init()), _consumed(0), _produced(0),
+        isSorted(true), hasDuplicates(false), _descending(_plan->_descending)
 {
+    TRACE(false);
     lastRow = nullptr;
-    isSorted = true;
 } // VerifyIterator::VerifyIterator
 
 VerifyIterator::~VerifyIterator()
@@ -29,11 +33,14 @@ VerifyIterator::~VerifyIterator()
     TRACE (false);
 
     delete _input;
-    traceprintf("Result is %s\n", isSorted ? "sorted" : "not sorted");
+    traceprintf("Result is %s %s\n", isSorted ? "sorted" : "not sorted", _descending ? "descending" : "ascending");
+    traceprintf("Result has %s\n", hasDuplicates ? "duplicates" : "no duplicates");
 
+    #if defined(VERBOSEL2) || defined(VERBOSEL1)
     traceprintf ("produced %lu of %lu rows\n",
 			(unsigned long) (_produced),
 			(unsigned long) (_consumed));
+    #endif
 } // VerifyIterator::~VerifyIterator
 
 byte * VerifyIterator::next()
@@ -44,21 +51,32 @@ byte * VerifyIterator::next()
     if (received == nullptr) {
         return nullptr;
     } else {
-        byte * row = received;
         ++ _consumed;
         if (lastRow != nullptr) {
-            if (memcmp(lastRow, row, _plan->_size) > 0) {
-                // TODO: Add in-stream duplicate removal
+            auto cmp = memcmp(lastRow, received, _plan->_size);
+            if (_descending ? cmp < 0 : cmp > 0) {
                 isSorted = false;
+
+                #ifdef VERBOSEL2
+                traceprintf ("#%lu not sorted with value %s\n", (unsigned long) (_consumed), rowToString(received, _plan->_size).c_str());
+                #endif
+            }
+            else if (cmp == 0) {
+                // TODO: Add in-stream duplicate removal
+                hasDuplicates = true;
+
+                #ifdef VERBOSEL2
+                traceprintf ("#%lu has duplicates with value %s\n", (unsigned long) (_consumed), rowToString(received, _plan->_size).c_str());
+                #endif
             }
         }
-        lastRow = row;
+        lastRow = received;
         ++ _produced;
 
         #ifdef VERBOSEL2
         traceprintf ("#%llu consumed %s\n", _consumed, rowToString(received, _plan->_size).c_str());
         #endif
         
-        return row;
+        return received;
     }
 } // VerifyIterator::next

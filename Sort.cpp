@@ -71,10 +71,6 @@ SortedRecordRenderer * SortIterator::_formInMemoryRenderer (RowCount base, u_int
 		if (received == nullptr) break;
 		rows.push_back(received);
 		++ _consumed;
-
-		#ifdef VERBOSEL2
-		traceprintf ("#%llu consumed %s\n", _consumed, rowToString(received, _plan->_size).c_str());
-		#endif
 	}
 
 	#if defined(VERBOSEL1) || defined(VERBOSEL2)

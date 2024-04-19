@@ -9,7 +9,7 @@ class SortPlan : public Plan
 {
 	friend class SortIterator;
 public:
-	SortPlan (Plan * const input, RowSize const size, RowCount const count);
+	SortPlan (Plan * const input, RowSize const size, RowCount const count, bool removeDuplicates = false);
 	~SortPlan ();
 	Iterator * init () const;
 private:
@@ -17,6 +17,7 @@ private:
 	RowSize const _size;
 	RowCount const _count;
 	u_int32_t _recordCountPerRun; // Changes when spill to HDD
+	bool _removeDuplicates;
 }; // class SortPlan
 
 class SortIterator : public Iterator

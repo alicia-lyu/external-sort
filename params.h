@@ -5,3 +5,5 @@
 
 #define SSD_PAGE_SIZE 2000 // Change to 20 KB
 #define HDD_PAGE_SIZE 50000 // Change to 500 KB
+
+#define READ_AHEAD_BUFFERS 0

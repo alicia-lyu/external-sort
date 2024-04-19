@@ -51,6 +51,9 @@ $(LOG_DIR) :
 ./spills/pass1:
 	mkdir -p ./spills/pass1
 
+./spills/pass2:
+	mkdir -p ./spills/pass2
+
 test : Test.exe Makefile $(LOG_DIR) ./inputs/
 	echo $(TIMESTAMP) > $(LOG_FILE)
 	./Test.exe -c 7 -s 20 -o $(LOG_FILE) -d >> $(LOG_FILE)
@@ -60,22 +63,22 @@ dup : Test.exe Makefile $(LOG_DIR) ./inputs/
 	./Test.exe -c 4000 -s 2 -o $(LOG_FILE) -d >> $(LOG_FILE)
 
 # Small test plan: Memory size = 100 KB, SSD page size = 2 KB
-# 50 pages per buffer, 98 KB per memory run
+# 50 pages per memory, 98 KB per memory run
 
 # 200 KB data, 3 initial runs, 1 pass
-external: Test.exe Makefile $(LOG_DIR) ./inputs/ ./spills/pass0
+external: Test.exe Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1
 	echo $(TIMESTAMP) > $(LOG_FILE)
 	./Test.exe -c 10000 -s 20 -o $(LOG_FILE) >> $(LOG_FILE)
 
-external-lldb: Test.exe Makefile $(LOG_DIR) ./inputs/ ./spills/pass0
+external-lldb: Test.exe Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1
 	lldb -- ./Test.exe -c 10000 -s 20 -o $(LOG_FILE)
 
 # 8 MB data, 82 initial runs, 2 pass-1 runs, 2 pass
-external-2: Test.exe Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1
+external-2: Test.exe Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1 ./spills/pass2
 	echo $(TIMESTAMP) > $(LOG_FILE)
 	./Test.exe -c 40000 -s 200 -o $(LOG_FILE) >> $(LOG_FILE)
 
-external-2-lldb: Test.exe Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1
+external-2-lldb: Test.exe Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1 ./spills/pass2
 	lldb -- ./Test.exe -c 40000 -s 200 -o $(LOG_FILE)
 
 # TODO: external-sort on HDD: 100 MB can be divided into 200 pages of 500KB each

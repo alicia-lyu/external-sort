@@ -10,11 +10,11 @@ SortedRecordRenderer::SortedRecordRenderer (RowSize recordSize, u_int8_t pass, u
 	_recordSize (recordSize), _produced (0)
 {
 	TRACE (false);
-	_outputBuffer = new Buffer(SSD_PAGE_SIZE, _recordSize);
+	_outputBuffer = new Buffer(SSD_PAGE_SIZE / _recordSize, _recordSize);
 	_outputFileName = _getOutputFileName(pass, runNumber);
 	_outputFile = ofstream(_outputFileName, std::ios::binary);
-	#ifdef VERBOSEL1 || VERBOSEL2
-	traceprintf ("Run %d: output file %s\n", _runNumber, _outputFileName.c_str());
+	#if defined(VERBOSEL1) || defined(VERBOSEL2)
+	traceprintf ("Run %d: output file %s\n", runNumber, _outputFileName.c_str());
 	#endif
 } // SortedRecordRenderer::SortedRecordRenderer
 
@@ -33,11 +33,9 @@ string SortedRecordRenderer::run ()
     TRACE (false);
     byte * row = next();
     while (row != nullptr) {
-		++ _produced;
-		_addRowToOutputBuffer(row);
         row = next();
     }
-	#ifdef VERBOSEL1 || VERBOSEL2
+	#if defined(VERBOSEL2)
 	traceprintf ("%s: produced %llu rows\n", _outputFileName.c_str(), _produced);
 	#endif
 	_outputFile.write(reinterpret_cast<char *>(_outputBuffer->data()), _outputBuffer->sizeFilled());
@@ -51,11 +49,12 @@ byte * SortedRecordRenderer::_addRowToOutputBuffer(byte * row)
 	byte * output = _outputBuffer->copy(row);
 	while (output == nullptr) { // Output buffer is full
 		_outputFile.write(reinterpret_cast<char *>(_outputBuffer->data()), SSD_PAGE_SIZE);
-		#ifdef VERBOSEL1 || VERBOSEL2
-		traceprintf ("Run %d: output buffer flushed with the first row being %s\n", _runNumber, rowToString(_outputBuffer->data(), _recordSize).c_str());
+		#if defined(VERBOSEL1)
+		traceprintf ("Run %d: output buffer flushed with %llu rows produced\n", _runNumber, _produced);
 		#endif
 		output = _outputBuffer->copy(row);
 	}
+	++ _produced;
 	return output;
 } // SortedRecordRenderer::_addRowToOutputBuffer
 

@@ -2,7 +2,7 @@
 #include "utils.h"
 
 ExternalRun::ExternalRun (std::string runFileName, u_int32_t pageSize, RowSize recordSize) :
-    _runFileName (runFileName), _pageSize (pageSize), _recordSize (recordSize), _pageCount (1)
+    _runFileName (runFileName), _pageSize (pageSize), _recordSize (recordSize), _pageCount (1), _produced (0)
 {
     traceprintf("Creating run from file %s\n", runFileName.c_str());
     _runFile = std::ifstream(runFileName, std::ios::binary);
@@ -15,6 +15,7 @@ ExternalRun::~ExternalRun ()
     TRACE (false);
     delete inMemoryPage;
     _runFile.close();
+    traceprintf("Produced %lu rows from run file %s\n", _produced, _runFileName.c_str());
 } // ExternalRun::~ExternalRun
 
 byte * ExternalRun::next ()
@@ -33,7 +34,7 @@ byte * ExternalRun::next ()
         // Reaches end of the run after attempting to read a new page
         row = inMemoryPage->next();
     }
-    // traceprintf("Read %s from run file %s\n", rowToHexString(row, _recordSize).c_str(), _runFileName.c_str());
+    ++ _produced;
     return row;
 } // ExternalRun::next
 

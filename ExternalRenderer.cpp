@@ -1,41 +1,45 @@
 #include "ExternalRenderer.h"
 #include "utils.h"
 
-ExternalRenderer::ExternalRenderer (RowSize recordSize, vector<string> runFileNames, u_int32_t pageSize, u_int64_t memorySpace, u_int16_t rendererNumber) :  // 500 KB = 2^19
-    _pageSize (pageSize), _inputBufferCount (memorySpace / pageSize - 1 - _readAheadBufferCount), _pass (1), SortedRecordRenderer(recordSize, 1, rendererNumber)
+ExternalRenderer::ExternalRenderer (RowSize recordSize, vector<string> runFileNames, u_int8_t pass, u_int16_t rendererNumber) :  // 500 KB = 2^19
+    SortedRecordRenderer(recordSize, pass, rendererNumber), _pass (pass)
 {
-    traceprintf("Renderer %d, merging %zu run files with %hu input buffers\n", _runNumber, runFileNames.size(), _inputBufferCount);
-    // Multi-pass merge
-    while (runFileNames.size() > _inputBufferCount) {
+    u_int16_t inputBufferCount = MEMORY_SIZE / SSD_PAGE_SIZE - 1 - READ_AHEAD_BUFFERS;
+    traceprintf("Pass %hhu Renderer %d, merging %zu run files with %hu input buffers\n", _pass, _runNumber, runFileNames.size(), inputBufferCount);
+    
+    // Incur one pass above
+    if (runFileNames.size() > inputBufferCount) {
         u_int16_t rendererCount = 0;
         _pass++;
-        traceprintf("Pass %hhu\n", _pass);
+        int runCountNextPass = std::ceil(runFileNames.size() / inputBufferCount); 
+        // if still too many runs, will be merged in the constructors next pass
         vector<string> mergedRunNames;
-        for (int i = 0; i < runFileNames.size(); i += _inputBufferCount) {
+        for (int i = 0; i < runFileNames.size(); i += runCountNextPass) {
             rendererCount++;
             vector<string> subRunFileNames(
                 runFileNames.begin() + i,
-                runFileNames.begin() + std::min(i + _inputBufferCount, (int) runFileNames.size())
+                runFileNames.begin() + std::min(i + runCountNextPass, (int) runFileNames.size())
             );
-            // print all subRunFileNames
+            #ifdef VERBOSEL2
             for (auto subRunFileName : subRunFileNames) {
                 traceprintf("Sub-run file %s\n", subRunFileName.c_str());
             }
-            ExternalRenderer * renderer = new ExternalRenderer(recordSize, subRunFileNames, pageSize, memorySpace, rendererCount); // subRunFileNames will be copied
+            #endif
+            ExternalRenderer * renderer = new ExternalRenderer(recordSize, subRunFileNames, pass - 1, rendererCount); // subRunFileNames will be copied
             mergedRunNames.push_back(renderer->run()); // TODO: Graceful degradation
             delete renderer;
         }
         runFileNames = mergedRunNames;
     }
+
     // Ready to render sorted records
     vector<byte *> formingRows;
     for (auto runFileName : runFileNames) {
-        ExternalRun * run = new ExternalRun(runFileName, _pageSize, _recordSize);
+        ExternalRun * run = new ExternalRun(runFileName, SSD_PAGE_SIZE, _recordSize);
         _runs.push_back(run);
         formingRows.push_back(run->next());
     }
     _tree = new TournamentTree(formingRows, _recordSize);
-	// this->print();
 } // ExternalRenderer::ExternalRenderer
 
 ExternalRenderer::~ExternalRenderer ()
@@ -63,14 +67,11 @@ byte * ExternalRenderer::next ()
     } else {
         _tree->pushAndPoll(retrieved);
     }
-    // traceprintf("Produced %s\n", rowToHexString(output, _recordSize).c_str());
+    #ifdef VERBOSEL2
+    traceprintf("Produced %s\n", rowToString(output, _recordSize).c_str());
+    #endif
     return output;
 } // ExternalRenderer::next
-
-string ExternalRenderer::_getOutputDir ()
-{
-    return string(".") + SEPARATOR + string("spills") + SEPARATOR + string("pass") +std::to_string(_pass);
-} // ExternalRenderer::getOutputFileName
 
 void ExternalRenderer::print ()
 {

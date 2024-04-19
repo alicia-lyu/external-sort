@@ -120,7 +120,7 @@ vector<string> SortIterator::_createInitialRuns () // metrics
 		string runName = renderer->run();
 		runNames.push_back(runName);
 	}
-	#ifdef VERBOSEL1
+	#if defined(VERBOSEL1) || defined(VERBOSEL2)
 	traceprintf ("Created %lu initial runs\n", runNames.size());
 	#endif
 	return runNames;
@@ -129,6 +129,8 @@ vector<string> SortIterator::_createInitialRuns () // metrics
 SortedRecordRenderer * SortIterator::_externalSort ()
 {
 	vector<string> runNames = _createInitialRuns(); // runNames is modified in this function, as it is passed by reference
-	SortedRecordRenderer * renderer = new ExternalRenderer(_plan->_size, runNames, SSD_PAGE_SIZE, MEMORY_SIZE); // runNames is passed by value
+	u_int16_t inputBufferCount = MEMORY_SIZE / SSD_PAGE_SIZE - 1 - READ_AHEAD_BUFFERS; // TODO: Implement read-ahead buffers
+	u_int8_t totalPasses = std::ceil(std::log(runNames.size()) / std::log(inputBufferCount));
+	SortedRecordRenderer * renderer = new ExternalRenderer(_plan->_size, runNames, totalPasses); // last pass: output
 	return renderer;
 }

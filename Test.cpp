@@ -26,7 +26,17 @@ int main (int argc, char * argv [])
 	Plan * const scanPlan = new ScanPlan (recordCount, recordSize);
 	Plan * const witnessPlan = new WitnessPlan (scanPlan, recordSize);
 	Plan * const sortPlan = new SortPlan (witnessPlan, recordSize, recordCount);
-	Plan * const verifyPlan = new VerifyPlan (sortPlan, recordSize);
+
+	// if need to remove duplicates, apply in-stream duplicate removal
+	Plan * verifyPlan;
+	if (config.removeDuplicates) {
+		Plan * const removePlan = new InStreamRemovePlan (sortPlan, recordSize);
+		verifyPlan = new VerifyPlan (removePlan, recordSize);
+	}
+	else {
+		verifyPlan = new VerifyPlan (sortPlan, recordSize);
+	}
+	
 	Plan * const witnessPlan2 = new WitnessPlan (verifyPlan, recordSize);
 
 	Iterator * const it = witnessPlan2->init ();

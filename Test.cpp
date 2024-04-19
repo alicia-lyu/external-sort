@@ -6,9 +6,11 @@
 #include "Witness.h"
 #include "Verify.h"
 #include "Remove.h"
+#include "Metrics.h"
 
 int main (int argc, char * argv [])
 {
+	Metrics::Init();
 
 	RowCount recordCount;
 	RowSize recordSize; // 20-2000 bytes
@@ -38,6 +40,18 @@ int main (int argc, char * argv [])
 	// in its destructor, and create a chain deletion
 	delete it;
 	delete witnessPlan2;
+
+	// print the metrics
+	auto ssdMetrics = Metrics::getMetrics(STORAGE_SSD);
+	auto hddMetrics = Metrics::getMetrics(STORAGE_HDD);
+	traceprintf("SSD accessed %llu times and transferred %llu bytes\n",
+		ssdMetrics.numAccesses, ssdMetrics.numBytes);
+	traceprintf("SSD total latency: %.2f (ms), total IO latency: %.2f (ms)\n",
+		ssdMetrics.accessCost * 1000, ssdMetrics.dataTransferCost * 1000);
+	traceprintf("HDD accessed %llu times and transferred %llu bytes\n",
+		hddMetrics.numAccesses, hddMetrics.numBytes);
+	traceprintf("HDD total latency: %.2f (ms), total IO latency: %.2f (ms)\n",
+		hddMetrics.accessCost * 1000, hddMetrics.dataTransferCost * 1000);
 
 	return 0;
 } // main

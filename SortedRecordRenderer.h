@@ -2,6 +2,7 @@
 
 #include "TournamentTree.h"
 #include "params.h"
+#include "Metrics.h"
 #include <vector>
 #include <fstream>
 

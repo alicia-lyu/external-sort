@@ -24,6 +24,12 @@ SortedRecordRenderer::~SortedRecordRenderer ()
 	if (_outputFile.is_open()) {
 		_outputFile.write((char *) _outputBuffer->data(), _outputBuffer->sizeFilled());
 		_outputFile.close();
+
+		// Update metrics
+		Metrics::accessStorage(
+			Metrics::CURRENT_STORAGE,
+			_outputBuffer->sizeFilled()
+		);
 	}
 	delete _outputBuffer;
 } // SortedRecordRenderer::~SortedRecordRenderer
@@ -40,6 +46,13 @@ string SortedRecordRenderer::run ()
 	#endif
 	_outputFile.write(reinterpret_cast<char *>(_outputBuffer->data()), _outputBuffer->sizeFilled());
 	_outputFile.close();
+
+	// Update metrics
+	Metrics::accessStorage(
+		Metrics::CURRENT_STORAGE,
+		_outputBuffer->sizeFilled()
+	);
+
     return _outputFileName;
 } // ExternalRenderer::run
 
@@ -53,6 +66,12 @@ byte * SortedRecordRenderer::_addRowToOutputBuffer(byte * row)
 		traceprintf ("Run %d: output buffer flushed with %llu rows produced\n", _runNumber, _produced);
 		#endif
 		output = _outputBuffer->copy(row);
+
+		// Update metrics
+		Metrics::accessStorage(
+			Metrics::CURRENT_STORAGE,
+			_outputBuffer->sizeFilled()
+		);
 	}
 	++ _produced;
 	return output;

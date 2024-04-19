@@ -11,7 +11,7 @@ using std::ofstream;
 class SortedRecordRenderer
 {
 public:
-	SortedRecordRenderer (RowSize recordSize);
+	SortedRecordRenderer (RowSize recordSize, string outputFileName);
 	virtual ~SortedRecordRenderer ();
 	virtual byte * next () = 0;
     string run(); // Render all sorted records and store to a file, return the file name
@@ -19,8 +19,9 @@ protected:
     Buffer * _outputBuffer;
     ofstream _outputFile;
     RowSize _recordSize;
+    string _outputFileName;
     virtual string _getOutputFileName() = 0;
-    void _addRowToOutputBuffer(byte * row);
+    byte * _addRowToOutputBuffer(byte * row); // return pointer to the row in output buffer
 };
 
 class NaiveRenderer : public SortedRecordRenderer

@@ -5,12 +5,12 @@
 #include <filesystem>
 #include <cmath>
 
-SortedRecordRenderer::SortedRecordRenderer (RowSize recordSize) :
-	_recordSize (recordSize)
+SortedRecordRenderer::SortedRecordRenderer (RowSize recordSize, string outputFileName) :
+	_recordSize (recordSize), _outputFileName (outputFileName)
 {
 	TRACE (false);
 	_outputBuffer = new Buffer(SSD_PAGE_SIZE, _recordSize);
-	_outputFile = ofstream(_getOutputFileName(), std::ios::binary);
+	_outputFile = ofstream(outputFileName, std::ios::binary);
 } // SortedRecordRenderer::SortedRecordRenderer
 
 SortedRecordRenderer::~SortedRecordRenderer ()
@@ -33,10 +33,10 @@ string SortedRecordRenderer::run ()
     }
 	_outputFile.write((char *) _outputBuffer->data(), _outputBuffer->sizeFilled());
 	_outputFile.close();
-    return _getOutputFileName();
+    return _outputFileName;
 } // ExternalRenderer::run
 
-void SortedRecordRenderer::_addRowToOutputBuffer(byte * row)
+byte * SortedRecordRenderer::_addRowToOutputBuffer(byte * row)
 {
 	byte * output = _outputBuffer->copy(row);
 	while (output == nullptr) { // Output buffer is full
@@ -46,7 +46,7 @@ void SortedRecordRenderer::_addRowToOutputBuffer(byte * row)
 } // SortedRecordRenderer::_addRowToOutputBuffer
 
 NaiveRenderer::NaiveRenderer (RowSize recordSize, TournamentTree * tree, u_int16_t runNumber) :
-	SortedRecordRenderer(recordSize), _tree(tree), _runNumber (runNumber)
+	SortedRecordRenderer(recordSize, _getOutputFileName()), _tree(tree), _runNumber (runNumber)
 {
 	TRACE (true);
 } // NaiveRenderer::NaiveRenderer
@@ -75,10 +75,9 @@ void NaiveRenderer::print ()
 } // NaiveRenderer::print
 
 CacheOptimizedRenderer::CacheOptimizedRenderer (RowSize recordSize, vector<TournamentTree *> &cacheTrees, u_int16_t runNumber) : 
-	SortedRecordRenderer(recordSize), _recordSize (recordSize), _cacheTrees (cacheTrees), _runNumber (runNumber)
+	SortedRecordRenderer(recordSize, _getOutputFileName()), _recordSize (recordSize), _cacheTrees (cacheTrees), _runNumber (runNumber)
 {
 	TRACE (true);
-
     std::vector<byte *> formingRows;
     for (auto cacheTree : _cacheTrees) {
         byte * row = cacheTree->poll();

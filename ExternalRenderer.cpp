@@ -2,7 +2,7 @@
 #include "utils.h"
 
 ExternalRenderer::ExternalRenderer (RowSize recordSize, vector<string> runFileNames, u_int32_t pageSize, u_int64_t memorySpace, u_int16_t rendererNumber) :  // 500 KB = 2^19
-    SortedRecordRenderer(recordSize), _pageSize (pageSize), _inputBufferCount (memorySpace / pageSize - 1 - _readAheadBufferCount), _pass (1), _rendererNumber (rendererNumber)
+    SortedRecordRenderer(recordSize, _getOutputFileName()), _pageSize (pageSize), _inputBufferCount (memorySpace / pageSize - 1 - _readAheadBufferCount), _pass (1), _rendererNumber (rendererNumber)
 {
     traceprintf("Renderer %d, merging %zu run files with %hu input buffers\n", _rendererNumber, runFileNames.size(), _inputBufferCount);
     // Multi-pass merge
@@ -53,7 +53,7 @@ byte * ExternalRenderer::next ()
     if (rendered == nullptr) return nullptr;
     // Copy root before calling run.next()
     // For retrieving a new page will overwrite the current page, where root is in
-    _addRowToOutputBuffer(rendered);
+    byte * output = _addRowToOutputBuffer(rendered);
     // Resume the tournament
 	u_int16_t bufferNum = _tree->peekTopBuffer();
     ExternalRun * run = _runs.at(bufferNum);
@@ -64,7 +64,7 @@ byte * ExternalRenderer::next ()
         _tree->pushAndPoll(retrieved);
     }
     // traceprintf("Produced %s\n", rowToHexString(output, _recordSize).c_str());
-    return rendered;
+    return output;
 } // ExternalRenderer::next
 
 string ExternalRenderer::_getOutputFileName ()

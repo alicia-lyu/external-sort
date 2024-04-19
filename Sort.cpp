@@ -108,45 +108,29 @@ SortedRecordRenderer * SortIterator::_formInMemoryRenderer (RowCount base)
 		cacheTrees.push_back(tree);
 	}
 
-	SortedRecordRenderer * renderer = new CacheOptimizedRenderer(cacheTrees, _plan->_size);
+	SortedRecordRenderer * renderer = new CacheOptimizedRenderer(_plan->_size, cacheTrees);
 	
 	// NaiveRenderer: Not cache-optimized
 	// TournamentTree * tree = new TournamentTree(rows, _plan->_size);
-	// SortedRecordRenderer * renderer = new NaiveRenderer(tree);
+	// SortedRecordRenderer * renderer = new NaiveRenderer(_plan->_size, tree);
 	return renderer;
 }
 
-void SortIterator::_createInitialRuns (vector<string> &runNames) // metrics
+vector<string> SortIterator::_createInitialRuns () // metrics
 {
-	runNames.clear();
-	Buffer * outputBuffer = new Buffer(_plan->_recordCountPerRun, _plan->_size); 
-	// CODE IMPROVEMENT: Have outputBuffer as a member variable of SortedRecordRenderer, to be consistent with ExternalRenderer
+	vector<string> runNames;
 	while (_consumed < _plan->_count) {
-		outputBuffer->reset();
-		string runName = string(".") + SEPARATOR + string("spills") + SEPARATOR + string("pass0") + SEPARATOR + string("run") + std::to_string(_consumed / _plan->_recordCountPerRun) + string(".bin");
-		runNames.push_back(runName);
 		SortedRecordRenderer * renderer = _formInMemoryRenderer(_consumed);
 		int i;
-		for (i = 0; i < _plan->_recordCountPerRun; i++) {
-			byte * row = renderer->next();
-			if (row == nullptr) break;
-			if (outputBuffer->copy(row) == nullptr) {
-				throw std::runtime_error("Output buffer overflows when creating initial run " + runName + ".\n");
-			}
-		}
-		std::ofstream runFile(runName, std::ios::binary);
-		int outputBufferSize = i * _plan->_size;
-		runFile.write(reinterpret_cast<char *>(outputBuffer->data()), outputBufferSize);
-		traceprintf ("Created run file %s with size %d\n", runName.c_str(), outputBufferSize);
-		runFile.close();
+		string runName = renderer->run();
+		runNames.push_back(runName);
 	}
-	delete outputBuffer;
+	return runNames;
 }
 
 SortedRecordRenderer * SortIterator::_externalSort ()
 {
-	vector<string> runNames;
-	_createInitialRuns(runNames); // runNames is modified in this function, as it is passed by reference
-	SortedRecordRenderer * renderer = new ExternalRenderer(runNames, _plan->_size, SSD_PAGE_SIZE, MEMORY_SIZE); // runNames is passed by value
+	vector<string> runNames = _createInitialRuns(); // runNames is modified in this function, as it is passed by reference
+	SortedRecordRenderer * renderer = new ExternalRenderer(_plan->_size, runNames, SSD_PAGE_SIZE, MEMORY_SIZE); // runNames is passed by value
 	return renderer;
 }

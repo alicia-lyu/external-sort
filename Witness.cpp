@@ -42,9 +42,11 @@ WitnessIterator::~WitnessIterator ()
 	delete _input;
     traceprintf ("Final parity %s\n", rowToHexString(parity, _plan->_size).c_str());
 
+    #if defined(VERBOSEL2) || defined(VERBOSEL1)
 	traceprintf ("produced %lu of %lu rows\n",
 			(unsigned long) (_produced),
 			(unsigned long) (_consumed));
+    #endif
 } // WitnessIterator::~WitnessIterator
 
 byte * WitnessIterator::next ()

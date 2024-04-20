@@ -14,17 +14,20 @@ SCRS=
 HDRS=	defs.h params.h\
 		Iterator.h Scan.h Filter.h Sort.h \
 		utils.h Buffer.h Witness.h TournamentTree.h, SortedRecordRenderer.h \
-		ExternalRenderer.h ExternalRun.h Verify.h Remove.h Metrics.h
+		ExternalRenderer.h ExternalRun.h Verify.h Remove.h Metrics.h \
+		InMemoryRenderer.h
 SRCS=	defs.cpp Assert.cpp Test.cpp \
 		Iterator.cpp Scan.cpp Filter.cpp Sort.cpp \
 		utils.cpp Buffer.cpp Witness.cpp TournamentTree.cpp SortedRecordRenderer.cpp \
-		ExternalRenderer.cpp ExternalRun.cpp Verify.cpp Remove.cpp Metrics.cpp
+		ExternalRenderer.cpp ExternalRun.cpp Verify.cpp Remove.cpp Metrics.cpp \
+		InMemoryRenderer.cpp
 
 # compilation targets
 OBJS=	defs.o Assert.o Test.o \
 		Iterator.o Scan.o Filter.o Sort.o \
 		utils.o Buffer.o Witness.o TournamentTree.o SortedRecordRenderer.o \
-		ExternalRenderer.o ExternalRun.o Verify.o Remove.o Metrics.o
+		ExternalRenderer.o ExternalRun.o Verify.o Remove.o Metrics.o \
+		InMemoryRenderer.o
 
 # RCS assists
 REV=-q -f
@@ -111,6 +114,7 @@ Metrics.o: Metrics.h
 SortedRecordRenderer.o: SortedRecordRenderer.h
 ExternalRun.o: ExternalRun.h
 ExternalRenderer.o: ExternalRenderer.h ExternalRun.h SortedRecordRenderer.h
+InMemoryRenderer.o: InMemoryRenderer.h SortedRecordRenderer.h
 
 list : Makefile
 	echo Makefile $(HDRS) $(SRCS) $(DOCS) $(SCRS) > list

@@ -1,6 +1,7 @@
 #include "Sort.h"
 #include "utils.h"
 #include "ExternalRenderer.h"
+#include "InMemoryRenderer.h"
 #include <stdexcept>
 
 SortPlan::SortPlan (Plan * const input, RowSize const size, RowCount const count, bool removeDuplicates) : 

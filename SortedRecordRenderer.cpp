@@ -22,14 +22,8 @@ SortedRecordRenderer::~SortedRecordRenderer ()
 {
 	TRACE (false);
 	if (_outputFile.is_open()) {
-		_outputFile.write((char *) _outputBuffer->data(), _outputBuffer->sizeFilled());
+		_write(_outputBuffer->sizeFilled());
 		_outputFile.close();
-
-		// Update metrics
-		Metrics::accessStorage(
-			Metrics::CURRENT_STORAGE,
-			_outputBuffer->sizeFilled()
-		);
 	}
 	delete _outputBuffer;
 } // SortedRecordRenderer::~SortedRecordRenderer
@@ -44,15 +38,8 @@ string SortedRecordRenderer::run ()
 	#if defined(VERBOSEL2)
 	traceprintf ("%s: produced %llu rows\n", _outputFileName.c_str(), _produced);
 	#endif
-	_outputFile.write(reinterpret_cast<char *>(_outputBuffer->data()), _outputBuffer->sizeFilled());
+	_write(SSD_PAGE_SIZE);
 	_outputFile.close();
-
-	// Update metrics
-	Metrics::accessStorage(
-		Metrics::CURRENT_STORAGE,
-		_outputBuffer->sizeFilled()
-	);
-
     return _outputFileName;
 } // ExternalRenderer::run
 
@@ -65,13 +52,7 @@ byte * SortedRecordRenderer::_addRowToOutputBuffer(byte * row)
 		#if defined(VERBOSEL2)
 		traceprintf ("Run %d: output buffer flushed with %llu rows produced\n", _runNumber, _produced);
 		#endif
-		output = _outputBuffer->copy(row);
-
-		// Update metrics
-		Metrics::accessStorage(
-			Metrics::CURRENT_STORAGE,
-			_outputBuffer->sizeFilled()
-		);
+		_write(SSD_PAGE_SIZE);
 	}
 	++ _produced;
 	return output;
@@ -81,3 +62,12 @@ string SortedRecordRenderer::_getOutputFileName (u_int8_t pass, u_int16_t runNum
 {
 	return string(".") + SEPARATOR + string("spills") + SEPARATOR + string("pass") + std::to_string(pass) + SEPARATOR + string("run") + std::to_string(runNumber) + string(".bin");
 } // SortedRecordRenderer::_getOutputFileName
+
+void SortedRecordRenderer::_write(u_int16_t sizeFilled)
+{
+	_outputFile.write((char*) _outputBuffer->data(), sizeFilled);
+	#if defined(VERBOSEL2)
+	traceprintf ("Run %d: output buffer flushed with %llu rows produced\n", _runNumber, _produced);
+	#endif
+	Metrics::write(sizeFilled);
+} // SortedRecordRenderer::_write

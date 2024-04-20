@@ -31,24 +31,25 @@ StorageParams: the parameters of a storage system (SSD / HDD)
 struct StorageParams {
     double latency;
     double bandwidth;
+    u_int64_t capacity;
 
-    StorageParams(double _latency = 0.0, double _bandwidth = 0.0) : 
-        latency(_latency), bandwidth(_bandwidth) {}
+    StorageParams(double _latency = 0.0, double _bandwidth = 0.0, u_int64_t _capacity = 0) : 
+        latency(_latency), bandwidth(_bandwidth), capacity (_capacity) {}
 };
 
 class Metrics
 {
 public:
-    static bool accessStorage(const int device_type, const u_int64_t num_bytes);
+    static void read(const int device_type, const u_int64_t num_bytes); // expect filename to contain the device type
+    static int write(const u_int64_t num_bytes); // choose storage automatically based on available space, each write is guaranteed to be on one device, return device type
     static StorageMetrics getMetrics(const int device_type);
     static void Init();
     Metrics();
-    static int CURRENT_STORAGE;
-    static bool setCurrentStorage(const int device_type);
 
 private:
     StorageMetrics metrics[NUM_STORAGE_TYPES];
     StorageParams params[NUM_STORAGE_TYPES];
-
     static Metrics * instance;
+    static int CURRENT_STORAGE;
+    static bool setCurrentStorage(const int device_type);
 };

@@ -22,18 +22,18 @@ bool Metrics::setCurrentStorage(const int device_type)
     return true;
 }
 
-bool Metrics::accessStorage(const int device_type, const u_int64_t num_bytes)
+void Metrics::read(const int device_type, const u_int64_t num_bytes)
 {
     #ifdef VERBOSEL2
     traceprintf("Accessing storage %d with %lu bytes\n", device_type, num_bytes);
     #endif
 
     if (instance == nullptr) {
-        return false;
+        throw std::runtime_error("Metrics not initialized");
     }
 
     if (device_type < 0 || device_type >= NUM_STORAGE_TYPES) {
-        return false;
+        throw std::invalid_argument("Invalid device type");
     }
 
     StorageParams & param = instance->params[device_type];
@@ -46,8 +46,35 @@ bool Metrics::accessStorage(const int device_type, const u_int64_t num_bytes)
     // calculate the fixed latency of the storage system
     metric.accessCost += param.latency;
     metric.numAccesses++;
+}
 
-    return true;
+int Metrics::write(const u_int64_t num_bytes)
+{
+    if (instance == nullptr) {
+        throw std::runtime_error("Metrics not initialized");
+    }
+
+    // choose storage automatically based on available space
+    int device_type = Metrics::CURRENT_STORAGE;
+    StorageParams & param = instance->params[device_type];
+    StorageMetrics & metric = instance->metrics[device_type];
+    if (metric.numBytes >= param.capacity) { // Use the next available storage
+        if (device_type++ > NUM_STORAGE_TYPES) {
+            throw std::runtime_error("No available storage");
+        }
+        param = instance->params[device_type];
+        metric = instance->metrics[device_type];
+    }
+
+    // calculate the time spent on data transfer
+    metric.dataTransferCost += num_bytes / param.bandwidth;
+    metric.numBytes += num_bytes;
+
+    // calculate the fixed latency of the storage system
+    metric.accessCost += param.latency;
+    metric.numAccesses++;
+
+    return device_type;
 }
 
 StorageMetrics Metrics::getMetrics(const int device_type)

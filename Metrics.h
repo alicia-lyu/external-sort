@@ -41,6 +41,7 @@ struct StorageParams {
 class Metrics
 {
 public:
+    static int CURRENT_STORAGE;
     static void read(const int device_type, const u_int64_t num_bytes); // expect filename to contain the device type
     static int write(const u_int64_t num_bytes); // choose storage automatically based on available space, each write is guaranteed to be on one device, return device type
     static int getAvailableStorage(); // return the device type that has enough space for predefined page size
@@ -54,6 +55,5 @@ private:
     StorageMetrics metrics[NUM_STORAGE_TYPES];
     StorageParams params[NUM_STORAGE_TYPES];
     static Metrics * instance;
-    static int CURRENT_STORAGE;
     static bool setCurrentStorage(const int device_type);
 };

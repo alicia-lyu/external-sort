@@ -121,6 +121,7 @@ vector<string> SortIterator::_createInitialRuns () // metrics
 	while (_consumed < _plan->_count) {
 		SortedRecordRenderer * renderer = _formInMemoryRenderer(_consumed, runNames.size());
 		string runName = renderer->run();
+		delete renderer; // Only after deleting the renderer, the run file is flushed and closed
 		runNames.push_back(runName);
 	}
 	#if defined(VERBOSEL1) || defined(VERBOSEL2)

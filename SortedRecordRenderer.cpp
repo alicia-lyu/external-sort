@@ -16,7 +16,7 @@ SortedRecordRenderer::SortedRecordRenderer (RowSize recordSize, u_int8_t pass, u
 	_outputFileName = _getOutputFileName(pass, runNumber);
 	_outputFile = ofstream(_outputFileName, std::ios::binary);
 	#if defined(VERBOSEL1) || defined(VERBOSEL2)
-	traceprintf ("Run %d: output file %s\n", runNumber, _outputFileName.c_str());
+	traceprintf ("Run %d: output file %s, device type %d, page size %d\n", runNumber, _outputFileName.c_str(), device_type, page_size);
 	#endif
 } // SortedRecordRenderer::SortedRecordRenderer
 
@@ -40,21 +40,20 @@ string SortedRecordRenderer::run ()
 	#if defined(VERBOSEL2)
 	traceprintf ("%s: produced %llu rows\n", _outputFileName.c_str(), _produced);
 	#endif
-	_write(SSD_PAGE_SIZE);
-	_outputFile.close();
     return _outputFileName;
 } // ExternalRenderer::run
 
 byte * SortedRecordRenderer::_addRowToOutputBuffer(byte * row)
 {
+	TRACE (false);
 	if (row == nullptr) return nullptr;
 	byte * output = _outputBuffer->copy(row);
 	while (output == nullptr) { // Output buffer is full
-		_outputFile.write(reinterpret_cast<char *>(_outputBuffer->data()), SSD_PAGE_SIZE);
 		#if defined(VERBOSEL2)
 		traceprintf ("Run %d: output buffer flushed with %llu rows produced\n", _runNumber, _produced);
 		#endif
-		_write(SSD_PAGE_SIZE);
+		_write(_outputBuffer->pageSize);
+		output = _outputBuffer->copy(row);
 	}
 	++ _produced;
 	return output;
@@ -62,12 +61,16 @@ byte * SortedRecordRenderer::_addRowToOutputBuffer(byte * row)
 
 string SortedRecordRenderer::_getOutputFileName (u_int8_t pass, u_int16_t runNumber)
 {
-	return string(".") + SEPARATOR + string("spills") + SEPARATOR + string("pass") + std::to_string(pass) + SEPARATOR + string("run") + std::to_string(runNumber) + string(".bin");
+	string device = Metrics::CURRENT_STORAGE == 0 ? string("-ssd") : string("-hdd");
+	string dir = string(".") + SEPARATOR + string("spills") + SEPARATOR + string("pass") + std::to_string(pass);
+	string filename = string("run") + std::to_string(runNumber) + device + string(".bin");
+	return dir + SEPARATOR + filename;
 } // SortedRecordRenderer::_getOutputFileName
 
 void SortedRecordRenderer::_write(u_int16_t sizeFilled)
 {
-	_outputFile.write((char*) _outputBuffer->data(), sizeFilled);
+	TRACE (false);
+	_outputFile.write((char*) _outputBuffer->data(), sizeFilled); // TODO: change storage as needed
 	#if defined(VERBOSEL2)
 	traceprintf ("Run %d: output buffer flushed with %llu rows produced\n", _runNumber, _produced);
 	#endif

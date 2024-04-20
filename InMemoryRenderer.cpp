@@ -16,7 +16,7 @@ NaiveRenderer::~NaiveRenderer ()
 byte * NaiveRenderer::next ()
 {
 	byte * rendered = renderRow(
-		[this] () -> byte * {
+		[] () -> byte * {
 			return nullptr;
 		},
 		[this] (byte * rendered) -> byte * {

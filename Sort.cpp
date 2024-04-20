@@ -4,8 +4,9 @@
 #include <stdexcept>
 
 SortPlan::SortPlan (Plan * const input, RowSize const size, RowCount const count, bool removeDuplicates) : 
-	_input (input), _size (size), _count (count), _removeDuplicates (removeDuplicates),
-	_recordCountPerRun (getRecordCountPerRun(size, true))
+	_input (input), _size (size), _count (count),
+	_recordCountPerRun (getRecordCountPerRun(size, true)),
+	_removeDuplicates (removeDuplicates)
 {
 	// TODO: introduce HDD --- preliminary thought: Just add predicates to indicate whether SSD is full.
 	// Use appropriate metrics. No change in code logic except page size

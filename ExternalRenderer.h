@@ -10,7 +10,7 @@ using std::ofstream;
 class ExternalRenderer : public SortedRecordRenderer
 {
 public:
-    ExternalRenderer (RowSize recordSize, vector<string> runFileNames, u_int8_t pass, u_int16_t rendererNumber = 0); // this function will modify runFileNames, so it is passed by value
+    ExternalRenderer (RowSize recordSize, vector<string> runFileNames, u_int8_t pass, u_int16_t rendererNumber = 0, bool removeDuplicates = false); // this function will modify runFileNames, so it is passed by value
     ~ExternalRenderer ();
     byte * next();
     void print();

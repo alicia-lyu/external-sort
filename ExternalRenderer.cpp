@@ -1,8 +1,8 @@
 #include "ExternalRenderer.h"
 #include "utils.h"
 
-ExternalRenderer::ExternalRenderer (RowSize recordSize, vector<string> runFileNames, u_int8_t pass, u_int16_t rendererNumber) :  // 500 KB = 2^19
-    SortedRecordRenderer(recordSize, pass, rendererNumber), _pass (pass), _readAheadBuffers (READ_AHEAD_BUFFERS_MIN)
+ExternalRenderer::ExternalRenderer (RowSize recordSize, vector<string> runFileNames, u_int8_t pass, u_int16_t rendererNumber, bool removeDuplicates) :  // 500 KB = 2^19
+    SortedRecordRenderer(recordSize, pass, rendererNumber, removeDuplicates), _pass (pass), _readAheadBuffers (READ_AHEAD_BUFFERS_MIN)
 {
     u_int16_t inputBufferCount = MEMORY_SIZE / SSD_PAGE_SIZE - 1 - READ_AHEAD_BUFFERS_MIN;
     traceprintf("Pass %hhu Renderer %d, merging %zu run files with %hu input buffers\n", _pass, _runNumber, runFileNames.size(), inputBufferCount);
@@ -58,24 +58,22 @@ ExternalRenderer::~ExternalRenderer ()
 byte * ExternalRenderer::next ()
 {
     TRACE (false);
-    byte * rendered = _tree->peekRoot();
-    if (rendered == nullptr) return nullptr;
-    // Copy root before calling run.next()
-    // For retrieving a new page will overwrite the current page, where root is in
-    byte * output = _addRowToOutputBuffer(rendered);
-    // Resume the tournament
-	u_int16_t bufferNum = _tree->peekTopBuffer();
-    ExternalRun * run = _runs.at(bufferNum);
-    byte * retrieved = run->next();
-    if (retrieved == nullptr) {
-        _tree->poll();
-    } else {
-        _tree->pushAndPoll(retrieved);
-    }
-    #ifdef VERBOSEL2
-    traceprintf("Produced %s\n", rowToString(output, _recordSize).c_str());
-    #endif
-    return output;
+    byte * rendered = renderRow(
+		[this] () -> byte * {
+			auto bufferNum = _tree->peekTopBuffer();
+			auto run = _runs.at(bufferNum);
+			return run->next();
+		},
+		[this] (byte * rendered) -> byte * {
+			return _addRowToOutputBuffer(rendered);
+		},
+		_tree,
+		_lastRow,
+		_removeDuplicates,
+		_recordSize
+	);
+	_lastRow = rendered;
+	return rendered;
 } // ExternalRenderer::next
 
 void ExternalRenderer::print ()

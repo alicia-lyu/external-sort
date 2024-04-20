@@ -6,8 +6,8 @@
 #include <cmath>
 #include <iostream>
 
-SortedRecordRenderer::SortedRecordRenderer (RowSize recordSize, u_int8_t pass, u_int16_t runNumber) :
-	_recordSize (recordSize), _produced (0)
+SortedRecordRenderer::SortedRecordRenderer (RowSize recordSize, u_int8_t pass, u_int16_t runNumber, bool removeDuplicates, byte * lastRow) :
+	_recordSize (recordSize), _produced (0), _runNumber (runNumber), _removeDuplicates (removeDuplicates), _lastRow (lastRow)
 {
 	TRACE (false);
 	_outputBuffer = new Buffer(SSD_PAGE_SIZE / _recordSize, _recordSize);
@@ -82,8 +82,8 @@ string SortedRecordRenderer::_getOutputFileName (u_int8_t pass, u_int16_t runNum
 	return string(".") + SEPARATOR + string("spills") + SEPARATOR + string("pass") + std::to_string(pass) + SEPARATOR + string("run") + std::to_string(runNumber) + string(".bin");
 } // SortedRecordRenderer::_getOutputFileName
 
-NaiveRenderer::NaiveRenderer (RowSize recordSize, TournamentTree * tree, u_int16_t runNumber) :
-	SortedRecordRenderer(recordSize, 0, runNumber), _tree(tree)
+NaiveRenderer::NaiveRenderer (RowSize recordSize, TournamentTree * tree, u_int16_t runNumber, bool removeDuplicates) :
+	SortedRecordRenderer(recordSize, 0, runNumber, removeDuplicates), _tree(tree)
 {
 	TRACE (true);
 } // NaiveRenderer::NaiveRenderer
@@ -96,9 +96,20 @@ NaiveRenderer::~NaiveRenderer ()
 
 byte * NaiveRenderer::next ()
 {
-	byte * row = _tree->poll();
-	_addRowToOutputBuffer(row);
-	return row;
+	byte * rendered = renderRow(
+		[this] () -> byte * {
+			return nullptr;
+		},
+		[this] (byte * rendered) -> byte * {
+			return _addRowToOutputBuffer(rendered);
+		},
+		_tree,
+		_lastRow,
+		_removeDuplicates,
+		_recordSize
+	);
+	_lastRow = rendered;
+	return rendered;
 } // NaiveRenderer::next
 
 void NaiveRenderer::print ()
@@ -108,7 +119,7 @@ void NaiveRenderer::print ()
 
 CacheOptimizedRenderer::CacheOptimizedRenderer (RowSize recordSize, 
 	vector<TournamentTree *> &cacheTrees, u_int16_t runNumber, bool removeDuplicates) : 
-	SortedRecordRenderer(recordSize, 0, runNumber), _cacheTrees (cacheTrees), _removeDuplicates (removeDuplicates)
+	SortedRecordRenderer(recordSize, 0, runNumber, removeDuplicates), _cacheTrees (cacheTrees)
 {
 	TRACE (true);
     std::vector<byte *> formingRows;
@@ -150,50 +161,21 @@ CacheOptimizedRenderer::~CacheOptimizedRenderer ()
 
 byte * CacheOptimizedRenderer::next ()
 {
-	byte * rendered, * retrieved;
-	u_int16_t bufferNum;
-	TournamentTree * cacheTree;
-
-	while (true) {
-		bufferNum = _tree->peekTopBuffer();
-		cacheTree = _cacheTrees.at(bufferNum);
-		retrieved = cacheTree->poll();
-
-		if (retrieved == nullptr) {
-			rendered = _tree->poll();
-		} else {
-			rendered = _tree->pushAndPoll(retrieved);
-		}
-
-		// if no more rows, jump out
-		if (rendered == nullptr) break;
-
-		// if not removing duplicates, jump out
-		if (!_removeDuplicates) break;
-
-		// if last row is null, jump out
-		if (lastRow == nullptr) break;
-
-		auto cmp = memcmp(lastRow, rendered, _recordSize);
-		if (cmp == 0) {
-			#if defined(VERBOSEL2)
-			traceprintf ("#%llu removed with value %s\n", _produced, rowToString(rendered, _recordSize).c_str());
-			#endif
-			++ _removed;
-			continue;
-		}
-		else {
-			#if defined(VERBOSEL2)
-			traceprintf ("#%llu produced %s, different from %s\n", _produced, 
-				rowToString(rendered, _recordSize).c_str(),
-				rowToString(lastRow, _recordSize).c_str());
-			#endif
-			break;
-		}
-	}
-	_addRowToOutputBuffer(rendered);
-	lastRow = rendered;
-	++ _produced;
+	byte * rendered = renderRow(
+		[this] () -> byte * {
+			auto bufferNum = _tree->peekTopBuffer();
+			auto cacheTree = _cacheTrees.at(bufferNum);
+			return cacheTree->poll();
+		},
+		[this] (byte * rendered) -> byte * {
+			return _addRowToOutputBuffer(rendered);
+		},
+		_tree,
+		_lastRow,
+		_removeDuplicates,
+		_recordSize
+	);
+	_lastRow = rendered;
 	return rendered;
 } // CacheOptimizedRenderer::next
 

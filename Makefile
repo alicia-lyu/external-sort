@@ -101,7 +101,7 @@ ExternalSort.exe: Makefile ExternalSort.cpp
 
 $(OBJS) : Makefile defs.h
 Test.o : Iterator.h Scan.h Filter.h Sort.h utils.h Buffer.h Witness.h TournamentTree.h SortedRecordRenderer.h Verify.h
-Iterator.o Scan.o Filter.o Sort.o utils.o Buffer.o Witness.o Verify.o: Iterator.h Buffer.h
+Iterator.o Scan.o Filter.o Sort.o utils.o Buffer.o Witness.o Verify.o: Iterator.h Buffer.h params.h
 Scan.o : Scan.h 
 Filter.o : Filter.h
 Sort.o : Sort.h

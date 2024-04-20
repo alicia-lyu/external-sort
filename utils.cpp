@@ -173,7 +173,7 @@ byte * renderRow(std::function<byte *()> retrieveNext, std::function<byte *(byte
 int parseDeviceType(string filename) {
     int pos = filename.find("device");
     if (pos == string::npos) {
-        throw std::runtime_error("Filename" + filename + "does not contain device type");
+        throw std::runtime_error("Filename " + filename + "does not contain device type");
     }
     int device_type = std::stoi(filename.substr(pos + 6, 1));
     return device_type;

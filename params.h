@@ -4,7 +4,7 @@
 // HDD size: unlimited
 
 #define SSD_PAGE_SIZE 2000 // Change to 20 KB
-#define HDD_PAGE_SIZE 50000 // Change to 500 KB
+#define HDD_PAGE_SIZE 20000 // Change to 500 KB
 
 // ============ Metrics ============
 #define SSD_BANDWIDTH 200000 // Change to 200 MB/s

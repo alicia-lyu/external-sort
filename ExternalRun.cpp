@@ -4,9 +4,10 @@
 ExternalRun::ExternalRun (std::string runFileName, RowSize recordSize, u_int64_t & readAheadSize) :
     storage (parseDeviceType(runFileName)), _readAheadSize (readAheadSize), 
     _readAheadThreshold (std::max(1.0 - (double) readAheadSize / MEMORY_SIZE, 0.5)),
-    _readAheadPage (nullptr), _runFileName (runFileName), _recordSize (recordSize), 
-    _pageSize (Metrics::getParams(storage).pageSize), _runFile (runFileName, std::ios::binary), _produced (0)
+    _readAheadPage (nullptr), _runFileName (runFileName), _runFile (runFileName, std::ios::binary), 
+    _pageSize (Metrics::getParams(storage).pageSize), _recordSize (recordSize),  _produced (0)
 {
+    TRACE (false);
     #ifdef VERBOSEL2
     traceprintf("Run file %s, device type %d, page size %d, read ahead size %d above %f\n", 
         runFileName.c_str(), storage, _pageSize, readAheadSize, _readAheadThreshold);

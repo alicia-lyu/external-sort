@@ -56,7 +56,7 @@ int Metrics::write(const u_int64_t num_bytes)
     StorageParams & param = instance->params[device_type];
     StorageMetrics & metric = instance->metrics[device_type];
     if (param.pageSize != num_bytes) {
-        std::cerr << "Write size " << num_bytes << " does not match page size " << param.pageSize << std::endl; // Use std::cerr instead of cerr
+        std::cerr << "Warning: Write size " << num_bytes << " does not match page size " << param.pageSize << ". This may be expected only when you are flushing the last fragment of a file." << std::endl; // Use std::cerr instead of cerr
     }
     // calculate the time spent on data transfer
     metric.dataTransferCost += num_bytes / param.bandwidth;

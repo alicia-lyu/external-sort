@@ -10,13 +10,13 @@
 SortedRecordRenderer::SortedRecordRenderer (RowSize recordSize, u_int8_t pass, u_int16_t runNumber, bool removeDuplicates, byte * lastRow) :
 	_recordSize (recordSize), _runNumber (runNumber), _produced (0), _removeDuplicates (removeDuplicates), _lastRow (lastRow), _deviceType (Metrics::getAvailableStorage())
 {
-	TRACE (false);
+	TRACE (true);
 	auto pageSize = Metrics::getParams(_deviceType).pageSize;
 	_outputBuffer = new Buffer(pageSize / _recordSize, _recordSize);
 	_outputFileName = _getOutputFileName(pass, runNumber);
 	_outputFile = ofstream(_outputFileName, std::ios::binary);
 	#if defined(VERBOSEL1) || defined(VERBOSEL2)
-	traceprintf ("Run %d: output file %s, device type %d, page size %d\n", runNumber, _outputFileName.c_str(), device_type, page_size);
+	traceprintf ("Pass %d run %d: output file %s, device type %d, page size %d\n", pass, runNumber, _outputFileName.c_str(), _deviceType, pageSize);
 	#endif
 } // SortedRecordRenderer::SortedRecordRenderer
 
@@ -39,6 +39,11 @@ string SortedRecordRenderer::run ()
     }
 	#if defined(VERBOSEL2)
 	traceprintf ("%s: produced %llu rows\n", _outputFileName.c_str(), _produced);
+	#endif
+	_flushOutputBuffer(_outputBuffer->sizeFilled());
+	_outputFile.close();
+	#if defined(VERBOSEL1) || defined(VERBOSEL2)
+	traceprintf ("Run through renderer with output file %s\n", _outputFileName.c_str());
 	#endif
     return _outputFileName;
 } // ExternalRenderer::run
@@ -74,7 +79,7 @@ void SortedRecordRenderer::_flushOutputBuffer(u_int16_t sizeFilled)
 	auto newDeviceType = Metrics::getAvailableStorage();
 	if (newDeviceType != _deviceType) { // switch to a new device
 		_deviceType = newDeviceType;
-		string newFileName = _outputFileName + std::to_string(_produced) + string("-device") + std::to_string(_deviceType);
+		string newFileName = _outputFileName + string("-") + std::to_string(_produced) + string("-device") + std::to_string(_deviceType);
 		std::rename(_outputFileName.c_str(), newFileName.c_str());
 		_outputFileName = newFileName;
 		delete _outputBuffer;

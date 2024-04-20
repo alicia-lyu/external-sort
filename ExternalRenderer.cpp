@@ -9,6 +9,9 @@ ExternalRenderer::ExternalRenderer (RowSize recordSize,
 {
     #if defined(VERBOSEL1) || defined(VERBOSEL2)
     traceprintf ("Renderer %d: %zu run files, read-ahead size %llu\n", rendererNumber, runFileNames.size(), readAheadSize);
+    for (auto runName : runFileNames) {
+        traceprintf ("%s\n", runName.c_str());
+    }
     #endif
     vector<byte *> formingRows;
     for (auto runFileName : runFileNames) {

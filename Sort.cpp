@@ -132,11 +132,15 @@ vector<string> SortIterator::_createInitialRuns () // metrics
 
 SortedRecordRenderer * SortIterator::_externalSort ()
 {
+	TRACE (true);
 	vector<string> runNames = _createInitialRuns();
 	u_int8_t pass = 0;
 	// Multi-pass merge
 	while (true) { // one pass
 		++ pass;
+		#if defined(VERBOSEL1) || defined(VERBOSEL2)
+		traceprintf ("Pass %d: %lu runs in total\n", pass, runNames.size());
+		#endif
 		u_int16_t mergedRunCount = 0;
 		vector<string> mergedRunNames;
 		u_int16_t rendererNum = 0;
@@ -150,9 +154,6 @@ SortedRecordRenderer * SortIterator::_externalSort ()
 
 			// READ-AHEAD BUFFERS
 			auto hddReadAheadBuffers = profileReadAheadBuffers(runNames, mergedRunCount);
-			#if defined(VERBOSEL1) || defined(VERBOSEL2)
-			traceprintf("Pass %hhu Renderer %d: %hu HDD read ahead buffers\n", pass, rendererNum, hddReadAheadBuffers);
-			#endif
 			u_int64_t readAheadSize = hddReadAheadBuffers * Metrics::getParams(1).pageSize + (READ_AHEAD_BUFFERS_MIN - hddReadAheadBuffers) * Metrics::getParams(0).pageSize;
 			memoryConsumption += readAheadSize;
 
@@ -160,12 +161,16 @@ SortedRecordRenderer * SortIterator::_externalSort ()
 			while (mergedRunCount < runNames.size()) { // max. 120 G / 98 M = 2^11
 				int deviceType = parseDeviceType(runNames[mergedRunCount]);
 				memoryConsumption += Metrics::getParams(deviceType).pageSize; // 1 input buffer for this run
-				if (memoryConsumption > MEMORY_SIZE) break;
+				if (memoryConsumption > MEMORY_SIZE) {
+					memoryConsumption -= Metrics::getParams(deviceType).pageSize;
+					break;
+				}
 				mergedRunCount++;
 			}
+			readAheadSize += MEMORY_SIZE - memoryConsumption; // Use the remaining memory for more read-ahead buffers
 			// MERGE RUNS
 			ExternalRenderer * renderer = new ExternalRenderer(_plan->_size, 
-				vector<string>(runNames.begin() + mergedRunCountSoFar, runNames.begin() + mergedRunCount), 
+				vector<string>(runNames.begin() + mergedRunCountSoFar, runNames.begin() + mergedRunCount), readAheadSize,
 				pass, rendererNum);
 			if (rendererNum == 0 && mergedRunCount == runNames.size()) {
 				// The last renderer in the last pass
@@ -181,6 +186,7 @@ SortedRecordRenderer * SortIterator::_externalSort ()
 
 u_int8_t SortIterator::profileReadAheadBuffers (vector<string>& runNames, u_int16_t mergedRunCount)
 {
+	TRACE (true);
 	u_int64_t memoryConsumption = 0;
 	u_int16_t ssdRunCount = 0;
 	u_int16_t hddRunCount = 0;

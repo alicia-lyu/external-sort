@@ -16,6 +16,7 @@ class Buffer // an in-memory buffer
 public:
     u_int16_t const recordCount; // max: 100 MB / 20 B = 5 * 10^3 = 2^13
     RowSize const recordSize;
+    u_int64_t const pageSize;
     Buffer (u_int16_t recordCount, RowSize recordSize);
     ~Buffer ();
     byte * fillRandomly(); // Fill the first bytes not filled yet with random bytes. Return the pointer to the filled bytes.

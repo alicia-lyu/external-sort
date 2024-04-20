@@ -10,7 +10,9 @@ SortedRecordRenderer::SortedRecordRenderer (RowSize recordSize, u_int8_t pass, u
 	_recordSize (recordSize), _runNumber (runNumber), _produced (0), _removeDuplicates (removeDuplicates), _lastRow (lastRow)
 {
 	TRACE (false);
-	_outputBuffer = new Buffer(SSD_PAGE_SIZE / _recordSize, _recordSize);
+	auto device_type = Metrics::getAvailableStorage();
+	auto page_size = Metrics::getParams(device_type).pageSize;
+	_outputBuffer = new Buffer(page_size / _recordSize, _recordSize);
 	_outputFileName = _getOutputFileName(pass, runNumber);
 	_outputFile = ofstream(_outputFileName, std::ios::binary);
 	#if defined(VERBOSEL1) || defined(VERBOSEL2)

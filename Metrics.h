@@ -32,9 +32,10 @@ struct StorageParams {
     double latency;
     double bandwidth;
     u_int64_t capacity;
+    u_int32_t pageSize; // max. 500 KB = 2 ^ 19
 
-    StorageParams(double _latency = 0.0, double _bandwidth = 0.0, u_int64_t _capacity = 0) : 
-        latency(_latency), bandwidth(_bandwidth), capacity (_capacity) {}
+    StorageParams(double _latency = 0.0, double _bandwidth = 0.0, u_int64_t _capacity = 0, u_int32_t _pageSize = 0) : 
+        latency(_latency), bandwidth(_bandwidth), capacity (_capacity), pageSize (_pageSize) {}
 };
 
 class Metrics
@@ -42,7 +43,10 @@ class Metrics
 public:
     static void read(const int device_type, const u_int64_t num_bytes); // expect filename to contain the device type
     static int write(const u_int64_t num_bytes); // choose storage automatically based on available space, each write is guaranteed to be on one device, return device type
+    static int getAvailableStorage(); // return the device type that has enough space for predefined page size
+    static int getAvailableStorage(const u_int64_t num_bytes); // return the device type that has enough space for a given number of bytes
     static StorageMetrics getMetrics(const int device_type);
+    static StorageParams getParams(const int device_type);
     static void Init();
     Metrics();
 

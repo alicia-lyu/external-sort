@@ -7,7 +7,7 @@ ExternalRenderer::ExternalRenderer (RowSize recordSize,
     bool removeDuplicates) :  // 500 KB = 2^19
     SortedRecordRenderer(recordSize, pass, rendererNumber, removeDuplicates), _pass (pass)
 {
-    #if defined(VERBOSEL1) || defined(VERBOSEL2)
+    #if defined(VERBOSEL1)
     traceprintf ("Renderer %d: %zu run files, read-ahead size %llu\n", rendererNumber, runFileNames.size(), readAheadSize);
     for (auto runName : runFileNames) {
         traceprintf ("%s\n", runName.c_str());

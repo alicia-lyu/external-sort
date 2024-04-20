@@ -175,8 +175,8 @@ SortedRecordRenderer * SortIterator::_externalSort ()
 			traceprintf ("Merging runs from %d to %d\n", mergedRunCountSoFar, mergedRunCount);
 			#endif
 			renderer = new ExternalRenderer(_plan->_size, 
-				vector<string>(runNames.begin() + mergedRunCountSoFar, runNames.begin() + mergedRunCount), readAheadSize,
-				pass, rendererNum);
+				vector<string>(runNames.begin() + mergedRunCountSoFar, runNames.begin() + mergedRunCount), 
+				readAheadSize, pass, rendererNum);
 			if (rendererNum == 0 && mergedRunCount == runNames.size()) {
 				// The last renderer in the last pass
 				#if defined(VERBOSEL1) || defined(VERBOSEL2)

@@ -34,3 +34,4 @@ byte * renderRow(std::function<byte *()> retrieveNext,
     byte * lastRow,
     bool removeDuplicates, 
     RowSize recordSize);
+int parseDeviceType(string filename);

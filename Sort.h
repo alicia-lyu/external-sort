@@ -2,8 +2,11 @@
 #include "TournamentTree.h"
 #include "SortedRecordRenderer.h"
 #include <fstream>
+#include <vector>
+#include <map>
 
 using std::vector;
+using std::map;
 
 class SortPlan : public Plan
 {
@@ -34,4 +37,5 @@ private:
 	SortedRecordRenderer * _formInMemoryRenderer (RowCount base = 0, u_int16_t runNumber = 0); // Returns the tree where the top node is the smallest
 	vector<string> _createInitialRuns (); // Returns the names of the files created
 	SortedRecordRenderer * _externalSort ();
+	u_int8_t profileReadAheadBuffers (vector<string>& runNames, u_int16_t mergedRunCount); // return the number of read-ahead buffers of HDD page size
 }; // class SortIterator

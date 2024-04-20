@@ -61,7 +61,7 @@ byte * SortedRecordRenderer::_addRowToOutputBuffer(byte * row)
 
 string SortedRecordRenderer::_getOutputFileName (u_int8_t pass, u_int16_t runNumber)
 {
-	string device = Metrics::CURRENT_STORAGE == 0 ? string("-ssd") : string("-hdd");
+	string device = string("-device") + std::to_string(Metrics::CURRENT_STORAGE);
 	string dir = string(".") + SEPARATOR + string("spills") + SEPARATOR + string("pass") + std::to_string(pass);
 	string filename = string("run") + std::to_string(runNumber) + device + string(".bin");
 	return dir + SEPARATOR + filename;

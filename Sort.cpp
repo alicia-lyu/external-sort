@@ -132,10 +132,70 @@ vector<string> SortIterator::_createInitialRuns () // metrics
 
 SortedRecordRenderer * SortIterator::_externalSort ()
 {
-	vector<string> runNames = _createInitialRuns(); // runNames is modified in this function, as it is passed by reference
-	u_int16_t inputBufferCount = MEMORY_SIZE / SSD_PAGE_SIZE - 1 - READ_AHEAD_BUFFERS_MIN; // TODO: Implement read-ahead buffers
-	u_int8_t totalPasses = std::ceil(std::log(runNames.size()) / std::log(inputBufferCount));
-	traceprintf ("Total passes: %d\n", totalPasses);
-	SortedRecordRenderer * renderer = new ExternalRenderer(_plan->_size, runNames, totalPasses); // last pass: output
-	return renderer;
+	vector<string> runNames = _createInitialRuns();
+	u_int8_t pass = 0;
+	// Multi-pass merge
+	while (true) { // one pass
+		++ pass;
+		u_int16_t mergedRunCount = 0;
+		vector<string> mergedRunNames;
+		u_int16_t rendererNum = 0;
+		while (mergedRunCount < runNames.size()) { // one renderer
+			u_int16_t mergedRunCountSoFar = mergedRunCount;
+			u_int64_t memoryConsumption = 0;
+			// OUTPUT BUFFER
+			int deviceType = Metrics::getAvailableStorage();
+			auto outputPageSize = Metrics::getParams(deviceType).pageSize;
+			memoryConsumption += outputPageSize;
+
+			// READ-AHEAD BUFFERS
+			auto hddReadAheadBuffers = profileReadAheadBuffers(runNames, mergedRunCount);
+			#if defined(VERBOSEL1) || defined(VERBOSEL2)
+			traceprintf("Pass %hhu Renderer %d: %hu HDD read ahead buffers\n", pass, rendererNum, hddReadAheadBuffers);
+			#endif
+			u_int64_t readAheadSize = hddReadAheadBuffers * Metrics::getParams(1).pageSize + (READ_AHEAD_BUFFERS_MIN - hddReadAheadBuffers) * Metrics::getParams(0).pageSize;
+			memoryConsumption += readAheadSize;
+
+			// INPUT BUFFERS
+			while (mergedRunCount < runNames.size()) { // max. 120 G / 98 M = 2^11
+				int deviceType = parseDeviceType(runNames[mergedRunCount]);
+				memoryConsumption += Metrics::getParams(deviceType).pageSize; // 1 input buffer for this run
+				if (memoryConsumption > MEMORY_SIZE) break;
+				mergedRunCount++;
+			}
+			// MERGE RUNS
+			ExternalRenderer * renderer = new ExternalRenderer(_plan->_size, 
+				vector<string>(runNames.begin() + mergedRunCountSoFar, runNames.begin() + mergedRunCount), 
+				pass, rendererNum);
+			if (rendererNum == 0 && mergedRunCount == runNames.size()) {
+				// The last renderer in the last pass
+				return renderer;
+			}
+			mergedRunNames.push_back(renderer->run());
+			delete renderer;
+			rendererNum++;
+		}
+		runNames = mergedRunNames;
+	}
+}
+
+u_int8_t SortIterator::profileReadAheadBuffers (vector<string>& runNames, u_int16_t mergedRunCount)
+{
+	u_int64_t memoryConsumption = 0;
+	u_int16_t ssdRunCount = 0;
+	u_int16_t hddRunCount = 0;
+	for (int i = mergedRunCount; i < runNames.size(); i++) {
+		auto deviceType = parseDeviceType(runNames[i]);
+		auto pageSize = Metrics::getParams(deviceType).pageSize;
+		memoryConsumption += pageSize;
+		if (memoryConsumption > MEMORY_SIZE) break;
+		else {
+			if (deviceType == 0) ssdRunCount++;
+			else hddRunCount++;
+		}
+	}
+	double hddRunRatio = (double) hddRunCount / (hddRunCount + ssdRunCount);
+	if (hddRunRatio > 2/3) return 2;
+	else if (hddRunCount > 1/3) return 1;
+	else return 0;
 }

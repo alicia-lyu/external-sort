@@ -23,7 +23,7 @@ bool Metrics::setCurrentStorage(const int device_type)
     return true;
 }
 
-void Metrics::read(const int device_type, const u_int64_t num_bytes) // TODO: When to clear space consumed/read?
+void Metrics::read(const int device_type, const u_int64_t num_bytes, bool readAhead) // TODO: When to clear space consumed/read?
 {
     #ifdef VERBOSEL2
     traceprintf("Accessing storage %d with %lu bytes\n", device_type, num_bytes);
@@ -41,11 +41,11 @@ void Metrics::read(const int device_type, const u_int64_t num_bytes) // TODO: Wh
     StorageMetrics & metric = instance->metrics[device_type];
 
     // calculate the time spent on data transfer
-    metric.dataTransferCost += num_bytes / param.bandwidth;
+    if (!readAhead) metric.dataTransferCost += num_bytes / param.bandwidth;
     metric.numBytes += num_bytes;
 
     // calculate the fixed latency of the storage system
-    metric.accessCost += param.latency;
+    if (!readAhead) metric.accessCost += param.latency;
     metric.numAccesses++;
 }
 

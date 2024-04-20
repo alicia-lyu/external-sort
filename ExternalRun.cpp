@@ -72,6 +72,6 @@ u_int32_t ExternalRun::_fillPage (Buffer * page) // metrics
     _runFile.read((char *) page->data(), _pageSize);
     u_int32_t readCount = _runFile.gcount(); // Same scale as _pageSize
     page->batchFillByOverwrite(readCount);
-    Metrics::read(storage, readCount);
+    Metrics::read(storage, readCount, page == _readAheadPage);
     return readCount;
 } // ExternalRun::_fillPage

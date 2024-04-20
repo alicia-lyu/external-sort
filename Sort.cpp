@@ -9,8 +9,6 @@ SortPlan::SortPlan (Plan * const input, RowSize const size, RowCount const count
 	_recordCountPerRun (getRecordCountPerRun(size, true)),
 	_removeDuplicates (removeDuplicates)
 {
-	// TODO: introduce HDD --- preliminary thought: Just add predicates to indicate whether SSD is full.
-	// Use appropriate metrics. No change in code logic except page size
 	traceprintf ("SortPlan: memory space %d, record per run %d\n", MEMORY_SIZE, _recordCountPerRun);
 } // SortPlan::SortPlan
 

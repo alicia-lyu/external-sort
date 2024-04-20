@@ -169,7 +169,6 @@ Node * TournamentTree::_advanceToTop(Node * advancing, Node * incumbent)
 byte * TournamentTree::poll()
 {
     // TRACE (true);
-    // TODO: Add in-sort duplicate removal
     // Eliminating duplicates with every _contest introduces a huge overhead
     // w.r.t. code logic, as the structure of the tree is changed along the way
     // and any node in the tree could be deleted. 

@@ -27,8 +27,8 @@ April 29, 2024    | Submission
 - [x] Write and test the tournament tree @Alicia
 - [x] Add in-memory sorting, test with 0, 1, 2, 3, 7 rows @Alicia
 - [x] Add multi-level external sort that spills to SSD, test with 0, 1, 2, 3, 10, 29, 100, 576, 1000 rows @Alicia
-- [ ] Add external sort that spills to HDD
-- [ ] Add HDD and SSD metrics:
+- [x] Add external sort that spills to HDD @Alicia
+- [x] Add HDD and SSD metrics: @Yuheng
   - SSD: 0.1 ms latency, 200 MB/s bandwidth
   - HDD: 5 ms latency, 100 MB/s bandwidth
 - [ ] Test with 10^3 * 50 (50M), 10^3 * 125 (125M), 10^5 * 120 (12 G), 10^6 * 120 (120 G) (rows, record size)
@@ -37,8 +37,8 @@ April 29, 2024    | Submission
 ### Optimization and bonus points: By April 29
 
 - [x] Add in-cache sorting and test again: In addition to in-memory sorting @Yuheng
-- [ ] Add duplicate removal and evaluate performance (distinct)
+- [x] Add duplicate removal and evaluate performance (distinct) @Yuheng
   - [x] In stream (after sort) @Yuheng
-  - [ ] In sort
+  - [x] In sort @Yuheng
 - [ ] Add graceful degradation
-- [ ] Add 2 read-ahead buffers
+- [x] Add 2 read-ahead buffers @Alicia

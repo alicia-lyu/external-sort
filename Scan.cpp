@@ -45,7 +45,10 @@ byte * ScanIterator::next ()
 	if (_count >= _plan->_count)
 		return nullptr;
 
-	byte * row = _run->fillRandomly();
+	byte * row;
+	do {
+		row = _run->fillRandomly();
+	} while (row == nullptr); // When the buffer is full, fillRandomly returns nullptr
 
 	#ifdef VERBOSEL2
 	traceprintf ("produced %s\n", rowToString(row, _plan->_size).c_str());

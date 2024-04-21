@@ -42,18 +42,24 @@ LOG_DIR=./logs/${TIMESTAMP}
 LOG_FILE=$(LOG_DIR)/trace
 
 $(LOG_DIR) : 
+	rm -rf ./logs/*
 	mkdir -p $(LOG_DIR)
 
 ./inputs/ : 
 	mkdir -p ./inputs/
+	rm -rf ./inputs/*
 
-./spills/pass0: 
+./spills/ : 
+	mkdir -p ./spills/
+	rm -rf ./spills/*
+
+./spills/pass0: ./spills/
 	mkdir -p ./spills/pass0
 
-./spills/pass1:
+./spills/pass1: ./spills/
 	mkdir -p ./spills/pass1
 
-./spills/pass2:
+./spills/pass2: ./spills/
 	mkdir -p ./spills/pass2
 
 test : Test.exe Makefile $(LOG_DIR) ./inputs/

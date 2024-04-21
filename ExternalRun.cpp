@@ -8,7 +8,7 @@ ExternalRun::ExternalRun (std::string runFileName, RowSize recordSize, u_int64_t
     _pageSize (Metrics::getParams(storage).pageSize), _recordSize (recordSize),  _produced (0), reachesEnd (false)
 {
     TRACE (false);
-    #ifdef VERBOSEL1
+    #ifdef VERBOSEL2
     traceprintf("Run file %s, device type %d, page size %d, read ahead size %llu above %f\n", 
         runFileName.c_str(), storage, _pageSize, _readAheadSize, _readAheadThreshold);
     #endif
@@ -30,31 +30,22 @@ ExternalRun::~ExternalRun ()
 byte * ExternalRun::next ()
 {
     TRACE (false);
-    #if defined(VERBOSEL2)
-    traceprintf("# %llu: Run %s next %llu\n", _produced, _runFileName.c_str(), _readAheadSize);
-    #endif
-    if (_runFile.eof()) {
-        return nullptr;
-    }
     byte * row = _currentPage->next();
-    while (row == nullptr) {
-        // Reaches end of the current page
+    if (row == nullptr) { // Reaches end of the current page
+        #if defined(VERBOSEL2)
+        traceprintf("# %llu row is null: %s buffer read %d\n", _produced, _runFileName.c_str(), _currentPage->sizeRead() / _recordSize);
+        #endif
         if (_readAheadPage != nullptr) { // We have a read-ahead page at hand
             delete _currentPage;
             _currentPage = _readAheadPage;
             _readAheadPage = nullptr;
-            auto old = _readAheadSize;
             _readAheadSize += _pageSize;
-            #if defined(VERBOSEL2)
-            traceprintf("# %llu: Run %s switched to read-ahead page read ahead buffer size: %llu -> %llu\n", 
-            _produced, _runFileName.c_str(), old, _readAheadSize);
-            #endif
-        } else if (reachesEnd == false) { // We need to read a new page (blocking I/O)
+        } else { // We need to read a new page (blocking I/O)
             u_int32_t readCount = _fillPage(_currentPage);
-            if (readCount == 0) return nullptr; // Reaches end of the run after attempting to read a new page
-        } else return nullptr; // Reaches end of the run after reading the last page
+        }
         row = _currentPage->next();
-    }
+        if (row == nullptr) return nullptr; // Still null, we have reached the end of the run
+    } 
     ++ _produced;
     // Read-ahead logic TODO: make it non-blocking
     u_int16_t recordPerPage = _pageSize / _recordSize; // max. 500 KB / 20 B = 25000 = 2^14
@@ -62,23 +53,11 @@ byte * ExternalRun::next ()
         && _readAheadPage == nullptr 
         && _readAheadSize >= _pageSize 
         && reachesEnd == false &&
-        (double) _currentPage->sizeRead() / (_currentPage->recordSize * _currentPage->recordCount) > _readAheadThreshold) {
+        (double) _currentPage->sizeRead() / (_currentPage->recordSize * _currentPage->recordCount) > _readAheadThreshold) 
+    {
         _readAheadPage = new Buffer(_pageSize / _recordSize, _recordSize);
         u_int32_t readCount = _fillPage(_readAheadPage);
-        if (readCount == 0) { // No more pages to read
-            delete _readAheadPage;
-            _readAheadPage = nullptr;
-            reachesEnd = true;
-        }
-        if (_readAheadSize >= readCount) {
-            auto old = _readAheadSize;
-            _readAheadSize = _readAheadSize - readCount;
-            #if defined(VERBOSEL2)
-            traceprintf("# %llu: Filling read-ahead page from run file %s, read ahead size %llu -> %llu\n", 
-            _produced, _runFileName.c_str(), old, _readAheadSize);
-            #endif
-        }
-        else throw std::runtime_error("Contention on decreasing read ahead size.");
+        _readAheadSize -= readCount;
     }
     return row;
 } // ExternalRun::next
@@ -86,10 +65,13 @@ byte * ExternalRun::next ()
 u_int32_t ExternalRun::_fillPage (Buffer * page)
 {
     TRACE (false);
-    if (_runFile.eof()) throw std::invalid_argument("Reaches end of the run file unexpectedly.");
+    if (_runFile.eof()) return 0;
     if (_runFile.good() == false) throw std::invalid_argument("Error reading from run file.");
     _runFile.read((char *) page->data(), _pageSize); // TODO: switch device
-    u_int32_t readCount = _runFile.gcount(); // Same scale as _pageSize
+    auto readCount = _runFile.gcount(); // Same scale as _pageSize
+    #if defined(VERBOSEL2)
+    traceprintf("Read %d rows from run file %s\n", readCount / _recordSize, _runFileName.c_str());
+    #endif
     page->batchFillByOverwrite(readCount);
     if (page == _currentPage) Metrics::read(storage, readCount, page == _readAheadPage);
     return readCount;

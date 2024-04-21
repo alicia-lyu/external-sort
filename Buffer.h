@@ -21,17 +21,17 @@ public:
     ~Buffer ();
     byte * fillRandomly(); // Fill the first bytes not filled yet with random bytes. Return the pointer to the filled bytes.
     byte * copy(byte const * source); // Copy the source to the first bytes not filled yet. Return the pointer to the filled bytes.
-    byte * next(); // Read the next row after _read. If _read is at the end of the buffer, return nullptr, and set _read to the beginning of the buffer.
-    byte * batchFillByOverwrite(u_int64_t toBeFilled); // Returning the beginning of the buffer, and set _filled to the last byte filled. Overwrite existing buffer. Expect to have the designated memory space filled immediately after being called.
-    void reset() { _read = _rows; _filled = _rows; };
+    byte * next(); // Read the next row after toBeRead. If toBeRead is at the end of the buffer, return nullptr, and set toBeRead to the beginning of the buffer.
+    byte * batchFillByOverwrite(u_int64_t toBeFilled); // Returning the beginning of the buffer, and set toBeFilled to the last byte filled. Overwrite existing buffer. Expect to have the designated memory space filled immediately after being called.
+    void reset() { toBeRead = _rows; toBeFilled = _rows; };
     byte * data() { return _rows; };
-    u_int64_t sizeFilled() { return _filled - _rows; };
-    u_int64_t sizeRead() { return _read - _rows; };
+    u_int64_t sizeFilled() { return toBeFilled - _rows; };
+    u_int64_t sizeRead() { return toBeRead - _rows; };
     // alpha numeric characters
     static byte toAlphaNumeric(const byte randomByte);
 private:
-    byte * _filled;
-    byte * _read;
+    byte * toBeFilled;
+    byte * toBeRead;
     byte * _rows;
     default_random_engine _engine;
     random_device _device;

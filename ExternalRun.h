@@ -11,7 +11,7 @@ public:
     ~ExternalRun ();
     byte * next();
 private:
-    u_int64_t & _readAheadSize;
+    u_int64_t _readAheadSize;
     double const _readAheadThreshold;
     Buffer * _currentPage;
     Buffer * _readAheadPage;
@@ -20,5 +20,6 @@ private:
     u_int32_t const _pageSize; // max. 500 KB = 2^19
     RowSize const _recordSize;
     u_int64_t _produced;
+    bool reachesEnd;
     u_int32_t _fillPage(Buffer * page);
 };

@@ -21,10 +21,15 @@ ExternalRun::ExternalRun (std::string runFileName, RowSize recordSize, u_int64_t
     else throw std::invalid_argument("More than 1 switch points.");
     
     storage = deviceTypes.at(0);
+    _pageSize = Metrics::getParams(storage).pageSize;
     if (deviceTypes.size() == 1) nextStorage = storage;
     else if (deviceTypes.size() == 2) nextStorage = deviceTypes.at(1);
     else throw std::invalid_argument("More than 2 device types.");
 
+    #if defined(VERBOSEL1) || defined(VERBOSEL2)
+    traceprintf("Switch point %llu, storage %d, next storage %d\n", switchPoint, storage, nextStorage);
+    #endif
+    
     _currentPage = getBuffer();
     _fillPage(_currentPage);
 } // ExternalRun::ExternalRun
@@ -72,6 +77,9 @@ byte * ExternalRun::next ()
         u_int32_t readCount = _fillPage(_readAheadPage);
         _readAheadSize -= readCount;
     }
+    #if defined(VERBOSEL2)
+    traceprintf ("# %llu: %s\n", _produced, rowToString(row, _recordSize).c_str());
+    #endif
     return row;
 } // ExternalRun::next
 

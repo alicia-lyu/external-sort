@@ -47,7 +47,8 @@ byte * ExternalRun::next ()
         if (row == nullptr) return nullptr; // Still null, we have reached the end of the run
     } 
     ++ _produced;
-    // Read-ahead logic TODO: make it non-blocking
+    // COMMENT: With a single thread, it is fundamentally challenging to make read-ahead non-blocking
+    // Therefore, we are only mimicking the non-blocking behavior by not counting the read-ahead cost in Metrics
     u_int16_t recordPerPage = _pageSize / _recordSize; // max. 500 KB / 20 B = 25000 = 2^14
     if (_produced % (recordPerPage / 10) == 0 
         && _readAheadPage == nullptr 

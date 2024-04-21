@@ -161,7 +161,7 @@ SortedRecordRenderer * SortIterator::_externalSort ()
 
 			// INPUT BUFFERS
 			while (mergedRunCount < runNames.size()) { // max. 120 G / 98 M = 2^11
-				auto deviceType = parseDeviceType(runNames.at(mergedRunCount));
+				auto deviceType = getLargestDeviceType(runNames.at(mergedRunCount));
 				memoryConsumption += Metrics::getParams(deviceType).pageSize; // 1 input buffer for this run
 				if (memoryConsumption > MEMORY_SIZE) {
 					memoryConsumption -= Metrics::getParams(deviceType).pageSize;
@@ -202,7 +202,7 @@ u_int8_t SortIterator::profileReadAheadBuffers (vector<string>& runNames, u_int1
 	u_int16_t ssdRunCount = 0;
 	u_int16_t hddRunCount = 0;
 	for (int i = mergedRunCount; i < runNames.size(); i++) {
-		auto deviceType = parseDeviceType(runNames.at(i));
+		auto deviceType = getLargestDeviceType(runNames.at(i));
 		auto pageSize = Metrics::getParams(deviceType).pageSize;
 		memoryConsumption += pageSize;
 		if (memoryConsumption > MEMORY_SIZE) break;
@@ -212,7 +212,7 @@ u_int8_t SortIterator::profileReadAheadBuffers (vector<string>& runNames, u_int1
 		}
 	}
 	double hddRunRatio = (double) hddRunCount / (hddRunCount + ssdRunCount);
-	if (hddRunRatio > 2/3) return 2;
-	else if (hddRunCount > 1/3) return 1;
+	if (hddRunRatio > 0.67) return 2;
+	else if (hddRunCount > 0.33) return 1;
 	else return 0;
 }

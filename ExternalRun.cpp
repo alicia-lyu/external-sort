@@ -2,17 +2,30 @@
 #include "utils.h"
 
 ExternalRun::ExternalRun (std::string runFileName, RowSize recordSize, u_int64_t & readAheadSize) :
-    storage (parseDeviceType(runFileName)), _readAheadSize (readAheadSize), 
+    _readAheadSize (readAheadSize), 
     _readAheadThreshold (std::max(1.0 - (double) readAheadSize / MEMORY_SIZE, 0.5)),
     _readAheadPage (nullptr), _runFileName (runFileName), _runFile (runFileName, std::ios::binary), 
-    _pageSize (Metrics::getParams(storage).pageSize), _recordSize (recordSize),  _produced (0), reachesEnd (false)
+    _recordSize (recordSize),  _produced (0)
 {
     TRACE (false);
     #ifdef VERBOSEL2
     traceprintf("Run file %s, device type %d, page size %d, read ahead size %llu above %f\n", 
         runFileName.c_str(), storage, _pageSize, _readAheadSize, _readAheadThreshold);
     #endif
-    _currentPage = new Buffer(_pageSize / recordSize, recordSize);
+    vector<u_int8_t> deviceTypes;
+    vector<u_int64_t> switchPoints;
+    std::tie(deviceTypes, switchPoints) = parseDeviceType(runFileName);
+
+    if (switchPoints.size() == 0) switchPoint = 0;
+    else if (switchPoints.size() == 1) switchPoint = switchPoints.at(0);
+    else throw std::invalid_argument("More than 1 switch points.");
+    
+    storage = deviceTypes.at(0);
+    if (deviceTypes.size() == 1) nextStorage = storage;
+    else if (deviceTypes.size() == 2) nextStorage = deviceTypes.at(1);
+    else throw std::invalid_argument("More than 2 device types.");
+
+    _currentPage = getBuffer();
     _fillPage(_currentPage);
 } // ExternalRun::ExternalRun
 
@@ -53,10 +66,9 @@ byte * ExternalRun::next ()
     if (_produced % (recordPerPage / 10) == 0 
         && _readAheadPage == nullptr 
         && _readAheadSize >= _pageSize 
-        && reachesEnd == false &&
-        (double) _currentPage->sizeRead() / (_currentPage->recordSize * _currentPage->recordCount) > _readAheadThreshold) 
+        && (double) _currentPage->sizeRead() / (_currentPage->recordSize * _currentPage->recordCount) > _readAheadThreshold) 
     {
-        _readAheadPage = new Buffer(_pageSize / _recordSize, _recordSize);
+        _readAheadPage = getBuffer();
         u_int32_t readCount = _fillPage(_readAheadPage);
         _readAheadSize -= readCount;
     }
@@ -68,7 +80,7 @@ u_int32_t ExternalRun::_fillPage (Buffer * page)
     TRACE (false);
     if (_runFile.eof()) return 0;
     if (_runFile.good() == false) throw std::invalid_argument("Error reading from run file.");
-    _runFile.read((char *) page->data(), _pageSize); // TODO: switch device
+    _runFile.read((char *) page->data(), _pageSize);
     auto readCount = _runFile.gcount(); // Same scale as _pageSize
     #if defined(VERBOSEL2)
     traceprintf("Read %d rows from run file %s\n", readCount / _recordSize, _runFileName.c_str());
@@ -77,3 +89,22 @@ u_int32_t ExternalRun::_fillPage (Buffer * page)
     if (page == _currentPage) Metrics::read(storage, readCount, page == _readAheadPage);
     return readCount;
 } // ExternalRun::_fillPage
+
+Buffer * ExternalRun::getBuffer ()
+{
+    TRACE (false);
+    if (nextStorage != storage) // If they are the same, we've reached the last device
+    {
+        // If the switch point is estimated to land in the next page, we need to switch to the next device
+        // By "estimated", we are not considering the rows not produced yet in the current page; this only happens 
+        // when we are reading ahead, i.e. when we are not so sensitive to suboptimal choice of page size
+        u_int32_t nextPageSize = Metrics::getParams(nextStorage).pageSize;
+        u_int64_t nextProducedCount = _produced + nextPageSize / _recordSize;
+        if (nextProducedCount > switchPoint) {
+            traceprintf("# %llu: Switching device before switch point %llu, page size %d -> %d\n", _produced, switchPoint, _pageSize, nextPageSize);
+            storage = nextStorage;
+            _pageSize = nextPageSize;
+        }
+    }
+    return new Buffer(_pageSize / _recordSize, _recordSize);
+} // ExternalRun::getBuffer

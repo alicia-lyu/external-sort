@@ -11,6 +11,7 @@
 
 using std::string;
 using std::tuple;
+using std::vector;
 using argparse::ArgumentParser;
 
 struct Config {
@@ -34,4 +35,5 @@ byte * renderRow(std::function<byte *()> retrieveNext,
     byte * lastRow,
     bool removeDuplicates, 
     RowSize recordSize);
-int parseDeviceType(string filename);
+tuple<vector<u_int8_t>, vector<u_int64_t>> parseDeviceType(string filename);
+u_int8_t getLargestDeviceType(string filename);

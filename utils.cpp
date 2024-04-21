@@ -2,6 +2,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <sstream>
+#include <regex>
 #include "Iterator.h"
 #include "utils.h"
 
@@ -170,11 +171,39 @@ byte * renderRow(std::function<byte *()> retrieveNext, std::function<byte *(byte
 	return output;
 }
 
-int parseDeviceType(string filename) {
-    int pos = filename.find("device");
-    if (pos == string::npos) {
-        throw std::runtime_error("Filename " + filename + "does not contain device type");
+tuple<vector<u_int8_t>, vector<u_int64_t>> parseDeviceType(string filename) {
+    vector<u_int8_t> deviceTypes;
+    vector<u_int64_t> switchPoints;
+    std::regex deviceTypePattern("device(\\d+)");
+    auto deviceTypeBegin = std::sregex_iterator(filename.begin(), filename.end(), deviceTypePattern);
+    auto deviceTypeEnd = std::sregex_iterator();
+    for (std::sregex_iterator i = deviceTypeBegin; i != deviceTypeEnd; ++i) {
+        std::smatch match = *i;
+        if (match.size() > 1) {
+            u_int8_t deviceType = std::stoi(match[1].str());  // Access the first capturing group
+            deviceTypes.push_back(deviceType);
+        }
     }
-    int device_type = std::stoi(filename.substr(pos + 6, 1));
-    return device_type;
+    std::regex switchPointPattern("device\\d+-(\\d+)-device\\d+");
+    auto switchPointBegin = std::sregex_iterator(filename.begin(), filename.end(), switchPointPattern);
+    auto switchPointEnd = std::sregex_iterator();
+    for (std::sregex_iterator i = switchPointBegin; i != switchPointEnd; ++i) {
+        std::smatch match = *i;
+        if (match.size() > 1) {
+            u_int64_t switchPoint = std::stoull(match[1].str());  // Access the first capturing group
+            switchPoints.push_back(switchPoint);
+        }
+    }
+    Assert(deviceTypes.size() == switchPoints.size() + 1, __FILE__, __LINE__);
+    return std::make_tuple(deviceTypes, switchPoints);
+}
+
+u_int8_t getLargestDeviceType(string filename) {
+    vector<u_int8_t> deviceTypes;
+    vector<u_int64_t> switchPoints;
+    std::tie(deviceTypes, switchPoints) = parseDeviceType(filename);
+    if (deviceTypes.size() > 1) {
+        std::cout << "Warning: Multiple device types found in " << filename << ". You are only getting the largest device.\n";
+    }
+    return *std::max_element(deviceTypes.begin(), deviceTypes.end());
 }

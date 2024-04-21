@@ -6,7 +6,7 @@
 class ExternalRun
 {
 public:
-    u_int8_t const storage;
+    u_int8_t storage;
     ExternalRun (std::string runFileName, RowSize recordSize, u_int64_t & readAheadSize);
     ~ExternalRun ();
     byte * next();
@@ -17,9 +17,11 @@ private:
     Buffer * _readAheadPage;
     std::string const _runFileName;
     std::ifstream _runFile;
-    u_int32_t const _pageSize; // max. 500 KB = 2^19
+    u_int32_t _pageSize; // max. 500 KB = 2^19, changes when switching between SSD and HDD
     RowSize const _recordSize;
     u_int64_t _produced;
-    bool reachesEnd;
+    u_int64_t switchPoint;
+    u_int8_t nextStorage;
     u_int32_t _fillPage(Buffer * page);
+    Buffer * getBuffer();
 };

@@ -62,9 +62,12 @@ byte * ExternalRun::next ()
             u_int32_t readCount = _fillPage(_currentPage);
         }
         row = _currentPage->next();
-        if (row == nullptr) return nullptr; // Still null, we have reached the end of the run
+        if (row == nullptr) { // Still null, we have reached the end of the run
+            Metrics::erase(storage, std::filesystem::file_size(_runFileName) - switchPoint * _recordSize);
+            // OPTIMIZATION: Erase in a smaller granularity at each fill?
+            return nullptr;
+        }
     } 
-    ++ _produced;
     // COMMENT: With a single thread, it is fundamentally challenging to make read-ahead non-blocking
     // Therefore, we are only mimicking the non-blocking behavior by not counting the read-ahead cost in Metrics
     u_int16_t recordPerPage = _pageSize / _recordSize; // max. 500 KB / 20 B = 25000 = 2^14
@@ -80,6 +83,7 @@ byte * ExternalRun::next ()
     #if defined(VERBOSEL2)
     traceprintf ("# %llu: %s\n", _produced, rowToString(row, _recordSize).c_str());
     #endif
+    ++ _produced;
     return row;
 } // ExternalRun::next
 
@@ -94,7 +98,7 @@ u_int32_t ExternalRun::_fillPage (Buffer * page)
     traceprintf("Read %d rows from run file %s\n", readCount / _recordSize, _runFileName.c_str());
     #endif
     page->batchFillByOverwrite(readCount);
-    if (page == _currentPage) Metrics::read(storage, readCount, page == _readAheadPage);
+    Metrics::read(storage, readCount, page == _readAheadPage);
     return readCount;
 } // ExternalRun::_fillPage
 
@@ -110,6 +114,8 @@ Buffer * ExternalRun::getBuffer ()
         u_int64_t nextProducedCount = _produced + nextPageSize / _recordSize;
         if (nextProducedCount > switchPoint) {
             traceprintf("# %llu: Switching device before switch point %llu, page size %d -> %d\n", _produced, switchPoint, _pageSize, nextPageSize);
+            Metrics::erase(storage, _produced * _recordSize);
+            // We may leave a small fragment in the next device, left for future optimization
             storage = nextStorage;
             _pageSize = nextPageSize;
         }

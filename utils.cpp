@@ -182,7 +182,6 @@ tuple<vector<u_int8_t>, vector<u_int64_t>> parseDeviceType(string filename) {
         if (match.size() > 1) {
             u_int8_t deviceType = std::stoi(match[1].str());  // Access the first capturing group
             deviceTypes.push_back(deviceType);
-            traceprintf("Device type %d\n", deviceType);
         }
     }
     std::regex switchPointPattern("device\\d+-(\\d+)-");
@@ -193,7 +192,6 @@ tuple<vector<u_int8_t>, vector<u_int64_t>> parseDeviceType(string filename) {
         if (match.size() > 1) {
             u_int64_t switchPoint = std::stoull(match[1].str());  // Access the first capturing group
             switchPoints.push_back(switchPoint);
-            traceprintf("Switch point %llu\n", switchPoint);
         }
     }
     Assert(deviceTypes.size() == switchPoints.size() + 1, __FILE__, __LINE__);

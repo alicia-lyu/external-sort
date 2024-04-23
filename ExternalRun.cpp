@@ -26,7 +26,7 @@ ExternalRun::ExternalRun (std::string runFileName, RowSize recordSize, u_int64_t
     else if (deviceTypes.size() == 2) nextStorage = deviceTypes.at(1);
     else throw std::invalid_argument("More than 2 device types.");
 
-    #if defined(VERBOSEL1) || defined(VERBOSEL2)
+    #if defined(VERBOSEL2)
     traceprintf("Switch point %llu, storage %d, next storage %d\n", switchPoint, storage, nextStorage);
     #endif
     

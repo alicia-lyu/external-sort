@@ -78,7 +78,7 @@ void Metrics::erase(const int device_type, const u_int64_t num_bytes) {
     if (device_type < 0 || device_type >= NUM_STORAGE_TYPES) {
         throw std::invalid_argument("Invalid device type");
     }
-    #if defined(VERBOSEL1) || defined(VERBOSEL2)
+    #if defined(VERBOSEL2)
     traceprintf("Erasing %llu bytes from storage %d\n", num_bytes, device_type);
     #endif
     StorageMetrics & metric = instance->metrics[device_type];
@@ -90,16 +90,16 @@ int Metrics::getAvailableStorage()
     if (instance == nullptr) {
         throw std::runtime_error("Metrics not initialized");
     }
-    for (int deviceType = 0; deviceType < NUM_STORAGE_TYPES; deviceType++) { 
-        // start from the fastest device (with smaller index)
-        StorageParams & param = instance->params[deviceType];
-        StorageMetrics & metric = instance->metrics[deviceType];
-        if (metric.numBytes + param.pageSize <= param.capacity) {
-            setCurrentStorage(deviceType);
-            return deviceType;
-        }
+    int device_type = Metrics::CURRENT_STORAGE;
+    // TODO: Start from the fastest storage, because it may be erased and has available space
+    StorageParams & param = instance->params[device_type];
+    StorageMetrics & metric = instance->metrics[device_type];
+    if (metric.numBytes + param.pageSize >= param.capacity) { // Use the next available storage
+        if (device_type++ >= NUM_STORAGE_TYPES) throw std::runtime_error("No available storage");
+        setCurrentStorage(device_type);
+        return getAvailableStorage(); // check again
     }
-    throw std::runtime_error("No available storage");
+    return device_type;
 }
 
 int Metrics::getAvailableStorage(const u_int64_t num_bytes)
@@ -107,16 +107,15 @@ int Metrics::getAvailableStorage(const u_int64_t num_bytes)
     if (instance == nullptr) {
         throw std::runtime_error("Metrics not initialized");
     }
-    for (int deviceType = 0; deviceType < NUM_STORAGE_TYPES; deviceType++) { 
-        // start from the fastest device (with smaller index)
-        StorageParams & param = instance->params[deviceType];
-        StorageMetrics & metric = instance->metrics[deviceType];
-        if (metric.numBytes + num_bytes <= param.capacity) {
-            setCurrentStorage(deviceType);
-            return deviceType;
-        }
+    int device_type = Metrics::CURRENT_STORAGE;
+    StorageParams & param = instance->params[device_type];
+    StorageMetrics & metric = instance->metrics[device_type];
+    if (metric.numBytes + num_bytes >= param.capacity) { // Use the next available storage
+        if (device_type++ >= NUM_STORAGE_TYPES) throw std::runtime_error("No available storage");
+        setCurrentStorage(device_type);
+        return getAvailableStorage(num_bytes); // check again
     }
-    throw std::runtime_error("No available storage");
+    return device_type;
 }
 
 StorageMetrics Metrics::getMetrics(const int device_type)

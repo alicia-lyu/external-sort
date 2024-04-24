@@ -7,6 +7,7 @@
 #include "Verify.h"
 #include "Remove.h"
 #include "Metrics.h"
+#include <unistd.h>
 
 int main (int argc, char * argv [])
 {
@@ -14,16 +15,19 @@ int main (int argc, char * argv [])
 
 	RowCount recordCount;
 	RowSize recordSize; // 20-2000 bytes
-	string outputPath;
-	string inputPath;
 	bool removeDuplicate;
 
 	Config config = getArgs(argc, argv);
 	recordCount = config.recordCount;
 	recordSize = config.recordSize;
-	outputPath = config.outputPath;
-	inputPath = config.inputPath;
 	removeDuplicate = config.removeDuplicates;
+
+	// output log file
+	string & outputPath = config.outputPath;
+	int stdout_copy = dup(STDOUT_FILENO);
+	if (!outputPath.empty()) {
+		freopen(outputPath.c_str(), "w+", stdout);
+	}
 
 	// u_int16_t runCount = recordCount / recordCountPerRun; // 4000 -- 40
 	// traceprintf("recordCountPerRun: %u, runCount: %u\n", recordCountPerRun, runCount);
@@ -52,6 +56,13 @@ int main (int argc, char * argv [])
 		hddMetrics.numAccesses, hddMetrics.numBytes);
 	traceprintf("HDD total latency: %.2f (ms), total IO latency: %.2f (ms)\n",
 		hddMetrics.accessCost * 1000, hddMetrics.dataTransferCost * 1000);
-
+	
+	// restore stdout
+	if (!outputPath.empty()) {
+		fflush(stdout);
+		dup2(stdout_copy, STDOUT_FILENO);
+		close(stdout_copy);
+	}
+	
 	return 0;
 } // main

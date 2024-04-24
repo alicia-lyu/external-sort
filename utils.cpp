@@ -22,7 +22,7 @@ Config getArgs(int argc, char* argv[])
     Arguments:
         * -c, --count: Number of records to generate
         * -s, --size: Size of each record, must be 20-2000
-        * -o, --output: Output path
+        * (optional) -o, --output: Output path
         * (optional) -i, --input: Input path. If not provided, generate records
         * (optional) -d, --duplicate-removal: remove duplicates
     */
@@ -39,7 +39,7 @@ Config getArgs(int argc, char* argv[])
 
     parser.add_argument("-o", "--output")
         .help("Output path")
-        .required();
+        .default_value(string(""));
 
     parser.add_argument("-i", "--input")
         .help("Input path")

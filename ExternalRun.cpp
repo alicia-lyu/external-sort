@@ -81,7 +81,7 @@ byte * ExternalRun::next ()
         _readAheadSize -= readCount;
     }
     #if defined(VERBOSEL2)
-    traceprintf ("# %llu: %s\n", _produced, rowToString(row, _recordSize).c_str());
+    if (_produced % 1000 == 0) traceprintf("# %llu of %s: %s\n", _produced, _runFileName.c_str(), rowToString(row, _recordSize).c_str());
     #endif
     ++ _produced;
     return row;

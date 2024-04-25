@@ -49,18 +49,17 @@ $(LOG_DIR) :
 	mkdir -p ./inputs/
 	rm -rf ./inputs/*
 
-./spills/ : 
-	mkdir -p ./spills/
-	rm -rf ./spills/*
-
-./spills/pass0: ./spills/
+./spills/pass0:
 	mkdir -p ./spills/pass0
+	rm -f ./spills/pass0/*
 
-./spills/pass1: ./spills/
+./spills/pass1:
 	mkdir -p ./spills/pass1
+	rm -f ./spills/pass1/*
 
-./spills/pass2: ./spills/
+./spills/pass2:
 	mkdir -p ./spills/pass2
+	rm -f ./spills/pass2/*
 
 test : Test.exe Makefile $(LOG_DIR) ./inputs/
 	echo $(TIMESTAMP) > $(LOG_FILE)
@@ -82,23 +81,23 @@ external: Test.exe Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1
 	echo $(TIMESTAMP) > $(LOG_FILE)
 	./Test.exe -c 10000 -s 20 -o $(LOG_FILE)
 
-external-lldb: Test.exe Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1
-	lldb -- ./Test.exe -c 10000 -s 20 -o $(LOG_FILE)
+external-lldb: Test.exe Makefile ./inputs/ ./spills/pass0 ./spills/pass1
+	lldb -- ./Test.exe -c 10000 -s 20
 
 # 8 MB data, 82 initial runs, 2 pass-1 runs, 2 pass
 external-2: Test.exe Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1 ./spills/pass2
 	echo $(TIMESTAMP) > $(LOG_FILE)
 	./Test.exe -c 40000 -s 200 -o $(LOG_FILE)
 
-external-2-lldb: Test.exe Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1 ./spills/pass2
-	lldb -- ./Test.exe -c 40000 -s 200 -o $(LOG_FILE)
+external-2-lldb: Test.exe Makefile ./inputs/ ./spills/pass0 ./spills/pass1 ./spills/pass2
+	lldb -- ./Test.exe -c 40000 -s 200
 
 # TODO: external-sort on HDD: 100 MB can be divided into 200 pages of 500KB each
 
 # TODO: Add more test cases 10^3 * 50 (50M), 10^3 * 125 (125M), 10^5 * 120 (12 G), 10^6 * 120 (120 G) (rows, record size) and sample input by TA
 
-lldb : Test.exe $(LOG_DIR)
-	lldb -- ./Test.exe -c 7 -s 20 -o $(LOG_FILE)
+lldb : Test.exe
+	lldb -- ./Test.exe -c 7 -s 20
 
 # TODO: We eventually need a ExternalSort.exe target
 ExternalSort.exe: Makefile ExternalSort.cpp

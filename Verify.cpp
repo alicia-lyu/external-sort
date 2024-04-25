@@ -59,7 +59,7 @@ byte * VerifyIterator::next()
         traceprintf ("#%llu consumed %s\n", _consumed, rowToString(received, _plan->_size).c_str());
         #endif
 
-        if (!lastRow) {
+        if (lastRow != nullptr) {
             auto cmp = memcmp(lastRow, received, _plan->_size);
             if (_descending ? cmp < 0 : cmp > 0) {
                 isSorted = false;

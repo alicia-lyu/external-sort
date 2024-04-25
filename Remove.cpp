@@ -24,13 +24,14 @@ InStreamRemoveIterator::InStreamRemoveIterator(InStreamRemovePlan const * const 
     : _plan(plan), _input(_plan->_input->init()), _consumed(0), _produced(0), _removed(0)
 {
     TRACE(false);
-    lastRow = nullptr;
+    lastRow = (byte *) malloc(_plan->_size);
 } // InStreamRemoveIterator::InStreamRemoveIterator
 
 InStreamRemoveIterator::~InStreamRemoveIterator()
 {
     TRACE(false);
     delete _input;
+    free(lastRow);
     traceprintf("Removed %lu rows\n", (unsigned long)(_removed));
 
     #if defined(VERBOSEL2) || defined(VERBOSEL1)

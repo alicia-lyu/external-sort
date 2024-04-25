@@ -21,14 +21,11 @@ struct StorageMetrics {
     u_int64_t numAccessesWritten;
     u_int64_t storageUsed;
 
-    StorageMetrics(double _dataTransferCost = 0.0, double _accessCost = 0.0,
-        u_int64_t _numBytesRead = 0, u_int64_t _numBytesWritten = 0,
-        u_int64_t _numAccessesRead = 0, u_int64_t _numAccessesWritten = 0, 
-        u_int64_t _storageUsed = 0) : 
-        dataTransferCost(_dataTransferCost), accessCost(_accessCost),
-        numBytesRead (_numBytesRead), numBytesWritten (_numBytesWritten),
-        numAccessesRead (_numAccessesRead), numAccessesWritten (_numAccessesWritten),
-        storageUsed (_storageUsed) {}
+    StorageMetrics() : 
+        dataTransferCost(0.0), accessCost(0.0),
+        numBytesRead (0), numBytesWritten (0),
+        numAccessesRead (0), numAccessesWritten (0),
+        storageUsed (0) {}
 };
 
 /*
@@ -60,9 +57,7 @@ public:
     Metrics();
 
 private:
-    static int CURRENT_STORAGE;
     StorageMetrics metrics[NUM_STORAGE_TYPES];
     StorageParams params[NUM_STORAGE_TYPES];
     static Metrics * instance;
-    static bool setCurrentStorage(const int device_type);
 };

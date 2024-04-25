@@ -2,7 +2,6 @@
 #include <iostream>
 
 Metrics * Metrics::instance = nullptr;
-int Metrics::CURRENT_STORAGE = STORAGE_SSD;
 
 void Metrics::Init()
 {
@@ -11,16 +10,6 @@ void Metrics::Init()
     if (instance == nullptr) {
         instance = new Metrics();
     }
-}
-
-bool Metrics::setCurrentStorage(const int device_type)
-{
-    if (device_type < 0 || device_type >= NUM_STORAGE_TYPES) {
-        return false;
-    }
-
-    CURRENT_STORAGE = device_type;
-    return true;
 }
 
 void Metrics::read(const int device_type, const u_int64_t num_bytes, bool readAhead)

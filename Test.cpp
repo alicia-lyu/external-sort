@@ -50,15 +50,22 @@ int main (int argc, char * argv [])
 
 	// print the metrics
 	auto ssdMetrics = Metrics::getMetrics(STORAGE_SSD);
+	auto ssdParams = Metrics::getParams(STORAGE_SSD);
 	auto hddMetrics = Metrics::getMetrics(STORAGE_HDD);
-	traceprintf("SSD accessed %llu times and transferred %llu bytes\n",
-		ssdMetrics.numAccesses, ssdMetrics.numBytes);
-	traceprintf("SSD total latency: %.2f (ms), total IO latency: %.2f (ms)\n",
-		ssdMetrics.accessCost * 1000, ssdMetrics.dataTransferCost * 1000);
-	traceprintf("HDD accessed %llu times and transferred %llu bytes\n",
-		hddMetrics.numAccesses, hddMetrics.numBytes);
-	traceprintf("HDD total latency: %.2f (ms), total IO latency: %.2f (ms)\n",
-		hddMetrics.accessCost * 1000, hddMetrics.dataTransferCost * 1000);
+	auto hddParams = Metrics::getParams(STORAGE_HDD);
+
+	traceprintf("SSD: dataTransferCost: %f, expected data transfer cost: %f\naccessCost: %f, expected access cost: %f\n",
+		ssdMetrics.dataTransferCost,
+		(ssdMetrics.numBytesRead + ssdMetrics.numBytesWritten) / (double) ssdParams.bandwidth,
+		ssdMetrics.accessCost,
+		(ssdMetrics.numAccessesRead + ssdMetrics.numAccessesWritten) * ssdParams.latency
+	);
+	traceprintf("HDD: dataTransferCost: %f, expected data transfer cost: %f\naccessCost: %f, expected access cost: %f\n",
+		hddMetrics.dataTransferCost,
+		(hddMetrics.numBytesRead + hddMetrics.numBytesWritten) / (double) hddParams.bandwidth,
+		hddMetrics.accessCost,
+		(hddMetrics.numAccessesRead + hddMetrics.numAccessesWritten) * hddParams.latency
+	);
 	
 	// restore stdout
 	if (!outputPath.empty()) {

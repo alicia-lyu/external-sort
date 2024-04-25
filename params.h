@@ -1,4 +1,4 @@
-#define CACHE_SIZE 1000 // Change to 1 MB
+#define CACHE_SIZE 8000 // Change to 8 MB
 #define MEMORY_SIZE 100000 // Change to 100 MB
 #define SSD_SIZE 10000000 // Change to 10 GB
 // HDD size: unlimited
@@ -20,3 +20,5 @@
 // ==========================
 
 #define READ_AHEAD_BUFFERS_MIN 2
+
+#define MAX_INPUT_FILE_SIZE 18000000

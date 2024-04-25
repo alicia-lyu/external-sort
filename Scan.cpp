@@ -2,8 +2,8 @@
 #include "utils.h"
 #include <memory>
 
-ScanPlan::ScanPlan (RowCount const count, RowSize const size) : 
-	_count (count), _size (size), _countPerRun (getRecordCountPerRun(size, true))
+ScanPlan::ScanPlan (RowCount const count, RowSize const size, const string &inputPath) : 
+	_count (count), _size (size), _countPerRun (getRecordCountPerRun(size, true)), _inputPath(inputPath)
 	// TODO: Provide the option to read from a input file, so that we can test against sample input
 {
 	TRACE (false);
@@ -23,10 +23,16 @@ Iterator * ScanPlan::init () const
 } // ScanPlan::init
 
 ScanIterator::ScanIterator (ScanPlan const * const plan) :
-	_plan (plan), _scanCount(0), _countPerScan(18000000 / plan->_size), _count (0)
+	_plan (plan), _scanCount(0), _countPerScan(MAX_INPUT_FILE_SIZE / plan->_size), _count (0)
 {
 	TRACE (false);
-	_run = new RandomBuffer(_plan->_countPerRun, _plan->_size);
+	// if input path is not empty, use InFileBuffer
+	// else, use RandomBuffer
+	if (_plan->_inputPath.empty()) {
+		_run = new RandomBuffer(_plan->_countPerRun, _plan->_size);
+	} else {
+		_run = new InFileBuffer(_plan->_countPerRun, _plan->_size, _plan->_inputPath);
+	}
 	_inputFile = std::ofstream(_getInputFileName(), std::ios::binary);
 } // ScanIterator::ScanIterator
 
@@ -49,10 +55,10 @@ byte * ScanIterator::next ()
 	byte * row;
 	do {
 		row = _run->next();
-	} while (row == nullptr); // When the buffer is full, fillRandomly returns nullptr
+	} while (row == nullptr);
 
 	#ifdef VERBOSEL2
-	traceprintf ("produced %s\n", rowToString(row, _plan->_size).c_str());
+	traceprintf ("%d produced %s\n", _count, rowToString(row, _plan->_size).c_str());
 	#endif
 
 	RowCount rowCountInCurrentScan = _count - _scanCount * _countPerScan;

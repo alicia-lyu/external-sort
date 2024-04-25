@@ -29,9 +29,12 @@ int main (int argc, char * argv [])
 		freopen(outputPath.c_str(), "w+", stdout);
 	}
 
+	// input file
+	string & inputPath = config.inputPath;
+
 	// u_int16_t runCount = recordCount / recordCountPerRun; // 4000 -- 40
 	// traceprintf("recordCountPerRun: %u, runCount: %u\n", recordCountPerRun, runCount);
-	Plan * const scanPlan = new ScanPlan (recordCount, recordSize);
+	Plan * const scanPlan = new ScanPlan (recordCount, recordSize, inputPath);
 	Plan * const witnessPlan = new WitnessPlan (scanPlan, recordSize);
 	Plan * const sortPlan = new SortPlan (witnessPlan, recordSize, recordCount, removeDuplicate);
 	Plan * const verifyPlan = new VerifyPlan (sortPlan, recordSize);
@@ -63,6 +66,6 @@ int main (int argc, char * argv [])
 		dup2(stdout_copy, STDOUT_FILENO);
 		close(stdout_copy);
 	}
-	
+
 	return 0;
 } // main

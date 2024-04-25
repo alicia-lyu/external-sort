@@ -66,6 +66,10 @@ test : Test.exe Makefile $(LOG_DIR) ./inputs/
 	echo $(TIMESTAMP) > $(LOG_FILE)
 	./Test.exe -c 7 -s 20 -o $(LOG_FILE) -d
 
+testinput : Test.exe Makefile $(LOG_DIR) ./inputs/
+	echo $(TIMESTAMP) > $(LOG_FILE)
+	./Test.exe -c 20 -s 1023 -i input_table -o $(LOG_FILE) -d
+
 dup : Test.exe Makefile $(LOG_DIR) ./inputs/
 	echo $(TIMESTAMP) > $(LOG_FILE)
 	./Test.exe -c 4000 -s 2 -o $(LOG_FILE) -d

@@ -24,14 +24,15 @@ private:
 class VerifyIterator : public Iterator
 {
 public:
-    byte * lastRow;
     VerifyIterator (VerifyPlan const * const plan);
     ~VerifyIterator ();
     byte * next ();
 private:
+    byte * lastRow;
     VerifyPlan const * const _plan;
     Iterator * const _input;
     RowCount _consumed, _produced;
     bool isSorted, hasDuplicates;
     bool const _descending;
+    bool isFirstRow;
 }; // class VerifyIterator

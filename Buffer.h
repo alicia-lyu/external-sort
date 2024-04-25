@@ -4,6 +4,7 @@
 #include <memory>
 #include <random>
 #include <fstream>
+#include <string>
 
 typedef uint64_t RowCount;
 typedef u_int16_t RowSize; // 20-2000, unit: 
@@ -12,6 +13,7 @@ using std::random_device;
 using std::default_random_engine;
 using std::uniform_int_distribution;
 using std::ifstream;
+using std::string;
 
 // class Buffer
 // provides a buffer to store records
@@ -19,7 +21,6 @@ using std::ifstream;
 //  - next: virtual function; returns the next record, in byte *
 //  - Buffer(recordCount, recordSize): constructor
 //  - Buffer(recordCount, recordSize, inputFile): constructor
-
 class Buffer
 {
 public:
@@ -37,6 +38,7 @@ public:
     virtual byte * next(); // Read the next row after toBeRead. If toBeRead is at the end of the buffer, return nullptr, and set toBeRead to the beginning of the buffer.
 protected:
     byte * _rows;
+    byte * _rowsEnd;
     byte * toBeRead;
     byte * toBeFilled;
 };
@@ -61,4 +63,20 @@ private:
     byte getRandomAlphaNumeric();
     static const int RANDOM_BYTE_UPPER_BOUND = (26+26+10); // 26 upper case, 26 lower case, 10 digits
 
+};
+
+
+// InFileBuffer: derived from Buffer
+// reads records from a file
+// overrides the next function to read records from a file
+class InFileBuffer : public Buffer
+{
+public:
+    InFileBuffer (u_int16_t recordCount, RowSize recordSize, const string & inputPath);
+    ~InFileBuffer ();
+    byte * next() override;
+private:
+    ifstream _inputFile;
+    bool isAlphaNumeric(byte c);
+    bool readRecordFromFile();
 };

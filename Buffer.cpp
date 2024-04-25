@@ -11,6 +11,7 @@ Buffer::Buffer(u_int16_t recordCount, RowSize recordSize):
     }
     toBeRead = _rows;
     toBeFilled = _rows;
+    _rowsEnd = _rows + recordSize * recordCount;
 }
 
 Buffer::~Buffer ()
@@ -21,7 +22,7 @@ Buffer::~Buffer ()
 
 byte * Buffer::copy (byte const * source)
 {
-    if (toBeFilled >= _rows + recordSize * recordCount) {
+    if (toBeFilled >= _rowsEnd) {
         toBeFilled = _rows;
         return nullptr;
     }
@@ -34,7 +35,7 @@ byte * Buffer::copy (byte const * source)
 byte * Buffer::next ()
 {
     TRACE (false);
-    if (toBeRead >= _rows + recordSize * recordCount || toBeRead >= toBeFilled) { 
+    if (toBeRead >= _rowsEnd || toBeRead >= toBeFilled) { 
         toBeRead = _rows;
         return nullptr;
     }
@@ -101,7 +102,7 @@ byte RandomBuffer::getRandomAlphaNumeric ()
 
 byte * RandomBuffer::fillRandomly ()
 {
-    if (toBeFilled >= _rows + recordSize * recordCount) {
+    if (toBeFilled >= _rowsEnd) {
         toBeFilled = _rows;
         return nullptr;
     }
@@ -115,4 +116,75 @@ byte * RandomBuffer::next ()
 {
     TRACE (false);
     return fillRandomly();
+}
+
+
+// Derived class: InFileBuffer
+InFileBuffer::InFileBuffer (u_int16_t recordCount, RowSize recordSize, const string & inputPath):
+    Buffer(recordCount, recordSize)
+{
+    TRACE (false);
+    traceprintf("recordCount: %d, recordSize: %d\n", recordCount, recordSize);
+    _inputFile = ifstream (inputPath, std::ios::binary);
+    if (!_inputFile.is_open()) {
+        throw std::runtime_error("Input file not found");
+    }
+}
+
+InFileBuffer::~InFileBuffer ()
+{
+    TRACE (false);
+    _inputFile.close();
+}
+
+bool InFileBuffer::isAlphaNumeric (byte c)
+{
+    return (c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
+}
+
+bool InFileBuffer::readRecordFromFile ()
+{
+    u_int16_t numToRead = recordSize;
+    char c;
+
+    while (numToRead > 0) {
+        if (_inputFile.eof()) {
+            return false;
+        }
+        _inputFile.read(&c, sizeof(char));
+        if (isAlphaNumeric(c)) {
+            *toBeFilled = (byte) c;
+            ++toBeFilled;
+            --numToRead;
+        }
+    }
+
+    return true;
+}
+
+byte * InFileBuffer::next ()
+{
+    TRACE (false);
+    if (toBeRead >= _rowsEnd || toBeRead >= toBeFilled) {
+        // has exhausted all records previously read, need to read more
+        toBeRead = toBeFilled = _rows;
+
+        // get one more record
+        for (u_int16_t i = 0; i < recordCount; ++i) {
+            auto res = readRecordFromFile();
+            if (!res) {
+                break;
+            }
+        }
+    }
+
+    // still no data, return nullptr
+    if (toBeRead >= _rowsEnd || toBeRead >= toBeFilled) {
+        return nullptr;
+    }
+
+    // return the next record
+    byte * read = toBeRead;
+    toBeRead += recordSize;
+    return read;
 }

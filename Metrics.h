@@ -15,13 +15,20 @@ StorageMetrics: the metrics of a storage system (SSD / HDD)
 struct StorageMetrics {
     double dataTransferCost;
     double accessCost;
-    u_int64_t numBytes;
-    u_int64_t numAccesses;
+    u_int64_t numBytesRead;
+    u_int64_t numBytesWritten;
+    u_int64_t numAccessesRead;
+    u_int64_t numAccessesWritten;
+    u_int64_t storageUsed;
 
     StorageMetrics(double _dataTransferCost = 0.0, double _accessCost = 0.0,
-        u_int64_t _numBytes = 0, u_int64_t _numAccesses = 0) : 
+        u_int64_t _numBytesRead = 0, u_int64_t _numBytesWritten = 0,
+        u_int64_t _numAccessesRead = 0, u_int64_t _numAccessesWritten = 0, 
+        u_int64_t _storageUsed = 0) : 
         dataTransferCost(_dataTransferCost), accessCost(_accessCost),
-        numBytes(_numBytes), numAccesses(_numAccesses) {}
+        numBytesRead (_numBytesRead), numBytesWritten (_numBytesWritten),
+        numAccessesRead (_numAccessesRead), numAccessesWritten (_numAccessesWritten),
+        storageUsed (_storageUsed) {}
 };
 
 /*

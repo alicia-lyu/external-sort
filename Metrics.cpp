@@ -40,11 +40,11 @@ void Metrics::read(const int device_type, const u_int64_t num_bytes, bool readAh
 
     // calculate the time spent on data transfer
     if (!readAhead) metric.dataTransferCost += num_bytes / param.bandwidth;
-    metric.numBytes += num_bytes;
+    metric.numBytesRead += num_bytes;
 
     // calculate the fixed latency of the storage system
     if (!readAhead) metric.accessCost += param.latency;
-    metric.numAccesses++;
+    metric.numAccessesRead++;
 }
 
 int Metrics::write(const int device_type, const u_int64_t num_bytes)
@@ -54,19 +54,21 @@ int Metrics::write(const int device_type, const u_int64_t num_bytes)
     }
     StorageParams & param = instance->params[device_type];
     StorageMetrics & metric = instance->metrics[device_type];
-    if (metric.numBytes + num_bytes >= param.capacity) { 
-        throw std::runtime_error("No available storage on device" + std::to_string(device_type) + " for " + std::to_string(num_bytes) + " bytes.");
+    if (metric.storageUsed + num_bytes > param.capacity) { 
+        throw std::runtime_error("No available storage on device" + std::to_string(device_type) + " for " + std::to_string(num_bytes) + " bytes." + " Current storage used: " + std::to_string(metric.storageUsed) + " bytes." + " Capacity: " + std::to_string(param.capacity) + " bytes.");
     }
     if (param.pageSize != num_bytes) {
         std::cerr << "Warning: Write size " << num_bytes << " does not match page size " << param.pageSize << ". This may be expected only when you are flushing the last fragment of a file." << std::endl; // Use std::cerr instead of cerr
     }
     // calculate the time spent on data transfer
     metric.dataTransferCost += num_bytes / param.bandwidth;
-    metric.numBytes += num_bytes;
+    metric.numBytesWritten += num_bytes;
 
     // calculate the fixed latency of the storage system
     metric.accessCost += param.latency;
-    metric.numAccesses++;
+    metric.numAccessesWritten++;
+
+    metric.storageUsed += num_bytes;
 
     return device_type;
 }
@@ -84,7 +86,7 @@ void Metrics::erase(const int device_type, const u_int64_t num_bytes) {
     traceprintf("Erasing %llu bytes from storage %d\n", num_bytes, device_type);
     #endif
     StorageMetrics & metric = instance->metrics[device_type];
-    metric.numBytes -= num_bytes;
+    metric.storageUsed -= num_bytes;
 }
 
 int Metrics::getAvailableStorage()
@@ -96,7 +98,7 @@ int Metrics::getAvailableStorage()
     for (int device_type = 0; device_type < NUM_STORAGE_TYPES; device_type++) {
         StorageParams & param = instance->params[device_type];
         StorageMetrics & metric = instance->metrics[device_type];
-        if (metric.numBytes + param.pageSize <= param.capacity) {
+        if (metric.storageUsed + param.pageSize <= param.capacity) {
             return device_type;
         }
     }
@@ -111,9 +113,9 @@ int Metrics::getAvailableStorage(const u_int64_t num_bytes)
     for (int device_type = 0; device_type < NUM_STORAGE_TYPES; device_type++) {
         StorageParams & param = instance->params[device_type];
         StorageMetrics & metric = instance->metrics[device_type];
-        if (metric.numBytes + num_bytes <= param.capacity) {
+        if (metric.storageUsed + num_bytes <= param.capacity) {
             return device_type;
-        } else if (metric.numBytes + param.pageSize <= param.capacity) {
+        } else if (metric.storageUsed + param.pageSize <= param.capacity) {
             std::cerr << "Warning: Storage " << device_type << " is skipped, despite having at least space of one page size available." << std::endl;
         }
     }

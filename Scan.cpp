@@ -6,7 +6,7 @@ ScanPlan::ScanPlan (RowCount const count, RowSize const size) :
 	_count (count), _size (size), _countPerRun (getRecordCountPerRun(size, true))
 	// TODO: Provide the option to read from a input file, so that we can test against sample input
 {
-	TRACE (true);
+	TRACE (false);
 	// CHECK WITH TA: Do we need to evaluate the metrics of data read & final write? 
 	// Since they are the same across different implementation, may as well only evaluate the spills
 	// This way, we also don't need to modify Scan when introducing HDD
@@ -14,7 +14,7 @@ ScanPlan::ScanPlan (RowCount const count, RowSize const size) :
 
 ScanPlan::~ScanPlan ()
 {
-	TRACE (true);
+	TRACE (false);
 } // ScanPlan::~ScanPlan
 
 Iterator * ScanPlan::init () const
@@ -25,13 +25,14 @@ Iterator * ScanPlan::init () const
 ScanIterator::ScanIterator (ScanPlan const * const plan) :
 	_plan (plan), _scanCount(0), _countPerScan(18000000 / plan->_size), _count (0)
 {
-	TRACE (true);
-	_run = new Buffer(_plan->_countPerRun, _plan->_size);
+	TRACE (false);
+	_run = new RandomBuffer(_plan->_countPerRun, _plan->_size);
 	_inputFile = std::ofstream(_getInputFileName(), std::ios::binary);
 } // ScanIterator::ScanIterator
 
 ScanIterator::~ScanIterator ()
 {
+	TRACE (false);
 	delete _run;
 	_inputFile.close();
 	traceprintf ("produced %lu of %lu rows\n",
@@ -47,7 +48,7 @@ byte * ScanIterator::next ()
 
 	byte * row;
 	do {
-		row = _run->fillRandomly();
+		row = _run->next();
 	} while (row == nullptr); // When the buffer is full, fillRandomly returns nullptr
 
 	#ifdef VERBOSEL2

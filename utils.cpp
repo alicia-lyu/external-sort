@@ -105,6 +105,8 @@ string rowToHexString(byte * rowContent, RowSize size) {
 		string hexString = byteToHexString(byte);
         result += hexString + " ";
 	}
+    // get rid of the last space
+    result.pop_back();
     return result;
 }
 

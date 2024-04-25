@@ -51,15 +51,15 @@ $(LOG_DIR) :
 
 ./spills/pass0:
 	mkdir -p ./spills/pass0
-	rm -f ./spills/pass0/*
 
 ./spills/pass1:
 	mkdir -p ./spills/pass1
-	rm -f ./spills/pass1/*
 
 ./spills/pass2:
 	mkdir -p ./spills/pass2
-	rm -f ./spills/pass2/*
+
+clean-spills:
+	rm -rf ./spills/*
 
 test : Test.exe Makefile $(LOG_DIR) ./inputs/
 	echo $(TIMESTAMP) > $(LOG_FILE)

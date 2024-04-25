@@ -146,7 +146,7 @@ SortedRecordRenderer * SortIterator::_externalSort ()
 		while (mergedRunCount < runNames.size()) { // one renderer
 			u_int16_t mergedRunCountSoFar = mergedRunCount;
 			u_int64_t memoryConsumption = 0;
-			// OUTPUT BUFFER
+			// OUTPUT BUFFER: TODO switch device
 			int deviceType = Metrics::getAvailableStorage();
 			auto outputPageSize = Metrics::getParams(deviceType).pageSize;
 			memoryConsumption += outputPageSize;

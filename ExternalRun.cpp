@@ -1,7 +1,7 @@
 #include "ExternalRun.h"
 #include "utils.h"
 
-ExternalRun::ExternalRun (std::string runFileName, RowSize recordSize, u_int64_t & readAheadSize) :
+ExternalRun::ExternalRun (std::string runFileName, RowSize recordSize, u_int64_t & readAheadSize) : // TODO: change readAheadSize to static
     _readAheadSize (readAheadSize), 
     _readAheadThreshold (std::max(1.0 - (double) readAheadSize / MEMORY_SIZE, 0.5)),
     _readAheadPage (nullptr), _runFileName (runFileName), _runFile (runFileName, std::ios::binary), 
@@ -23,7 +23,11 @@ ExternalRun::ExternalRun (std::string runFileName, RowSize recordSize, u_int64_t
     storage = deviceTypes.at(0);
     _pageSize = Metrics::getParams(storage).pageSize;
     if (deviceTypes.size() == 1) nextStorage = storage;
-    else if (deviceTypes.size() == 2) nextStorage = deviceTypes.at(1);
+    else if (deviceTypes.size() == 2) nextStorage = deviceTypes.at(1); 
+    // INPUT buffer allocated for this run is the largest page size if there are multiple device types
+    // TODO: Choose one of the options below
+    // 1. Allocate available memory to read ahead buffer? Need a policy to retract this offering by destroying read ahead pages of other runs
+    // 2. Use the largest page size from the start (chosen for simplicity)
     else throw std::invalid_argument("More than 2 device types.");
 
     #if defined(VERBOSEL2)
@@ -51,7 +55,7 @@ byte * ExternalRun::next ()
     byte * row = _currentPage->next();
     if (row == nullptr) { // Reaches end of the current page
         #if defined(VERBOSEL2)
-        traceprintf("# %llu row is null: %s buffer read %d\n", _produced, _runFileName.c_str(), _currentPage->sizeRead() / _recordSize);
+        traceprintf("# %llu row is null, run file: %s\n", _produced, _runFileName.c_str());
         #endif
         if (_readAheadPage != nullptr) { // We have a read-ahead page at hand
             delete _currentPage;
@@ -80,8 +84,8 @@ byte * ExternalRun::next ()
         u_int32_t readCount = _fillPage(_readAheadPage);
         _readAheadSize -= readCount;
     }
-    #if defined(VERBOSEL2)
-    if (_produced % 1000 == 0) traceprintf("# %llu of %s: %s\n", _produced, _runFileName.c_str(), rowToString(row, _recordSize).c_str());
+    #if defined(VERBOSEL1) || defined(VERBOSEL2)
+    if (_produced % 10000 == 0) traceprintf("# %llu of %s: %s\n", _produced, _runFileName.c_str(), rowToString(row, _recordSize).c_str());
     #endif
     ++ _produced;
     return row;

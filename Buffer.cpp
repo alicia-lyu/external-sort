@@ -1,4 +1,5 @@
 #include "Buffer.h"
+#include <iostream>
 
 // Base class: Buffer
 Buffer::Buffer(u_int16_t recordCount, RowSize recordSize):
@@ -37,6 +38,7 @@ byte * Buffer::next ()
     TRACE (false);
     if (toBeRead >= _rowsEnd || toBeRead >= toBeFilled) { 
         toBeRead = _rows;
+        toBeFilled = _rows; // Filled rows are all read
         return nullptr;
     }
     byte * read = toBeRead;
@@ -52,6 +54,9 @@ byte * Buffer::batchFillByOverwrite (u_int64_t sizeToBeFilled)
         #if defined(VERBOSEL2)
         traceprintf("Buffer under-filled %llu / %d.\n", toBeFilled, recordSize * recordCount);
         #endif
+    }
+    if (toBeFilled > _rows) {
+        std::cout << "Warning: Existing content overwritten by batchFillByOverwrite" << std::endl;
     }
     toBeFilled = _rows + sizeToBeFilled;
     toBeRead = _rows;

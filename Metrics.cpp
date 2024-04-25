@@ -47,16 +47,18 @@ void Metrics::read(const int device_type, const u_int64_t num_bytes, bool readAh
     metric.numAccesses++;
 }
 
-int Metrics::write(const u_int64_t num_bytes)
+int Metrics::write(const int device_type, const u_int64_t num_bytes)
 {
     if (instance == nullptr) {
         throw std::runtime_error("Metrics not initialized");
     }
-    int device_type = Metrics::CURRENT_STORAGE;
     StorageParams & param = instance->params[device_type];
     StorageMetrics & metric = instance->metrics[device_type];
     if (param.pageSize != num_bytes) {
         std::cerr << "Warning: Write size " << num_bytes << " does not match page size " << param.pageSize << ". This may be expected only when you are flushing the last fragment of a file." << std::endl; // Use std::cerr instead of cerr
+    }
+    if (metric.numBytes + num_bytes >= param.capacity) { 
+        throw std::runtime_error("No available storage on device" + std::to_string(device_type) + " for " + std::to_string(num_bytes) + " bytes.");
     }
     // calculate the time spent on data transfer
     metric.dataTransferCost += num_bytes / param.bandwidth;
@@ -90,16 +92,15 @@ int Metrics::getAvailableStorage()
     if (instance == nullptr) {
         throw std::runtime_error("Metrics not initialized");
     }
-    int device_type = Metrics::CURRENT_STORAGE;
-    // TODO: Start from the fastest storage, because it may be erased and has available space
-    StorageParams & param = instance->params[device_type];
-    StorageMetrics & metric = instance->metrics[device_type];
-    if (metric.numBytes + param.pageSize >= param.capacity) { // Use the next available storage
-        if (device_type++ >= NUM_STORAGE_TYPES) throw std::runtime_error("No available storage");
-        setCurrentStorage(device_type);
-        return getAvailableStorage(); // check again
+
+    for (int device_type = 0; device_type < NUM_STORAGE_TYPES; device_type++) {
+        StorageParams & param = instance->params[device_type];
+        StorageMetrics & metric = instance->metrics[device_type];
+        if (metric.numBytes + param.pageSize < param.capacity) {
+            return device_type;
+        }
     }
-    return device_type;
+    throw std::runtime_error("No available storage");
 }
 
 int Metrics::getAvailableStorage(const u_int64_t num_bytes)
@@ -107,15 +108,14 @@ int Metrics::getAvailableStorage(const u_int64_t num_bytes)
     if (instance == nullptr) {
         throw std::runtime_error("Metrics not initialized");
     }
-    int device_type = Metrics::CURRENT_STORAGE;
-    StorageParams & param = instance->params[device_type];
-    StorageMetrics & metric = instance->metrics[device_type];
-    if (metric.numBytes + num_bytes >= param.capacity) { // Use the next available storage
-        if (device_type++ >= NUM_STORAGE_TYPES) throw std::runtime_error("No available storage");
-        setCurrentStorage(device_type);
-        return getAvailableStorage(num_bytes); // check again
+    for (int device_type = 0; device_type < NUM_STORAGE_TYPES; device_type++) {
+        StorageParams & param = instance->params[device_type];
+        StorageMetrics & metric = instance->metrics[device_type];
+        if (metric.numBytes + num_bytes < param.capacity) {
+            return device_type;
+        }
     }
-    return device_type;
+    throw std::runtime_error("No available storage for " + std::to_string(num_bytes) + " bytes");
 }
 
 StorageMetrics Metrics::getMetrics(const int device_type)

@@ -66,7 +66,7 @@ byte * SortedRecordRenderer::_addRowToOutputBuffer(byte * row)
 
 string SortedRecordRenderer::_getOutputFileName (u_int8_t pass, u_int16_t runNumber)
 {
-	string device = string("-device") + std::to_string(Metrics::CURRENT_STORAGE);
+	string device = string("-device") + std::to_string(_deviceType);
 	string dir = string(".") + SEPARATOR + string("spills") + SEPARATOR + string("pass") + std::to_string(pass);
 	string filename = string("run") + std::to_string(runNumber) + device;
 	return dir + SEPARATOR + filename;
@@ -75,21 +75,24 @@ string SortedRecordRenderer::_getOutputFileName (u_int8_t pass, u_int16_t runNum
 void SortedRecordRenderer::_flushOutputBuffer(u_int16_t sizeFilled)
 {
 	TRACE (false);
-	_outputFile.write((char*) _outputBuffer->data(), sizeFilled);
-	auto newDeviceType = Metrics::getAvailableStorage();
-	if (newDeviceType != _deviceType) { // switch to a new device
-		_deviceType = newDeviceType;
-		string newFileName = _outputFileName + string("-") + std::to_string(_produced) + string("-device") + std::to_string(_deviceType);
-		std::rename(_outputFileName.c_str(), newFileName.c_str());
-		_outputFileName = newFileName;
-		delete _outputBuffer;
-		_outputBuffer = new Buffer(Metrics::getParams(_deviceType).pageSize / _recordSize, _recordSize);
-		#if defined(VERBOSEL1) || defined(VERBOSEL2)
-		traceprintf ("Switched to a new device %d at %llu, now output file is %s\n", _deviceType, _produced, _outputFileName.c_str());
-		#endif
-	}
+	if (_deviceType == 0) { // switch device when the current one is SSD and is full
+		auto newDeviceType = Metrics::getAvailableStorage();
+		if (newDeviceType != _deviceType) { // switch to a new device
+			_deviceType = newDeviceType;
+			string newFileName = _outputFileName + string("-") + std::to_string(_produced) + string("-device") + std::to_string(_deviceType);
+			std::rename(_outputFileName.c_str(), newFileName.c_str());
+			_outputFileName = newFileName;
+			delete _outputBuffer;
+			_outputBuffer = new Buffer(Metrics::getParams(_deviceType).pageSize / _recordSize, _recordSize);
+			_deviceType = newDeviceType;
+			#if defined(VERBOSEL1) || defined(VERBOSEL2)
+			traceprintf ("Switched to a new device %d at %llu, now output file is %s\n", _deviceType, _produced, _outputFileName.c_str());
+			#endif
+		}
+	} // Wouldn't switch device when the current one is HDD and SSD becomes available for simplicity (max switch once)
 	#if defined(VERBOSEL2)
 	traceprintf ("Run %d: output buffer flushed with %llu rows produced\n", _runNumber, _produced);
 	#endif
-	Metrics::write(sizeFilled);
+	_outputFile.write((char*) _outputBuffer->data(), sizeFilled);
+	Metrics::write(_deviceType, sizeFilled);
 } // SortedRecordRenderer::_flushOutputBuffer

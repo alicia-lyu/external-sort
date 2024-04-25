@@ -146,10 +146,6 @@ SortedRecordRenderer * SortIterator::_externalSort ()
 		while (mergedRunCount < runNames.size()) { // one renderer
 			u_int16_t mergedRunCountSoFar = mergedRunCount;
 			u_int64_t memoryConsumption = 0;
-			// OUTPUT BUFFER: TODO switch device
-			int deviceType = Metrics::getAvailableStorage();
-			auto outputPageSize = Metrics::getParams(deviceType).pageSize;
-			memoryConsumption += outputPageSize;
 
 			// READ-AHEAD BUFFERS
 			auto hddReadAheadBuffers = profileReadAheadBuffers(runNames, mergedRunCountSoFar);
@@ -160,15 +156,26 @@ SortedRecordRenderer * SortIterator::_externalSort ()
 			#endif
 
 			// INPUT BUFFERS
+			u_int64_t outputFileSize = 0;
 			while (mergedRunCount < runNames.size()) { // max. 120 G / 98 M = 2^11
-				auto deviceType = getLargestDeviceType(runNames.at(mergedRunCount));
+				string runName = runNames.at(mergedRunCount);
+				auto deviceType = getLargestDeviceType(runName);
 				memoryConsumption += Metrics::getParams(deviceType).pageSize; // 1 input buffer for this run
 				if (memoryConsumption > MEMORY_SIZE) {
 					memoryConsumption -= Metrics::getParams(deviceType).pageSize;
 					break;
 				}
 				mergedRunCount++;
+				outputFileSize += std::filesystem::file_size(runName);
 			}
+
+			// OUTPUT BUFFER
+			int deviceType = Metrics::getAvailableStorage(outputFileSize);
+			// Allocate output buffer conservatively: max page sizes of all storage devices needed
+			// But will try to write into SSD first if possible
+			auto outputPageSize = Metrics::getParams(deviceType).pageSize;
+			memoryConsumption += outputPageSize;
+
 			readAheadSize += MEMORY_SIZE - memoryConsumption; // Use the remaining memory for more read-ahead buffers
 			// MERGE RUNS
 			#if defined(VERBOSEL1) || defined(VERBOSEL2)

@@ -1,4 +1,4 @@
-#define CACHE_SIZE 8000 // Change to 8 MB
+#define CACHE_SIZE 8000 // Change to 1 MB
 #define MEMORY_SIZE 100000 // Change to 100 MB
 #define SSD_SIZE 10000000 // Change to 10 GB
 // HDD size: unlimited

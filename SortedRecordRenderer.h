@@ -29,5 +29,6 @@ protected:
 private:
     Buffer * _outputBuffer;
     ofstream _outputFile;
-    void _flushOutputBuffer(u_int16_t sizeFilled); // max. 500 KB / 20 B = 25000 = 2^14
+    bool _flushOutputBuffer(u_int32_t sizeFilled); // max. 500 KB = 2^19
+    int switchDevice(u_int32_t sizeFilled);
 };

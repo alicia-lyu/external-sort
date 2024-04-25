@@ -7,17 +7,14 @@ ExternalRenderer::ExternalRenderer (RowSize recordSize,
     bool removeDuplicates) :  // 500 KB = 2^19
     SortedRecordRenderer(recordSize, pass, rendererNumber, removeDuplicates)
 {
-    #if defined(VERBOSEL1) || defined(VERBOSEL2)
-    traceprintf ("Renderer %d: %zu run files, read-ahead size %llu\n", rendererNumber, runFileNames.size(), readAheadSize);
-    #endif
-    #if defined(VERBOSEL2)
-    for (auto runName : runFileNames) {
-        traceprintf ("%s\n", runName.c_str());
-    }
-    #endif
     vector<byte *> formingRows;
+    ExternalRun::READ_AHEAD_SIZE = readAheadSize;
+    ExternalRun::READ_AHEAD_THRESHOLD = std::max(0.5, ((double) readAheadSize) / MEMORY_SIZE);
+    #if defined(VERBOSEL1) || defined(VERBOSEL2)
+    traceprintf ("Renderer %d: %zu run files, read-ahead size %llu threshold %f\n", rendererNumber, runFileNames.size(), readAheadSize, ExternalRun::READ_AHEAD_THRESHOLD);
+    #endif
     for (auto runFileName : runFileNames) {
-        ExternalRun * run = new ExternalRun(runFileName, _recordSize, readAheadSize);
+        ExternalRun * run = new ExternalRun(runFileName, _recordSize);
         _runs.push_back(run);
         formingRows.push_back(run->next());
     }

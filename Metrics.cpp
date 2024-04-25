@@ -54,11 +54,11 @@ int Metrics::write(const int device_type, const u_int64_t num_bytes)
     }
     StorageParams & param = instance->params[device_type];
     StorageMetrics & metric = instance->metrics[device_type];
-    if (param.pageSize != num_bytes) {
-        std::cerr << "Warning: Write size " << num_bytes << " does not match page size " << param.pageSize << ". This may be expected only when you are flushing the last fragment of a file." << std::endl; // Use std::cerr instead of cerr
-    }
     if (metric.numBytes + num_bytes >= param.capacity) { 
         throw std::runtime_error("No available storage on device" + std::to_string(device_type) + " for " + std::to_string(num_bytes) + " bytes.");
+    }
+    if (param.pageSize != num_bytes) {
+        std::cerr << "Warning: Write size " << num_bytes << " does not match page size " << param.pageSize << ". This may be expected only when you are flushing the last fragment of a file." << std::endl; // Use std::cerr instead of cerr
     }
     // calculate the time spent on data transfer
     metric.dataTransferCost += num_bytes / param.bandwidth;
@@ -96,7 +96,7 @@ int Metrics::getAvailableStorage()
     for (int device_type = 0; device_type < NUM_STORAGE_TYPES; device_type++) {
         StorageParams & param = instance->params[device_type];
         StorageMetrics & metric = instance->metrics[device_type];
-        if (metric.numBytes + param.pageSize < param.capacity) {
+        if (metric.numBytes + param.pageSize <= param.capacity) {
             return device_type;
         }
     }
@@ -111,8 +111,10 @@ int Metrics::getAvailableStorage(const u_int64_t num_bytes)
     for (int device_type = 0; device_type < NUM_STORAGE_TYPES; device_type++) {
         StorageParams & param = instance->params[device_type];
         StorageMetrics & metric = instance->metrics[device_type];
-        if (metric.numBytes + num_bytes < param.capacity) {
+        if (metric.numBytes + num_bytes <= param.capacity) {
             return device_type;
+        } else if (metric.numBytes + param.pageSize <= param.capacity) {
+            std::cerr << "Warning: Storage " << device_type << " is skipped, despite having at least space of one page size available." << std::endl;
         }
     }
     throw std::runtime_error("No available storage for " + std::to_string(num_bytes) + " bytes");

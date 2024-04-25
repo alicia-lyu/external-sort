@@ -206,7 +206,7 @@ u_int8_t getLargestDeviceType(string filename) {
     vector<u_int64_t> switchPoints;
     std::tie(deviceTypes, switchPoints) = parseDeviceType(filename);
     if (deviceTypes.size() > 1) {
-        std::cout << "Warning: Multiple device types found in " << filename << ". You are only getting the largest device.\n";
+        std::cerr << "Warning: Multiple device types found in " << filename << ". You are only getting the largest device.\n";
     }
     return *std::max_element(deviceTypes.begin(), deviceTypes.end());
 }

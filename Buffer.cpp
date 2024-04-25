@@ -56,7 +56,7 @@ byte * Buffer::batchFillByOverwrite (u_int64_t sizeToBeFilled)
         #endif
     }
     if (toBeFilled > _rows) {
-        std::cout << "Warning: Existing content overwritten by batchFillByOverwrite" << std::endl;
+        std::cerr << "Warning: Existing content overwritten by batchFillByOverwrite" << std::endl;
     }
     toBeFilled = _rows + sizeToBeFilled;
     toBeRead = _rows;

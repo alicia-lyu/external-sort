@@ -4,7 +4,6 @@
 
 ScanPlan::ScanPlan (RowCount const count, RowSize const size, const string &inputPath) : 
 	_count (count), _size (size), _countPerRun (getRecordCountPerRun(size, true)), _inputPath(inputPath)
-	// TODO: Provide the option to read from a input file, so that we can test against sample input
 {
 	TRACE (false);
 	// CHECK WITH TA: Do we need to evaluate the metrics of data read & final write? 

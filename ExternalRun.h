@@ -6,13 +6,13 @@
 class ExternalRun
 {
 public:
+    static u_int64_t READ_AHEAD_SIZE;
+    static double READ_AHEAD_THRESHOLD;
     u_int8_t storage;
-    ExternalRun (std::string runFileName, RowSize recordSize, u_int64_t & readAheadSize);
+    ExternalRun (std::string runFileName, RowSize recordSize);
     ~ExternalRun ();
     byte * next();
 private:
-    u_int64_t _readAheadSize;
-    double const _readAheadThreshold;
     Buffer * _currentPage;
     Buffer * _readAheadPage;
     std::string const _runFileName;

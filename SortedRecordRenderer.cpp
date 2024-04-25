@@ -16,7 +16,7 @@ SortedRecordRenderer::SortedRecordRenderer (RowSize recordSize, u_int8_t pass, u
 	_outputFileName = _getOutputFileName(pass, runNumber);
 	_outputFile = ofstream(_outputFileName, std::ios::binary);
 	#if defined(VERBOSEL1) || defined(VERBOSEL2)
-	traceprintf ("Pass %d run %d: output file %s, device type %d, page size %d\n", pass, runNumber, _outputFileName.c_str(), _deviceType, pageSize);
+	traceprintf ("Pass %d run %d: output file %s, device type %d, output page size %d\n", pass, runNumber, _outputFileName.c_str(), _deviceType, pageSize);
 	#endif
 } // SortedRecordRenderer::SortedRecordRenderer
 
@@ -24,8 +24,8 @@ SortedRecordRenderer::~SortedRecordRenderer ()
 {
 	TRACE (false);
 	if (_outputFile.is_open()) {
-		_flushOutputBuffer(_outputBuffer->sizeFilled());
-		_outputFile.close();
+		bool flush = _flushOutputBuffer(_outputBuffer->sizeFilled());
+		if (flush) _outputFile.close();
 	}
 	delete _outputBuffer;
 } // SortedRecordRenderer::~SortedRecordRenderer
@@ -40,8 +40,8 @@ string SortedRecordRenderer::run ()
 	#if defined(VERBOSEL2)
 	traceprintf ("%s: produced %llu rows\n", _outputFileName.c_str(), _produced);
 	#endif
-	_flushOutputBuffer(_outputBuffer->sizeFilled());
-	_outputFile.close();
+	bool flush = _flushOutputBuffer(_outputBuffer->sizeFilled());
+	if (flush) _outputFile.close();
 	#if defined(VERBOSEL1) || defined(VERBOSEL2)
 	traceprintf ("Run through renderer with output file %s\n", _outputFileName.c_str());
 	#endif
@@ -57,8 +57,8 @@ byte * SortedRecordRenderer::_addRowToOutputBuffer(byte * row)
 		#if defined(VERBOSEL2)
 		traceprintf ("Run %d: output buffer flushed with %llu rows produced\n", _runNumber, _produced);
 		#endif
-		_flushOutputBuffer(_outputBuffer->pageSize);
-		output = _outputBuffer->copy(row);
+		bool flush = _flushOutputBuffer(_outputBuffer->pageSize);
+		if (flush) output = _outputBuffer->copy(row);
 	}
 	++ _produced;
 	return output;
@@ -72,11 +72,22 @@ string SortedRecordRenderer::_getOutputFileName (u_int8_t pass, u_int16_t runNum
 	return dir + SEPARATOR + filename;
 } // SortedRecordRenderer::_getOutputFileName
 
-void SortedRecordRenderer::_flushOutputBuffer(u_int16_t sizeFilled)
+bool SortedRecordRenderer::_flushOutputBuffer(u_int32_t sizeFilled)
 {
 	TRACE (false);
+	#if defined(VERBOSEL2)
+	traceprintf ("Run %d: output buffer flushed with %llu rows produced\n", _runNumber, _produced);
+	#endif
+	int deviceType = switchDevice(sizeFilled);
+	_outputFile.write((char*) _outputBuffer->data(), sizeFilled);
+	Metrics::write(deviceType, sizeFilled);
+	return true;
+} // SortedRecordRenderer::_flushOutputBuffer
+
+int SortedRecordRenderer::switchDevice (u_int32_t sizeFilled)
+{
 	if (_deviceType == 0) { // switch device when the current one is SSD and is full
-		auto newDeviceType = Metrics::getAvailableStorage();
+		auto newDeviceType = Metrics::getAvailableStorage(sizeFilled);
 		if (newDeviceType != _deviceType) { // switch to a new device
 			_deviceType = newDeviceType;
 			string newFileName = _outputFileName + string("-") + std::to_string(_produced) + string("-device") + std::to_string(_deviceType);
@@ -88,11 +99,8 @@ void SortedRecordRenderer::_flushOutputBuffer(u_int16_t sizeFilled)
 			#if defined(VERBOSEL1) || defined(VERBOSEL2)
 			traceprintf ("Switched to a new device %d at %llu, now output file is %s\n", _deviceType, _produced, _outputFileName.c_str());
 			#endif
+			return newDeviceType;
 		}
 	} // Wouldn't switch device when the current one is HDD and SSD becomes available for simplicity (max switch once)
-	#if defined(VERBOSEL2)
-	traceprintf ("Run %d: output buffer flushed with %llu rows produced\n", _runNumber, _produced);
-	#endif
-	_outputFile.write((char*) _outputBuffer->data(), sizeFilled);
-	Metrics::write(_deviceType, sizeFilled);
-} // SortedRecordRenderer::_flushOutputBuffer
+	return _deviceType;
+}

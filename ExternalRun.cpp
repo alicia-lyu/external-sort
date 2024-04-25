@@ -1,17 +1,14 @@
 #include "ExternalRun.h"
 #include "utils.h"
 
-ExternalRun::ExternalRun (std::string runFileName, RowSize recordSize, u_int64_t & readAheadSize) : // TODO: change readAheadSize to static
-    _readAheadSize (readAheadSize), 
-    _readAheadThreshold (std::max(1.0 - (double) readAheadSize / MEMORY_SIZE, 0.5)),
+u_int64_t ExternalRun::READ_AHEAD_SIZE = 0; // Initialize with appropriate value
+double ExternalRun::READ_AHEAD_THRESHOLD = 0.0; // Initialize with appropriate value
+
+ExternalRun::ExternalRun (std::string runFileName, RowSize recordSize) :
     _readAheadPage (nullptr), _runFileName (runFileName), _runFile (runFileName, std::ios::binary), 
     _recordSize (recordSize),  _produced (0)
 {
     TRACE (false);
-    #ifdef VERBOSEL2
-    traceprintf("Run file %s, device type %d, page size %d, read ahead size %llu above %f\n", 
-        runFileName.c_str(), storage, _pageSize, _readAheadSize, _readAheadThreshold);
-    #endif
     vector<u_int8_t> deviceTypes;
     vector<u_int64_t> switchPoints;
     std::tie(deviceTypes, switchPoints) = parseDeviceType(runFileName);
@@ -23,15 +20,17 @@ ExternalRun::ExternalRun (std::string runFileName, RowSize recordSize, u_int64_t
     storage = deviceTypes.at(0);
     _pageSize = Metrics::getParams(storage).pageSize;
     if (deviceTypes.size() == 1) nextStorage = storage;
-    else if (deviceTypes.size() == 2) nextStorage = deviceTypes.at(1); 
-    // INPUT buffer allocated for this run is the largest page size if there are multiple device types
-    // TODO: Choose one of the options below
-    // 1. Allocate available memory to read ahead buffer? Need a policy to retract this offering by destroying read ahead pages of other runs
-    // 2. Use the largest page size from the start (chosen for simplicity)
+    else if (deviceTypes.size() == 2) {
+        nextStorage = deviceTypes.at(1);
+        _pageSize = Metrics::getParams(nextStorage).pageSize;
+        // INPUT buffer allocated for this run is the largest page size if there are multiple device types
+        // OPTIMIZATION: Use the smaller page size when appropriate and allocate the rest to read ahead
+        // Concern: Need to retract the space and kill read ahead pages from other runs when switching device
+    }
     else throw std::invalid_argument("More than 2 device types.");
 
-    #if defined(VERBOSEL2)
-    traceprintf("Switch point %llu, storage %d, next storage %d\n", switchPoint, storage, nextStorage);
+    #if defined(VERBOSEL1) || defined(VERBOSEL2)
+    traceprintf("Run file %s: %zu device types, switch point %llu, page size %d\n", runFileName.c_str(), deviceTypes.size(), switchPoint, _pageSize);
     #endif
     
     _currentPage = getBuffer();
@@ -61,7 +60,7 @@ byte * ExternalRun::next ()
             delete _currentPage;
             _currentPage = _readAheadPage;
             _readAheadPage = nullptr;
-            _readAheadSize += _pageSize;
+            ExternalRun::READ_AHEAD_SIZE += _pageSize;
         } else { // We need to read a new page (blocking I/O)
             u_int32_t readCount = _fillPage(_currentPage);
         }
@@ -77,12 +76,12 @@ byte * ExternalRun::next ()
     u_int16_t recordPerPage = _pageSize / _recordSize; // max. 500 KB / 20 B = 25000 = 2^14
     if (_produced % (recordPerPage / 10) == 0 
         && _readAheadPage == nullptr 
-        && _readAheadSize >= _pageSize 
-        && (double) _currentPage->sizeRead() / (_currentPage->recordSize * _currentPage->recordCount) > _readAheadThreshold) 
+        && ExternalRun::READ_AHEAD_SIZE >= _pageSize 
+        && (double) _currentPage->sizeRead() / (_currentPage->recordSize * _currentPage->recordCount) > ExternalRun::READ_AHEAD_THRESHOLD) 
     {
         _readAheadPage = getBuffer();
         u_int32_t readCount = _fillPage(_readAheadPage);
-        _readAheadSize -= readCount;
+        ExternalRun::READ_AHEAD_SIZE -= readCount;
     }
     #if defined(VERBOSEL1) || defined(VERBOSEL2)
     if (_produced % 10000 == 0) traceprintf("# %llu of %s: %s\n", _produced, _runFileName.c_str(), rowToString(row, _recordSize).c_str());

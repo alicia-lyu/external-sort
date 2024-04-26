@@ -50,9 +50,9 @@ byte * Buffer::batchFillByOverwrite (u_int64_t sizeToBeFilled)
 {
     if (sizeToBeFilled > recordSize * recordCount) {
         throw std::runtime_error("Buffer overflow");
-    } else if (sizeToBeFilled < recordSize * recordCount) {
-        #if defined(VERBOSEL2)
-        traceprintf("Buffer under-filled %llu / %d.\n", toBeFilled, recordSize * recordCount);
+    } else if (sizeToBeFilled < recordSize * recordCount && sizeToBeFilled > 0) {
+        #if defined(VERBOSEL1)
+        traceprintf("Buffer under-filled %llu / %d.\n", sizeToBeFilled, recordSize * recordCount);
         #endif
     }
     if (toBeFilled > _rows) {
@@ -120,7 +120,7 @@ byte * RandomBuffer::fillRandomly ()
 byte * RandomBuffer::next ()
 {
     TRACE (false);
-    return fillRandomly();
+    return fillRandomly(); // TODO: toBeRead is not updated
 }
 
 

@@ -100,6 +100,7 @@ u_int32_t ExternalRun::_fillPage (Buffer * page)
     #if defined(VERBOSEL2)
     traceprintf("Read %d rows from run file %s\n", readCount / _recordSize, _runFileName.c_str());
     #endif
+    if (readCount % _recordSize != 0) throw std::invalid_argument("Read count is not a multiple of record size, from file" + _runFileName);
     page->batchFillByOverwrite(readCount);
     Metrics::read(storage, readCount, page == _readAheadPage);
     return readCount;
@@ -113,14 +114,12 @@ Buffer * ExternalRun::getBuffer ()
         // If the switch point is estimated to land in the next page, we need to switch to the next device
         // By "estimated", we are not considering the rows not produced yet in the current page; this only happens 
         // when we are reading ahead, i.e. when we are not so sensitive to suboptimal choice of page size
-        u_int32_t nextPageSize = Metrics::getParams(nextStorage).pageSize;
-        u_int64_t nextProducedCount = _produced + nextPageSize / _recordSize;
+        u_int64_t nextProducedCount = _produced + _pageSize / _recordSize;
         if (nextProducedCount > switchPoint) {
-            traceprintf("# %llu: Switching device before switch point %llu, page size %d -> %d\n", _produced, switchPoint, _pageSize, nextPageSize);
+            traceprintf("# %llu: Switching device before switch point %llu\n", _produced, switchPoint);
             Metrics::erase(storage, _produced * _recordSize);
             // We may leave a small fragment in the next device, left for future optimization
             storage = nextStorage;
-            _pageSize = nextPageSize;
         }
     }
     return new Buffer(_pageSize / _recordSize, _recordSize);

@@ -71,7 +71,7 @@ byte * VerifyIterator::next()
             else if (cmp == 0) {
                 hasDuplicates = true;
 
-                #ifdef VERBOSEL2
+                #ifdef VERBOSEL1
                 traceprintf ("#%lu has duplicates with value %s\n", (unsigned long) (_consumed), rowToString(lastRow, _plan->_size).c_str());
                 #endif
             }

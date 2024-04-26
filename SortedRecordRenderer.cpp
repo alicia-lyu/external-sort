@@ -78,9 +78,9 @@ bool SortedRecordRenderer::_flushOutputBuffer(u_int32_t sizeFilled)
 	#if defined(VERBOSEL2)
 	traceprintf ("Run %d: output buffer flushed with %llu rows produced\n", _runNumber, _produced);
 	#endif
+	_outputFile.write((char*) _outputBuffer->data(), sizeFilled); // Write to file before creating a new buffer
 	int deviceType = switchDevice(sizeFilled);
-	_outputFile.write((char*) _outputBuffer->data(), sizeFilled);
-	Metrics::write(deviceType, sizeFilled);
+	Metrics::write(deviceType, sizeFilled); // However, log the write to the new device
 	return true;
 } // SortedRecordRenderer::_flushOutputBuffer
 

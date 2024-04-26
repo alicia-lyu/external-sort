@@ -68,6 +68,7 @@ test : Test.exe Makefile $(LOG_DIR) ./inputs/
 testinput : Test.exe Makefile $(LOG_DIR) ./inputs/
 	echo $(TIMESTAMP) > $(LOG_FILE)
 	./Test.exe -c 20 -s 1023 -i input_table -t $(LOG_FILE) -d insort
+	diff output_table output.txt
 
 insort : Test.exe Makefile $(LOG_DIR) ./inputs/
 	echo $(TIMESTAMP) > $(LOG_FILE)

@@ -64,7 +64,7 @@ byte * SortIterator::next ()
 } // SortIterator::next
 
 
-SortedRecordRenderer * SortIterator::_formInMemoryRenderer (RowCount base, u_int16_t runNumber, u_int32_t memory_limit)
+SortedRecordRenderer * SortIterator::_formInMemoryRenderer (RowCount base, u_int16_t runNumber, u_int32_t memory_limit, bool materialize)
 {
 	vector<byte *> rows;
 	while ((_consumed - base) * _plan->_size < memory_limit) {
@@ -105,7 +105,7 @@ SortedRecordRenderer * SortIterator::_formInMemoryRenderer (RowCount base, u_int
 		cacheTrees.push_back(tree);
 	}
 
-	SortedRecordRenderer * renderer = new CacheOptimizedRenderer(_plan->_size, cacheTrees, runNumber, _plan->_removeDuplicates);
+	SortedRecordRenderer * renderer = new CacheOptimizedRenderer(_plan->_size, cacheTrees, runNumber, _plan->_removeDuplicates, materialize);
 	return renderer;
 }
 

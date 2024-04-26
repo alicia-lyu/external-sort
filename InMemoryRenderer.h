@@ -3,7 +3,7 @@
 class NaiveRenderer : public SortedRecordRenderer
 {
 public:
-    NaiveRenderer (RowSize recordSize, TournamentTree * tree, u_int16_t runNumber = 0, bool removeDuplicates = false); // max. 120 G / 100 M = 2^10
+    NaiveRenderer (RowSize recordSize, TournamentTree * tree, u_int16_t runNumber = 0, bool removeDuplicates = false, bool materialize = true); // max. 120 G / 100 M = 2^10
     ~NaiveRenderer ();
     byte * next ();
     void print();
@@ -14,7 +14,7 @@ private:
 class CacheOptimizedRenderer : public SortedRecordRenderer
 {
 public:
-    CacheOptimizedRenderer (RowSize recordSize, vector<TournamentTree *> &cacheTrees, u_int16_t runNumber = 0, bool removeDuplicates = false); // will modify the given cacheTrees, but it won't be reused
+    CacheOptimizedRenderer (RowSize recordSize, vector<TournamentTree *> &cacheTrees, u_int16_t runNumber = 0, bool removeDuplicates = false, bool materialize = true); // will modify the given cacheTrees, but it won't be reused
     ~CacheOptimizedRenderer ();
     byte * next();
     void print();

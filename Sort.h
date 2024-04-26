@@ -35,7 +35,9 @@ private:
 	Iterator * const _input;
 	RowCount _consumed, _produced;
 	SortedRecordRenderer * _renderer;
-	SortedRecordRenderer * _formInMemoryRenderer (RowCount base = 0, u_int16_t runNumber = 0, u_int32_t memory_limit = MEMORY_SIZE - SSD_PAGE_SIZE); // Returns the tree where the top node is the smallest
+	SortedRecordRenderer * _formInMemoryRenderer (RowCount base = 0, u_int16_t runNumber = 0, 
+		u_int32_t memory_limit = MEMORY_SIZE - SSD_PAGE_SIZE,
+		bool materialize = true); // Returns the tree where the top node is the smallest
 	vector<string> _createInitialRuns (); // Returns the names of the files created
 	SortedRecordRenderer * gracefulDegradation (); // Returns the renderer that is ready to render the next row
 	SortedRecordRenderer * _externalSort (); // Returns the renderer that is ready to render the next row

@@ -1,8 +1,8 @@
 #include "InMemoryRenderer.h"
 #include "utils.h"
 
-NaiveRenderer::NaiveRenderer (RowSize recordSize, TournamentTree * tree, u_int16_t runNumber, bool removeDuplicates) :
-	SortedRecordRenderer(recordSize, 0, runNumber, removeDuplicates), _tree(tree)
+NaiveRenderer::NaiveRenderer (RowSize recordSize, TournamentTree * tree, u_int16_t runNumber, bool removeDuplicates, bool materialize) :
+	SortedRecordRenderer(recordSize, 0, runNumber, removeDuplicates, nullptr, materialize), _tree(tree)
 {
 	TRACE (false);
 } // NaiveRenderer::NaiveRenderer
@@ -29,8 +29,10 @@ void NaiveRenderer::print ()
 } // NaiveRenderer::print
 
 CacheOptimizedRenderer::CacheOptimizedRenderer (RowSize recordSize, 
-	vector<TournamentTree *> &cacheTrees, u_int16_t runNumber, bool removeDuplicates) : 
-	SortedRecordRenderer(recordSize, 0, runNumber, removeDuplicates), _cacheTrees (cacheTrees)
+	vector<TournamentTree *> &cacheTrees, u_int16_t runNumber, 
+	bool removeDuplicates, bool materialize) 
+: 
+	SortedRecordRenderer(recordSize, 0, runNumber, removeDuplicates, nullptr, materialize), _cacheTrees (cacheTrees)
 {
 	TRACE (false);
     std::vector<byte *> formingRows;

@@ -7,27 +7,24 @@
 #include <iostream>
 #include <cstdio>
 
-SortedRecordRenderer::SortedRecordRenderer (RowSize recordSize, u_int8_t pass, u_int16_t runNumber, bool removeDuplicates, byte * lastRow) :
-	_recordSize (recordSize), _produced (0), _removeDuplicates (removeDuplicates), _lastRow (lastRow), _deviceType (Metrics::getAvailableStorage()), _runNumber (runNumber)
+SortedRecordRenderer::SortedRecordRenderer (RowSize recordSize, u_int8_t pass, u_int16_t runNumber, bool removeDuplicates, byte * lastRow, bool materialize) :
+	_recordSize (recordSize), _produced (0), _removeDuplicates (removeDuplicates), _lastRow (lastRow)
 {
 	TRACE (false);
-	auto pageSize = Metrics::getParams(_deviceType).pageSize;
-	_outputBuffer = new Buffer(pageSize / _recordSize, _recordSize);
-	_outputFileName = _getOutputFileName(pass, runNumber);
-	_outputFile = ofstream(_outputFileName, std::ios::binary);
-	#if defined(VERBOSEL1) || defined(VERBOSEL2)
-	traceprintf ("Pass %d run %d: output file %s, device type %d, output page size %d\n", pass, runNumber, _outputFileName.c_str(), _deviceType, pageSize);
-	#endif
+	if (materialize) {
+		materializer = new Materializer(pass, runNumber, this);
+	} else {
+		traceprintf ("Materializer is disabled for pass %d run %d\n", pass, runNumber);
+		materializer = nullptr;
+	}
 } // SortedRecordRenderer::SortedRecordRenderer
 
 SortedRecordRenderer::~SortedRecordRenderer ()
 {
 	TRACE (false);
-	if (_outputFile.is_open()) {
-		bool flush = _flushOutputBuffer(_outputBuffer->sizeFilled());
-		if (flush) _outputFile.close();
+	if (materializer != nullptr) {
+		delete materializer;
 	}
-	delete _outputBuffer;
 } // SortedRecordRenderer::~SortedRecordRenderer
 
 string SortedRecordRenderer::run ()
@@ -39,74 +36,17 @@ string SortedRecordRenderer::run ()
     }
 	#if defined(VERBOSEL2)
 	traceprintf ("%s: produced %llu rows\n", _outputFileName.c_str(), _produced);
-	#endif
-	bool flush = _flushOutputBuffer(_outputBuffer->sizeFilled());
-	if (flush) _outputFile.close();
-	#if defined(VERBOSEL1) || defined(VERBOSEL2)
 	traceprintf ("Run through renderer with output file %s\n", _outputFileName.c_str());
 	#endif
-    return _outputFileName;
-} // ExternalRenderer::run
-
-byte * SortedRecordRenderer::addRowToOutputBuffer(byte * row)
-{
-	TRACE (false);
-	if (row == nullptr) return nullptr;
-	byte * output = _outputBuffer->copy(row);
-	while (output == nullptr) { // Output buffer is full
-		#if defined(VERBOSEL2)
-		traceprintf ("Run %d: output buffer flushed with %llu rows produced\n", _runNumber, _produced);
-		#endif
-		bool flush = _flushOutputBuffer(_outputBuffer->pageSize);
-		if (flush) output = _outputBuffer->copy(row);
+	if (materializer != nullptr) {
+		string outputFileName = materializer->outputFileName;
+		delete materializer;
+		materializer = nullptr;
+		return outputFileName;
+	} else {
+		return "";
 	}
-	++ _produced;
-	return output;
-} // SortedRecordRenderer::_addRowToOutputBuffer
-
-string SortedRecordRenderer::_getOutputFileName (u_int8_t pass, u_int16_t runNumber)
-{
-	string device = string("-device") + std::to_string(_deviceType);
-	string dir = string(".") + SEPARATOR + string("spills") + SEPARATOR + string("pass") + std::to_string(pass);
-	string filename = string("run") + std::to_string(runNumber) + device;
-	return dir + SEPARATOR + filename;
-} // SortedRecordRenderer::_getOutputFileName
-
-bool SortedRecordRenderer::_flushOutputBuffer(u_int32_t sizeFilled)
-{
-	TRACE (false);
-	#if defined(VERBOSEL2)
-	traceprintf ("Run %d: output buffer flushed with %llu rows produced\n", _runNumber, _produced);
-	#endif
-
-	_outputFile.write((char*) _outputBuffer->data(), sizeFilled); // Write to file before creating a new buffer
-	
-	// Metrics: switch device if necessary
-	int deviceType = switchDevice(sizeFilled);
-	Metrics::write(deviceType, sizeFilled); // However, log the write to the new device
-	return true;
-} // SortedRecordRenderer::_flushOutputBuffer
-
-int SortedRecordRenderer::switchDevice (u_int32_t sizeFilled)
-{
-	if (_deviceType == STORAGE_SSD) { // switch device when the current one is SSD and is full
-		auto newDeviceType = Metrics::getAvailableStorage(sizeFilled);
-		if (newDeviceType != _deviceType) { // switch to a new device
-			_deviceType = newDeviceType;
-			string newFileName = _outputFileName + string("-") + std::to_string(_produced) + string("-device") + std::to_string(_deviceType);
-			std::rename(_outputFileName.c_str(), newFileName.c_str());
-			_outputFileName = newFileName;
-			delete _outputBuffer;
-			_outputBuffer = new Buffer(Metrics::getParams(_deviceType).pageSize / _recordSize, _recordSize);
-			_deviceType = newDeviceType;
-			#if defined(VERBOSEL1) || defined(VERBOSEL2)
-			traceprintf ("Switched to a new device %d at %llu, now output file is %s\n", _deviceType, _produced, _outputFileName.c_str());
-			#endif
-			return newDeviceType;
-		}
-	} // Wouldn't switch device when the current one is HDD and SSD becomes available for simplicity (max switch once)
-	return _deviceType;
-}
+} // ExternalRenderer::run
 
 byte * SortedRecordRenderer::renderRow(std::function<byte *()> retrieveNext, TournamentTree *& tree) 
 {
@@ -128,7 +68,7 @@ byte * SortedRecordRenderer::renderRow(std::function<byte *()> retrieveNext, Tou
             memcmp(_lastRow, rendered, _recordSize) != 0 // last row is different from the current row
         ) {
             // copy before retrieving next, as retrieving next could overwrite the current page in ExternalRenderer
-            output = addRowToOutputBuffer(rendered);
+            output = materializer->addRowToOutputBuffer(rendered);
             _lastRow = output;
             canReturn = true;
         } else {
@@ -148,4 +88,87 @@ byte * SortedRecordRenderer::renderRow(std::function<byte *()> retrieveNext, Tou
 	}
 
 	return output;
+}
+
+Materializer::Materializer(u_int8_t pass, u_int16_t runNumber, SortedRecordRenderer * renderer) : 
+	 renderer (renderer), deviceType (Metrics::getAvailableStorage())
+{
+	TRACE (false);
+	auto pageSize = Metrics::getParams(deviceType).pageSize;
+	outputBuffer = new Buffer(pageSize / renderer->_recordSize, renderer->_recordSize);
+	outputFileName = getOutputFileName(pass, runNumber);
+	outputFile = ofstream(outputFileName, std::ios::binary);
+	#if defined(VERBOSEL1) || defined(VERBOSEL2)
+	traceprintf ("Materializer for run %d with output file %s initialized on device %d\n", runNumber, outputFileName.c_str(), deviceType);
+	#endif
+} // Materializer::Materializer
+
+Materializer::~Materializer ()
+{
+	TRACE (false);
+	if (outputFile.is_open()) {
+		bool flush = flushOutputBuffer(outputBuffer->sizeFilled());
+		if (flush) outputFile.close();
+	}
+	delete outputBuffer;
+} // Materializer::~Materializer
+
+string Materializer::getOutputFileName (u_int8_t pass, u_int16_t runNumber)
+{
+	string device = string("-device") + std::to_string(deviceType);
+	string dir = string(".") + SEPARATOR + string("spills") + SEPARATOR + string("pass") + std::to_string(pass);
+	string filename = string("run") + std::to_string(runNumber) + device;
+	return dir + SEPARATOR + filename;
+} // SortedRecordRenderer::_getOutputFileName
+
+byte * Materializer::addRowToOutputBuffer(byte * row)
+{
+	TRACE (false);
+	if (row == nullptr) return nullptr;
+	byte * output = outputBuffer->copy(row);
+	while (output == nullptr) { // Output buffer is full
+		#if defined(VERBOSEL2)
+		traceprintf ("Run %d: output buffer flushed with %llu rows produced\n", _runNumber, _produced);
+		#endif
+		bool flush = flushOutputBuffer(outputBuffer->pageSize);
+		if (flush) output = outputBuffer->copy(row);
+	}
+	++ renderer->_produced;
+	return output;
+} // SortedRecordRenderer::_addRowToOutputBuffer
+
+bool Materializer::flushOutputBuffer(u_int32_t sizeFilled)
+{
+	TRACE (false);
+	#if defined(VERBOSEL2)
+	traceprintf ("Run %d: output buffer flushed with %llu rows produced\n", _runNumber, _produced);
+	#endif
+
+	outputFile.write((char*) outputBuffer->data(), sizeFilled); // Write to file before creating a new buffer
+	
+	// Metrics: switch device if necessary
+	int deviceType = switchDevice(sizeFilled);
+	Metrics::write(deviceType, sizeFilled); // However, log the write to the new device
+	return true;
+} // SortedRecordRenderer::_flushOutputBuffer
+
+int Materializer::switchDevice (u_int32_t sizeFilled)
+{
+	if (deviceType == STORAGE_SSD) { // switch device when the current one is SSD and is full
+		auto newDeviceType = Metrics::getAvailableStorage(sizeFilled);
+		if (newDeviceType != deviceType) { // switch to a new device
+			deviceType = newDeviceType;
+			string newFileName = outputFileName + string("-") + std::to_string(renderer->_produced) + string("-device") + std::to_string(deviceType);
+			std::rename(outputFileName.c_str(), newFileName.c_str());
+			outputFileName = newFileName;
+			delete outputBuffer;
+			outputBuffer = new Buffer(Metrics::getParams(deviceType).pageSize / renderer->_recordSize, renderer->_recordSize);
+			deviceType = newDeviceType;
+			#if defined(VERBOSEL1) || defined(VERBOSEL2)
+			traceprintf ("Switched to a new device %d at %llu, now output file is %s\n", deviceType, renderer->_produced, outputFileName.c_str());
+			#endif
+			return newDeviceType;
+		}
+	} // Wouldn't switch device when the current one is HDD and SSD becomes available for simplicity (max switch once)
+	return deviceType;
 }

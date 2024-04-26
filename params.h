@@ -20,5 +20,6 @@
 // ==========================
 
 #define READ_AHEAD_BUFFERS_MIN 2
+#define GRACEFUL_DEGRADATION_THRESHOLD 1.5
 
 #define MAX_INPUT_FILE_SIZE 18000000

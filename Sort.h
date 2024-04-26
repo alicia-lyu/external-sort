@@ -35,9 +35,10 @@ private:
 	Iterator * const _input;
 	RowCount _consumed, _produced;
 	SortedRecordRenderer * _renderer;
-	SortedRecordRenderer * _formInMemoryRenderer (RowCount base = 0, u_int16_t runNumber = 0); // Returns the tree where the top node is the smallest
+	SortedRecordRenderer * _formInMemoryRenderer (RowCount base = 0, u_int16_t runNumber = 0, u_int32_t memory_limit = MEMORY_SIZE - SSD_PAGE_SIZE); // Returns the tree where the top node is the smallest
 	vector<string> _createInitialRuns (); // Returns the names of the files created
-	SortedRecordRenderer * _externalSort ();
+	SortedRecordRenderer * gracefulDegradation (); // Returns the renderer that is ready to render the next row
+	SortedRecordRenderer * _externalSort (); // Returns the renderer that is ready to render the next row
 	u_int8_t profileReadAheadBuffers (vector<string>& runNames, u_int16_t mergedRunCount); // return the number of read-ahead buffers of HDD page size
 	tuple<u_int16_t, u_int64_t> assignRuns(vector<string>& runNames, u_int16_t mergedRunCount); // The first return is updated merged run count [initial merged run count, returned merged run count) is the assigned runs; the second is the read ahead size
 }; // class SortIterator

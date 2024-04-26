@@ -2,6 +2,7 @@
 #include "utils.h"
 #include "ExternalRenderer.h"
 #include "InMemoryRenderer.h"
+#include "GracefulRenderer.h"
 #include <stdexcept>
 
 SortPlan::SortPlan (Plan * const input, RowSize const size, RowCount const count, bool removeDuplicates) : 
@@ -63,14 +64,10 @@ byte * SortIterator::next ()
 } // SortIterator::next
 
 
-SortedRecordRenderer * SortIterator::_formInMemoryRenderer (RowCount base, u_int16_t runNumber)
+SortedRecordRenderer * SortIterator::_formInMemoryRenderer (RowCount base, u_int16_t runNumber, u_int32_t memory_limit)
 {
-	#if defined(VERBOSEL1) || defined(VERBOSEL2)
-	traceprintf ("Forming in-memory renderer with %u rows\n", _plan->_recordCountPerRun);
-	#endif
-
 	vector<byte *> rows;
-	while (_consumed - base < _plan->_recordCountPerRun) {
+	while ((_consumed - base) * _plan->_size < memory_limit) {
 		byte * received = _input->next ();
 		if (received == nullptr) break;
 		rows.push_back(received);
@@ -78,7 +75,7 @@ SortedRecordRenderer * SortIterator::_formInMemoryRenderer (RowCount base, u_int
 	}
 
 	#if defined(VERBOSEL1) || defined(VERBOSEL2)
-	traceprintf ("Formed in-memory renderer with %lu rows\n", rows.size());
+	traceprintf ("Forming in-memory renderer with %lu rows\n", rows.size());
 	#endif
 
 	// break rows by cache size
@@ -109,10 +106,6 @@ SortedRecordRenderer * SortIterator::_formInMemoryRenderer (RowCount base, u_int
 	}
 
 	SortedRecordRenderer * renderer = new CacheOptimizedRenderer(_plan->_size, cacheTrees, runNumber, _plan->_removeDuplicates);
-	
-	// NaiveRenderer: Not cache-optimized
-	// TournamentTree * tree = new TournamentTree(rows, _plan->_size);
-	// SortedRecordRenderer * renderer = new NaiveRenderer(_plan->_size, tree);
 	return renderer;
 }
 
@@ -131,9 +124,33 @@ vector<string> SortIterator::_createInitialRuns () // metrics
 	return runNames;
 }
 
+SortedRecordRenderer * SortIterator::gracefulDegradation ()
+{
+	Assert (_consumed == 0, __FILE__, __LINE__);
+	u_int64_t gracefulInMemoryRunSize = MEMORY_SIZE - SSD_PAGE_SIZE * 3; // One page for output, one page for external renderer run page, one page for external renderer read-ahead
+	u_int64_t initialInMemoryRunSize = _plan->_size * _plan->_count - gracefulInMemoryRunSize;
+	Assert (initialInMemoryRunSize <= MEMORY_SIZE - SSD_PAGE_SIZE, __FILE__, __LINE__);
+	string initialRunFileName = _formInMemoryRenderer(0, 0, initialInMemoryRunSize)->run(); // The only intermediate spill
+
+	SortedRecordRenderer * inMemoryRenderer = _formInMemoryRenderer(_consumed, 1, gracefulInMemoryRunSize);
+
+	ExternalRun::READ_AHEAD_SIZE = SSD_PAGE_SIZE;
+    ExternalRun::READ_AHEAD_THRESHOLD = std::max(0.5, ((double) SSD_PAGE_SIZE) / MEMORY_SIZE);
+	ExternalRun * externalRun = new ExternalRun(initialRunFileName, _plan->_size);
+
+	SortedRecordRenderer * gracefulRenderer = new GracefulRenderer(_plan->_size, inMemoryRenderer, externalRun, _plan->_removeDuplicates);
+
+	return gracefulRenderer;
+}
+
 SortedRecordRenderer * SortIterator::_externalSort ()
 {
 	TRACE (false);
+
+	if (_plan->_count * _plan->_size <= MEMORY_SIZE * GRACEFUL_DEGRADATION_THRESHOLD) {
+		return gracefulDegradation();
+	}
+
 	vector<string> runNames = _createInitialRuns();
 	u_int8_t pass = 0;
 	SortedRecordRenderer * renderer = nullptr;
@@ -154,7 +171,7 @@ SortedRecordRenderer * SortIterator::_externalSort ()
 			u_int16_t mergedRunCountSoFar = mergedRunCount;
 			mergedRunCount = mergedRunCountNew;
 			#if defined(VERBOSEL1) || defined(VERBOSEL2)
-			traceprintf ("Merging runs from %d to %d\n", mergedRunCountSoFar, mergedRunCount - 1);
+			traceprintf ("Pass %d renderer %d: Merging runs from %d to %d\n", pass, rendererNum, mergedRunCountSoFar, mergedRunCount - 1);
 			#endif
 
 			renderer = new ExternalRenderer(_plan->_size, 

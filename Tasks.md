@@ -27,7 +27,7 @@ April 29, 2024    | Submission
 - [x] Write and test the tournament tree @Alicia
 - [x] Add in-memory sorting, test with 0, 1, 2, 3, 7 rows @Alicia
 - [x] Add multi-level external sort that spills to SSD, test with 0, 1, 2, 3, 10, 29, 100, 576, 1000 rows @Alicia
-- [x] Add external sort that spills to HDD @Alicia
+- [x] Add external sort that spills to HDD @Alicia @Yuheng
 - [x] Add HDD and SSD metrics: @Yuheng @Alicia
   - SSD: 0.1 ms latency, 200 MB/s bandwidth
   - HDD: 5 ms latency, 100 MB/s bandwidth

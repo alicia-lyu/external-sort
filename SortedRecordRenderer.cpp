@@ -8,7 +8,7 @@
 #include <cstdio>
 
 SortedRecordRenderer::SortedRecordRenderer (RowSize recordSize, u_int8_t pass, u_int16_t runNumber, bool removeDuplicates, byte * lastRow) :
-	_recordSize (recordSize), _runNumber (runNumber), _produced (0), _removeDuplicates (removeDuplicates), _lastRow (lastRow), _deviceType (Metrics::getAvailableStorage())
+	_recordSize (recordSize), _produced (0), _removeDuplicates (removeDuplicates), _lastRow (lastRow), _deviceType (Metrics::getAvailableStorage()), _runNumber (runNumber)
 {
 	TRACE (false);
 	auto pageSize = Metrics::getParams(_deviceType).pageSize;
@@ -48,7 +48,7 @@ string SortedRecordRenderer::run ()
     return _outputFileName;
 } // ExternalRenderer::run
 
-byte * SortedRecordRenderer::_addRowToOutputBuffer(byte * row)
+byte * SortedRecordRenderer::addRowToOutputBuffer(byte * row)
 {
 	TRACE (false);
 	if (row == nullptr) return nullptr;
@@ -106,4 +106,46 @@ int SortedRecordRenderer::switchDevice (u_int32_t sizeFilled)
 		}
 	} // Wouldn't switch device when the current one is HDD and SSD becomes available for simplicity (max switch once)
 	return _deviceType;
+}
+
+byte * SortedRecordRenderer::renderRow(std::function<byte *()> retrieveNext, TournamentTree *& tree) 
+{
+    byte * rendered, * retrieved;
+    byte * output = nullptr;
+
+    bool canReturn = false;
+
+	while (true) {
+        canReturn = false;
+
+        rendered = tree->peekRoot();
+        // if no more rows, jump out
+		if (rendered == nullptr) break;
+        
+		if (
+            !_removeDuplicates ||  // not removing duplicates
+            _lastRow == nullptr || // last row is null
+            memcmp(_lastRow, rendered, _recordSize) != 0 // last row is different from the current row
+        ) {
+            // copy before retrieving next, as retrieving next could overwrite the current page in ExternalRenderer
+            output = addRowToOutputBuffer(rendered);
+            _lastRow = output;
+            canReturn = true;
+        } else {
+            #if defined(VERBOSEL2)
+			traceprintf ("%s removed\n", rowToString(rendered, recordSize).c_str());
+			#endif
+        }
+
+        retrieved = retrieveNext();
+        if (retrieved == nullptr) {
+            tree->poll();
+        } else {
+            tree->pushAndPoll(retrieved);
+        }
+
+        if (canReturn) break;
+	}
+
+	return output;
 }

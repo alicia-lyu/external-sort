@@ -23,20 +23,12 @@ GracefulRenderer::~GracefulRenderer ()
 
 byte * GracefulRenderer::next ()
 {
-    byte * rendered = renderRow(
+    return SortedRecordRenderer::renderRow(
         [this] () -> byte * {
             auto bufferNum = tree->peekTopBuffer();
             if (bufferNum == 0) return inMemoryRenderer->next();
             else return externalRun->next();
         },
-        [this] (byte * rendered) -> byte * {
-            return _addRowToOutputBuffer(rendered);
-        },
-        tree,
-        _lastRow,
-        _removeDuplicates,
-        _recordSize
+        tree
     );
-    _lastRow = rendered;
-    return rendered;
 }

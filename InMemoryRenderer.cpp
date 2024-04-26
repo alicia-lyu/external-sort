@@ -15,20 +15,12 @@ NaiveRenderer::~NaiveRenderer ()
 
 byte * NaiveRenderer::next ()
 {
-	byte * rendered = renderRow(
+	return SortedRecordRenderer::renderRow(
 		[] () -> byte * {
 			return nullptr;
 		},
-		[this] (byte * rendered) -> byte * {
-			return _addRowToOutputBuffer(rendered);
-		},
-		_tree,
-		_lastRow,
-		_removeDuplicates,
-		_recordSize
+		_tree
 	);
-	_lastRow = rendered;
-	return rendered;
 } // NaiveRenderer::next
 
 void NaiveRenderer::print ()
@@ -74,22 +66,14 @@ CacheOptimizedRenderer::~CacheOptimizedRenderer ()
 
 byte * CacheOptimizedRenderer::next ()
 {
-	byte * rendered = renderRow(
+	return SortedRecordRenderer::renderRow(
 		[this] () -> byte * {
 			auto bufferNum = _tree->peekTopBuffer();
 			auto cacheTree = _cacheTrees.at(bufferNum);
 			return cacheTree->poll();
 		},
-		[this] (byte * rendered) -> byte * {
-			return _addRowToOutputBuffer(rendered);
-		},
-		_tree,
-		_lastRow,
-		_removeDuplicates,
-		_recordSize
+		_tree
 	);
-	_lastRow = rendered;
-	return rendered;
 } // CacheOptimizedRenderer::next
 
 void CacheOptimizedRenderer::print ()

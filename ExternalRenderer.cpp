@@ -33,22 +33,14 @@ ExternalRenderer::~ExternalRenderer ()
 byte * ExternalRenderer::next ()
 {
     TRACE (false);
-    byte * rendered = renderRow(
+    return SortedRecordRenderer::renderRow(
 		[this] () -> byte * {
 			auto bufferNum = _tree->peekTopBuffer();
 			auto run = _runs.at(bufferNum);
 			return run->next();
 		},
-		[this] (byte * rendered) -> byte * {
-			return _addRowToOutputBuffer(rendered);
-		},
-		_tree,
-		_lastRow,
-		_removeDuplicates,
-		_recordSize
+		_tree
 	);
-	_lastRow = rendered;
-	return rendered;
 } // ExternalRenderer::next
 
 void ExternalRenderer::print ()

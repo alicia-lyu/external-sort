@@ -157,51 +157,6 @@ string rowRawValueToString(byte * rowContent, RowSize size) {
     return result;
 }
 
-byte * renderRow(std::function<byte *()> retrieveNext, std::function<byte *(byte * rendered)> copyRowToOutputBuffer,
-    TournamentTree * renderingTree, byte * &lastRow, bool removeDuplicates, RowSize recordSize) 
-{
-    byte * rendered, * retrieved;
-    byte * output = nullptr;
-
-    bool canReturn = false;
-
-	while (true) {
-        canReturn = false;
-
-        rendered = renderingTree->peekRoot();
-        // if no more rows, jump out
-		if (rendered == nullptr) break;
-        
-		if (
-            !removeDuplicates ||  // not removing duplicates
-            lastRow == nullptr || // last row is null
-            memcmp(lastRow, rendered, recordSize) != 0 // last row is different from the current row
-        ) {
-            // copy before retrieving next, as retrieving next could overwrite the current page in ExternalRenderer
-            output = copyRowToOutputBuffer(rendered); 
-            lastRow = output;
-            canReturn = true;
-        } else {
-            #if defined(VERBOSEL2)
-			traceprintf ("%s removed\n", rowToString(rendered, recordSize).c_str());
-			#endif
-        }
-
-        retrieved = retrieveNext();
-        if (retrieved == nullptr) {
-            renderingTree->poll();
-        } else {
-            renderingTree->pushAndPoll(retrieved);
-        }
-
-        if (canReturn) {
-            break;
-        }
-	}
-
-	return output;
-}
-
 tuple<vector<u_int8_t>, vector<u_int64_t>> parseDeviceType(string filename) {
     vector<u_int8_t> deviceTypes;
     vector<u_int64_t> switchPoints;

@@ -7,6 +7,7 @@
 
 using std::vector;
 using std::map;
+using std::tuple;
 
 class SortPlan : public Plan
 {
@@ -38,4 +39,5 @@ private:
 	vector<string> _createInitialRuns (); // Returns the names of the files created
 	SortedRecordRenderer * _externalSort ();
 	u_int8_t profileReadAheadBuffers (vector<string>& runNames, u_int16_t mergedRunCount); // return the number of read-ahead buffers of HDD page size
+	tuple<u_int16_t, u_int64_t> assignRuns(vector<string>& runNames, u_int16_t mergedRunCount); // The first return is updated merged run count [initial merged run count, returned merged run count) is the assigned runs; the second is the read ahead size
 }; // class SortIterator

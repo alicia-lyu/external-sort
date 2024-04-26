@@ -138,71 +138,84 @@ SortedRecordRenderer * SortIterator::_externalSort ()
 	u_int8_t pass = 0;
 	SortedRecordRenderer * renderer = nullptr;
 	// Multi-pass merge
-	while (!runNames.empty()) { // one pass
+	while (runNames.size() > 1) { // Need another pass to merge the runs
 		++ pass;
 		#if defined(VERBOSEL1) || defined(VERBOSEL2)
 		traceprintf ("Pass %d: %lu runs in total\n", pass, runNames.size());
 		#endif
+
 		u_int16_t mergedRunCount = 0;
 		vector<string> mergedRunNames;
 		u_int16_t rendererNum = 0;
-		while (mergedRunCount < runNames.size()) { // one renderer
+
+		while (mergedRunCount < runNames.size()) { // has more runs to merge
+			// one renderer
+			auto [mergedRunCountNew, readAheadSize] = assignRuns(runNames, mergedRunCount);
 			u_int16_t mergedRunCountSoFar = mergedRunCount;
-			u_int64_t memoryConsumption = 0;
-
-			// READ-AHEAD BUFFERS
-			auto hddReadAheadBuffers = profileReadAheadBuffers(runNames, mergedRunCountSoFar);
-			u_int64_t readAheadSize = hddReadAheadBuffers * Metrics::getParams(STORAGE_HDD).pageSize + (READ_AHEAD_BUFFERS_MIN - hddReadAheadBuffers) * Metrics::getParams(STORAGE_SSD).pageSize;
-			memoryConsumption += readAheadSize;
+			mergedRunCount = mergedRunCountNew;
 			#if defined(VERBOSEL1) || defined(VERBOSEL2)
-			traceprintf ("%d read ahead buffers for HDD\n", hddReadAheadBuffers);
+			traceprintf ("Merging runs from %d to %d\n", mergedRunCountSoFar, mergedRunCount - 1);
 			#endif
 
-			// INPUT BUFFERS
-			u_int64_t outputFileSize = 0;
-			while (mergedRunCount < runNames.size()) { // max. 120 G / 98 M = 2^11
-				string runName = runNames.at(mergedRunCount);
-				auto deviceType = getLargestDeviceType(runName);
-				memoryConsumption += Metrics::getParams(deviceType).pageSize; // 1 input buffer for this run
-				if (memoryConsumption > MEMORY_SIZE) {
-					memoryConsumption -= Metrics::getParams(deviceType).pageSize;
-					break;
-				}
-				mergedRunCount++;
-				outputFileSize += std::filesystem::file_size(runName);
-			}
-
-			// OUTPUT BUFFER
-			int deviceType = Metrics::getAvailableStorage(outputFileSize);
-			// Allocate output buffer conservatively: max page sizes of all storage devices needed
-			// But will try to write into SSD first if possible
-			auto outputPageSize = Metrics::getParams(deviceType).pageSize;
-			memoryConsumption += outputPageSize;
-
-			readAheadSize += MEMORY_SIZE - memoryConsumption; // Use the remaining memory for more read-ahead buffers
-			// MERGE RUNS
-			#if defined(VERBOSEL1) || defined(VERBOSEL2)
-			traceprintf ("Merging runs from %d to %d\n", mergedRunCountSoFar, mergedRunCount);
-			#endif
 			renderer = new ExternalRenderer(_plan->_size, 
 				vector<string>(runNames.begin() + mergedRunCountSoFar, runNames.begin() + mergedRunCount), 
 				readAheadSize, pass, rendererNum);
-			if (rendererNum == 0 && mergedRunCount == runNames.size()) {
-				// The last renderer in the last pass
+
+			if (rendererNum == 0 && mergedRunCount == runNames.size()) // The last renderer in the last pass
+			{
 				#if defined(VERBOSEL1) || defined(VERBOSEL2)
-				traceprintf("Stopped in pass %d\n", pass);
+				traceprintf("*** Multi-level merge stopped in pass %d\n", pass);
 				#endif
 				return renderer;
-			} else {
+			} else { // Need another pass for merged runs
 				mergedRunNames.push_back(renderer->run());
 				rendererNum++;
 				delete renderer;
-				renderer = nullptr;
 			}
 		}
+
 		runNames = mergedRunNames;
 	}
-	return renderer;
+
+	throw std::runtime_error("External sort not returning renderer.");
+}
+
+tuple<u_int16_t, u_int64_t> SortIterator::assignRuns(vector<string>& runNames, u_int16_t mergedRunCount) {
+	u_int64_t memoryConsumption = 0;
+	u_int64_t outputFileSize = 0;
+
+	// READ-AHEAD BUFFERS
+	auto hddReadAheadBuffers = profileReadAheadBuffers(runNames, mergedRunCount);
+	u_int64_t readAheadSize = hddReadAheadBuffers * Metrics::getParams(STORAGE_HDD).pageSize + 
+		(READ_AHEAD_BUFFERS_MIN - hddReadAheadBuffers) * Metrics::getParams(STORAGE_SSD).pageSize;
+	memoryConsumption += readAheadSize;
+	#if defined(VERBOSEL1) || defined(VERBOSEL2)
+	traceprintf ("%d read ahead buffers for HDD\n", hddReadAheadBuffers);
+	#endif
+
+	// INPUT BUFFERS
+	while (mergedRunCount < runNames.size()) { // max. 120 G / 98 M = 2^11
+		string runName = runNames.at(mergedRunCount);
+		auto deviceType = getLargestDeviceType(runName);
+		memoryConsumption += Metrics::getParams(deviceType).pageSize; // 1 input buffer for this run
+		if (memoryConsumption > MEMORY_SIZE) {
+			memoryConsumption -= Metrics::getParams(deviceType).pageSize;
+			break;
+		}
+		mergedRunCount++;
+		outputFileSize += std::filesystem::file_size(runName);
+	}
+
+	// OUTPUT BUFFER
+	int deviceType = Metrics::getAvailableStorage(outputFileSize);
+	// Allocate output buffer conservatively: max page sizes of all storage devices needed
+	// But will try to write into SSD first if possible
+	auto outputPageSize = Metrics::getParams(deviceType).pageSize;
+	memoryConsumption += outputPageSize;
+
+	readAheadSize += MEMORY_SIZE - memoryConsumption; // Use the remaining memory for more read-ahead buffers
+
+	return std::make_tuple(mergedRunCount, readAheadSize);
 }
 
 u_int8_t SortIterator::profileReadAheadBuffers (vector<string>& runNames, u_int16_t mergedRunCount)

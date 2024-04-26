@@ -2,6 +2,10 @@
 #include "params.h"
 #include "Metrics.h"
 #include <fstream>
+#include <string>
+
+using std::string;
+using std::ifstream;
 
 class ExternalRun
 {
@@ -9,14 +13,14 @@ public:
     static u_int64_t READ_AHEAD_SIZE;
     static double READ_AHEAD_THRESHOLD;
     u_int8_t storage;
-    ExternalRun (std::string runFileName, RowSize recordSize);
+    ExternalRun (const string &runFileName, RowSize recordSize);
     ~ExternalRun ();
     byte * next();
 private:
     Buffer * _currentPage;
     Buffer * _readAheadPage;
-    std::string const _runFileName;
-    std::ifstream _runFile;
+    string const _runFileName;
+    ifstream _runFile;
     u_int32_t _pageSize; // max. 500 KB = 2^19, changes when switching between SSD and HDD
     RowSize const _recordSize;
     u_int64_t _produced;

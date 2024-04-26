@@ -68,6 +68,7 @@ byte * ScanIterator::next ()
 	}
 	if (_inputFile.good()) {
 		_inputFile.write(reinterpret_cast<char *>(row), _plan->_size);
+		_inputFile.write("\n", 1);
 	} else {
 		throw std::runtime_error("Error writing to input file scan" + std::to_string(_scanCount));
 	}
@@ -77,5 +78,5 @@ byte * ScanIterator::next ()
 
 string ScanIterator::_getInputFileName()
 {
-	return std::string(".") + SEPARATOR + std::string("inputs") + SEPARATOR + std::string("scan") + std::to_string(_scanCount) + std::string(".bin");
+	return std::string(".") + SEPARATOR + std::string("inputs") + SEPARATOR + std::string("input") + std::to_string(_scanCount) + std::string(".txt");
 } // ScanIterator::_getInputFileName

@@ -9,6 +9,7 @@ SortPlan::SortPlan (Plan * const input, RowSize const size, RowCount const count
 	_recordCountPerRun (getRecordCountPerRun(size, true)),
 	_removeDuplicates (removeDuplicates)
 {
+	TRACE (false);
 	traceprintf ("SortPlan: memory space %d, record per run %d\n", MEMORY_SIZE, _recordCountPerRun);
 } // SortPlan::SortPlan
 
@@ -20,14 +21,14 @@ SortPlan::~SortPlan ()
 
 Iterator * SortPlan::init () const
 {
-	TRACE (true);
+	TRACE (false);
 	return new SortIterator (this);
 } // SortPlan::init
 
 SortIterator::SortIterator (SortPlan const * const plan) :
 	_plan (plan), _input (plan->_input->init ()), _consumed (0), _produced (0)
 {
-	TRACE (true);
+	TRACE (false);
 	if (_plan->_count <= _plan->_recordCountPerRun) {
 		_renderer = _formInMemoryRenderer();
 	} else {
@@ -39,7 +40,7 @@ SortIterator::SortIterator (SortPlan const * const plan) :
 
 SortIterator::~SortIterator ()
 {
-	TRACE (true);
+	TRACE (false);
 	delete _input;
 	delete _renderer;
 	traceprintf ("produced %lu of %lu rows\n",
@@ -130,7 +131,7 @@ vector<string> SortIterator::_createInitialRuns () // metrics
 
 SortedRecordRenderer * SortIterator::_externalSort ()
 {
-	TRACE (true);
+	TRACE (false);
 	vector<string> runNames = _createInitialRuns();
 	u_int8_t pass = 0;
 	SortedRecordRenderer * renderer = nullptr;
@@ -149,7 +150,7 @@ SortedRecordRenderer * SortIterator::_externalSort ()
 
 			// READ-AHEAD BUFFERS
 			auto hddReadAheadBuffers = profileReadAheadBuffers(runNames, mergedRunCountSoFar);
-			u_int64_t readAheadSize = hddReadAheadBuffers * Metrics::getParams(1).pageSize + (READ_AHEAD_BUFFERS_MIN - hddReadAheadBuffers) * Metrics::getParams(0).pageSize;
+			u_int64_t readAheadSize = hddReadAheadBuffers * Metrics::getParams(STORAGE_HDD).pageSize + (READ_AHEAD_BUFFERS_MIN - hddReadAheadBuffers) * Metrics::getParams(STORAGE_SSD).pageSize;
 			memoryConsumption += readAheadSize;
 			#if defined(VERBOSEL1) || defined(VERBOSEL2)
 			traceprintf ("%d read ahead buffers for HDD\n", hddReadAheadBuffers);
@@ -204,7 +205,7 @@ SortedRecordRenderer * SortIterator::_externalSort ()
 
 u_int8_t SortIterator::profileReadAheadBuffers (vector<string>& runNames, u_int16_t mergedRunCount)
 {
-	TRACE (true);
+	TRACE (false);
 	u_int64_t memoryConsumption = 0;
 	u_int16_t ssdRunCount = 0;
 	u_int16_t hddRunCount = 0;

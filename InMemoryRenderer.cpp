@@ -4,12 +4,12 @@
 NaiveRenderer::NaiveRenderer (RowSize recordSize, TournamentTree * tree, u_int16_t runNumber, bool removeDuplicates) :
 	SortedRecordRenderer(recordSize, 0, runNumber, removeDuplicates), _tree(tree)
 {
-	TRACE (true);
+	TRACE (false);
 } // NaiveRenderer::NaiveRenderer
 
 NaiveRenderer::~NaiveRenderer ()
 {
-	TRACE (true);
+	TRACE (false);
     delete _tree;
 } // NaiveRenderer::~NaiveRenderer
 
@@ -40,7 +40,7 @@ CacheOptimizedRenderer::CacheOptimizedRenderer (RowSize recordSize,
 	vector<TournamentTree *> &cacheTrees, u_int16_t runNumber, bool removeDuplicates) : 
 	SortedRecordRenderer(recordSize, 0, runNumber, removeDuplicates), _cacheTrees (cacheTrees)
 {
-	TRACE (true);
+	TRACE (false);
     std::vector<byte *> formingRows;
     for (auto cacheTree : _cacheTrees) {
         byte * row = cacheTree->poll();
@@ -64,7 +64,7 @@ CacheOptimizedRenderer::CacheOptimizedRenderer (RowSize recordSize,
 
 CacheOptimizedRenderer::~CacheOptimizedRenderer ()
 {
-	TRACE (true);
+	TRACE (false);
     delete _tree;
     for (auto cacheTree : _cacheTrees) {
         delete cacheTree;

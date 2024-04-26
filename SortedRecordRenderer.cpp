@@ -10,7 +10,7 @@
 SortedRecordRenderer::SortedRecordRenderer (RowSize recordSize, u_int8_t pass, u_int16_t runNumber, bool removeDuplicates, byte * lastRow) :
 	_recordSize (recordSize), _runNumber (runNumber), _produced (0), _removeDuplicates (removeDuplicates), _lastRow (lastRow), _deviceType (Metrics::getAvailableStorage())
 {
-	TRACE (true);
+	TRACE (false);
 	auto pageSize = Metrics::getParams(_deviceType).pageSize;
 	_outputBuffer = new Buffer(pageSize / _recordSize, _recordSize);
 	_outputFileName = _getOutputFileName(pass, runNumber);
@@ -78,7 +78,10 @@ bool SortedRecordRenderer::_flushOutputBuffer(u_int32_t sizeFilled)
 	#if defined(VERBOSEL2)
 	traceprintf ("Run %d: output buffer flushed with %llu rows produced\n", _runNumber, _produced);
 	#endif
+
 	_outputFile.write((char*) _outputBuffer->data(), sizeFilled); // Write to file before creating a new buffer
+	
+	// Metrics: switch device if necessary
 	int deviceType = switchDevice(sizeFilled);
 	Metrics::write(deviceType, sizeFilled); // However, log the write to the new device
 	return true;
@@ -86,7 +89,7 @@ bool SortedRecordRenderer::_flushOutputBuffer(u_int32_t sizeFilled)
 
 int SortedRecordRenderer::switchDevice (u_int32_t sizeFilled)
 {
-	if (_deviceType == 0) { // switch device when the current one is SSD and is full
+	if (_deviceType == STORAGE_SSD) { // switch device when the current one is SSD and is full
 		auto newDeviceType = Metrics::getAvailableStorage(sizeFilled);
 		if (newDeviceType != _deviceType) { // switch to a new device
 			_deviceType = newDeviceType;

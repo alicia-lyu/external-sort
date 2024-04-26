@@ -47,7 +47,7 @@ int Metrics::write(const int device_type, const u_int64_t num_bytes)
         throw std::runtime_error("No available storage on device" + std::to_string(device_type) + " for " + std::to_string(num_bytes) + " bytes." + " Current storage used: " + std::to_string(metric.storageUsed) + " bytes." + " Capacity: " + std::to_string(param.capacity) + " bytes.");
     }
     if (param.pageSize != num_bytes) {
-        std::cerr << "Warning: Write size " << num_bytes << " does not match page size " << param.pageSize << ". This may be expected only when you are flushing the last fragment of a file." << std::endl; // Use std::cerr instead of cerr
+        // std::cerr << "Warning: Write size " << num_bytes << " does not match page size " << param.pageSize << ". This may be expected only when you are flushing the last fragment of a file." << std::endl; // Use std::cerr instead of cerr
     }
     // calculate the time spent on data transfer
     metric.dataTransferCost += num_bytes / param.bandwidth;

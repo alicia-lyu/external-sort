@@ -120,7 +120,11 @@ byte * RandomBuffer::fillRandomly ()
 byte * RandomBuffer::next ()
 {
     TRACE (false);
-    return fillRandomly(); // TODO: toBeRead is not updated
+    byte * nextRecord = fillRandomly();
+    // toBeRead is always the same as toBeFilled, since 
+    // we generate random records on the fly
+    toBeRead = toBeFilled;
+    return nextRecord;
 }
 
 
@@ -129,7 +133,6 @@ InFileBuffer::InFileBuffer (u_int16_t recordCount, RowSize recordSize, const str
     Buffer(recordCount, recordSize)
 {
     TRACE (false);
-    traceprintf("recordCount: %d, recordSize: %d\n", recordCount, recordSize);
     _inputFile = ifstream (inputPath, std::ios::binary);
     if (!_inputFile.is_open()) {
         throw std::runtime_error("Input file not found");

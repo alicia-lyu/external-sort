@@ -4,7 +4,7 @@
 u_int64_t ExternalRun::READ_AHEAD_SIZE = 0; // Initialize with appropriate value
 double ExternalRun::READ_AHEAD_THRESHOLD = 0.0; // Initialize with appropriate value
 
-ExternalRun::ExternalRun (std::string runFileName, RowSize recordSize) :
+ExternalRun::ExternalRun (const string &runFileName, RowSize recordSize) :
     _readAheadPage (nullptr), _runFileName (runFileName), _runFile (runFileName, std::ios::binary), 
     _recordSize (recordSize),  _produced (0)
 {

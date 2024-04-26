@@ -34,7 +34,7 @@ string rowRawValueToString(byte * rowContent, RowSize size);
 byte * renderRow(std::function<byte *()> retrieveNext, 
     std::function<byte *(byte * rendered)> copyRowToOutputBuffer,
     TournamentTree * renderingTree,
-    byte * lastRow,
+    byte * &lastRow,
     bool removeDuplicates, 
     RowSize recordSize);
 tuple<vector<u_int8_t>, vector<u_int64_t>> parseDeviceType(string filename);

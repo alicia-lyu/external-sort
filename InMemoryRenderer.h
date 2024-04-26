@@ -21,6 +21,4 @@ public:
 private:
     TournamentTree * _tree;
     vector<TournamentTree *> _cacheTrees;
-    byte * lastRow;
-    RowCount _removed;
 };

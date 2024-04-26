@@ -11,6 +11,8 @@ SortPlan::SortPlan (Plan * const input, RowSize const size, RowCount const count
 {
 	TRACE (false);
 	traceprintf ("SortPlan: memory space %d, record per run %d\n", MEMORY_SIZE, _recordCountPerRun);
+	if (_removeDuplicates)
+		traceprintf ("SortPlan: remove duplicates using in-sort method\n");
 } // SortPlan::SortPlan
 
 SortPlan::~SortPlan ()

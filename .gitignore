@@ -10,3 +10,4 @@ temp.*
 /outputs/*
 .DS_Store
 *.tmp
+output.txt

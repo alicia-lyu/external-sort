@@ -15,12 +15,16 @@ class InStreamRemovePlan : public Plan
 {
     friend class InStreamRemoveIterator;
 public:
-    InStreamRemovePlan (Plan * const input, RowSize const size);
+    InStreamRemovePlan (Plan * const input, RowSize const size, bool activated);
     ~InStreamRemovePlan ();
     Iterator * init () const;
 private:
     Plan * const _input;
     RowSize const _size;
+    // need to compare between two different removal methods
+    // so if we are using the in-sort removal, we do not activate it
+    // and the iterator simply returns the input rows
+    bool const _activated;
 }; // class InStreamRemovePlan
 
 class InStreamRemoveIterator : public Iterator

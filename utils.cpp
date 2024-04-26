@@ -25,7 +25,7 @@ Config getArgs(int argc, char* argv[])
         * -c, --count: Number of records to generate
         * -s, --size: Size of each record, must be 20-2000
         * -t, --trace: Trace log path. Default is "trace"
-        * (optional) -o, --ouput: Output path. If not provided, default to "output_table"
+        * (optional) -o, --ouput: Output path. If not provided, default to "output.txt"
         * (optional) -i, --input: Input path. If not provided, generate records
         * (optional) -d, --duplicate-removal: Remove duplicates. Default is false. If provided, also provides <removal-method>
     */
@@ -41,12 +41,12 @@ Config getArgs(int argc, char* argv[])
         .required();
 
     parser.add_argument("-t", "--trace")
-        .help("Trace log path. If not provided, default to 'trace'")
-        .default_value(string("trace"));
+        .help("Trace log path. If not provided, default to console")
+        .default_value(string(""));
 
     parser.add_argument("-o", "--output")
-        .help("Output path. If not provided, default to 'output_table'")
-        .default_value(string("output_table"));
+        .help("Output path. If not provided, default to 'output.txt'")
+        .default_value(string("output.txt"));
 
     parser.add_argument("-i", "--input")
         .help("Input path. If not provided, generate random records")
@@ -158,12 +158,16 @@ string rowRawValueToString(byte * rowContent, RowSize size) {
 }
 
 byte * renderRow(std::function<byte *()> retrieveNext, std::function<byte *(byte * rendered)> copyRowToOutputBuffer,
-    TournamentTree * renderingTree, byte * lastRow, bool removeDuplicates, RowSize recordSize) 
+    TournamentTree * renderingTree, byte * &lastRow, bool removeDuplicates, RowSize recordSize) 
 {
     byte * rendered, * retrieved;
     byte * output = nullptr;
 
+    bool canReturn = false;
+
 	while (true) {
+        canReturn = false;
+
         rendered = renderingTree->peekRoot();
         // if no more rows, jump out
 		if (rendered == nullptr) break;
@@ -173,23 +177,28 @@ byte * renderRow(std::function<byte *()> retrieveNext, std::function<byte *(byte
             lastRow == nullptr || // last row is null
             memcmp(lastRow, rendered, recordSize) != 0 // last row is different from the current row
         ) {
-            output = copyRowToOutputBuffer(rendered); 
             // copy before retrieving next, as retrieving next could overwrite the current page in ExternalRenderer
-            retrieved = retrieveNext();
-            if (retrieved == nullptr) {
-                renderingTree->poll();
-            } else {
-                renderingTree->pushAndPoll(retrieved);
-            }
-            break;
+            output = copyRowToOutputBuffer(rendered); 
+            lastRow = output;
+            canReturn = true;
         } else {
             #if defined(VERBOSEL2)
 			traceprintf ("%s removed\n", rowToString(rendered, recordSize).c_str());
 			#endif
         }
-        lastRow = output;
+
+        retrieved = retrieveNext();
+        if (retrieved == nullptr) {
+            renderingTree->poll();
+        } else {
+            renderingTree->pushAndPoll(retrieved);
+        }
+
+        if (canReturn) {
+            break;
+        }
 	}
-	
+
 	return output;
 }
 

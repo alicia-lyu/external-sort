@@ -1,10 +1,13 @@
 #include "Remove.h"
 #include "utils.h"
 
-InStreamRemovePlan::InStreamRemovePlan (Plan * const input, RowSize const size)
-    : _input(input), _size(size)
+InStreamRemovePlan::InStreamRemovePlan (Plan * const input, RowSize const size, bool activated)
+    : _input(input), _size(size), _activated(activated)
 {
     TRACE(false);
+    if (_activated) {
+        traceprintf("InStreamRemovePlan: remove duplicates using in-stream method\n");
+    }
 } // InStreamRemovePlan::InStreamRemovePlan
 
 InStreamRemovePlan::~InStreamRemovePlan()
@@ -24,26 +27,32 @@ InStreamRemoveIterator::InStreamRemoveIterator(InStreamRemovePlan const * const 
     : _plan(plan), _input(_plan->_input->init()), _consumed(0), _produced(0), _removed(0)
 {
     TRACE(false);
-    lastRow = (byte *) malloc(_plan->_size);
 } // InStreamRemoveIterator::InStreamRemoveIterator
 
 InStreamRemoveIterator::~InStreamRemoveIterator()
 {
     TRACE(false);
     delete _input;
-    free(lastRow);
-    traceprintf("Removed %lu rows\n", (unsigned long)(_removed));
+    if (_plan->_activated) {
+        traceprintf("Removed %lu rows\n", (unsigned long)(_removed));
 
-    #if defined(VERBOSEL2) || defined(VERBOSEL1)
-    traceprintf("produced %lu of %lu rows\n",
-                (unsigned long)(_produced),
-                (unsigned long)(_consumed));
-    #endif
+        #if defined(VERBOSEL2) || defined(VERBOSEL1)
+        traceprintf("produced %lu of %lu rows\n",
+                    (unsigned long)(_produced),
+                    (unsigned long)(_consumed));
+        #endif
+    }
+        
 } // InStreamRemoveIterator::~InStreamRemoveIterator
 
 byte * InStreamRemoveIterator::next()
 {
     TRACE(false);
+
+    // if not activated, simply return the input rows
+    if (!_plan->_activated) {
+        return _input->next();
+    }
 
     while (true) {
         byte * received = _input->next();

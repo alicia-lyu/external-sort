@@ -23,11 +23,14 @@ int main (int argc, char * argv [])
 
 	bool removeDuplicate = config.removeDuplicates;
 	string & removalMethod = config.removalMethod;
+	bool useInsort = removeDuplicate && removalMethod == "insort";
+	bool useInstream = removeDuplicate && removalMethod == "instream";
 
 	// trace log file
 	string & tracePath = config.tracePath;
 	int stdout_copy = dup(STDOUT_FILENO);
-	freopen(tracePath.c_str(), "w+", stdout);
+	if (!tracePath.empty())
+		freopen(tracePath.c_str(), "w+", stdout);
 
 	// input file
 	string & inputPath = config.inputPath;
@@ -36,8 +39,9 @@ int main (int argc, char * argv [])
 	// traceprintf("recordCountPerRun: %u, runCount: %u\n", recordCountPerRun, runCount);
 	Plan * const scanPlan = new ScanPlan (recordCount, recordSize, inputPath);
 	Plan * const witnessPlan = new WitnessPlan (scanPlan, recordSize);
-	Plan * const sortPlan = new SortPlan (witnessPlan, recordSize, recordCount, removeDuplicate);
-	Plan * const verifyPlan = new VerifyPlan (sortPlan, recordSize);
+	Plan * const sortPlan = new SortPlan (witnessPlan, recordSize, recordCount, useInsort);
+	Plan * const removePlan = new InStreamRemovePlan (sortPlan, recordSize, useInstream);
+	Plan * const verifyPlan = new VerifyPlan (removePlan, recordSize);
 	Plan * const witnessPlan2 = new WitnessPlan (verifyPlan, recordSize);
 	Plan * const outputPlan = new OutputPlan (witnessPlan2, recordSize, config.outputPath);
 

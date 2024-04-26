@@ -69,9 +69,13 @@ testinput : Test.exe Makefile $(LOG_DIR) ./inputs/
 	echo $(TIMESTAMP) > $(LOG_FILE)
 	./Test.exe -c 20 -s 1023 -i input_table -t $(LOG_FILE) -d insort
 
-dup : Test.exe Makefile $(LOG_DIR) ./inputs/
+insort : Test.exe Makefile $(LOG_DIR) ./inputs/
 	echo $(TIMESTAMP) > $(LOG_FILE)
 	./Test.exe -c 4000 -s 2 -t $(LOG_FILE) -d insort
+
+instream : Test.exe Makefile $(LOG_DIR) ./inputs/
+	echo $(TIMESTAMP) > $(LOG_FILE)
+	./Test.exe -c 4000 -s 2 -t $(LOG_FILE) -d instream
 
 # Small test plan: Memory size = 100 KB, SSD page size = 2 KB
 # 50 pages per memory, 98 KB per memory run
@@ -110,7 +114,7 @@ ExternalSort.exe: Makefile ExternalSort.cpp
 
 $(OBJS) : Makefile defs.h
 Test.o : Iterator.h Scan.h Filter.h Sort.h utils.h Buffer.h Witness.h TournamentTree.h SortedRecordRenderer.h Verify.h
-Iterator.o Scan.o Filter.o Sort.o utils.o Buffer.o Witness.o Verify.o: Iterator.h Buffer.h params.h
+Iterator.o Scan.o Filter.o Sort.o utils.o Buffer.o Witness.o Verify.o TournamentTree.o SortedRecordRenderer.o: Iterator.h Buffer.h params.h utils.h
 Scan.o : Scan.h 
 Filter.o : Filter.h
 Sort.o : Sort.h

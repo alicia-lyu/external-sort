@@ -1,3 +1,5 @@
+#pragma once
+
 #include "Buffer.h"
 #include "params.h"
 #include "Metrics.h"

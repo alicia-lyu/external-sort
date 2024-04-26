@@ -126,18 +126,24 @@ vector<string> SortIterator::_createInitialRuns () // metrics
 
 SortedRecordRenderer * SortIterator::gracefulDegradation ()
 {
-	Assert (_consumed == 0, __FILE__, __LINE__);
+	// Determine the size of the initial in-memory run (the only intermediate spill)
 	u_int64_t gracefulInMemoryRunSize = MEMORY_SIZE - SSD_PAGE_SIZE * 3; // One page for output, one page for external renderer run page, one page for external renderer read-ahead
 	u_int64_t initialInMemoryRunSize = _plan->_size * _plan->_count - gracefulInMemoryRunSize;
 	Assert (initialInMemoryRunSize <= MEMORY_SIZE - SSD_PAGE_SIZE, __FILE__, __LINE__);
-	string initialRunFileName = _formInMemoryRenderer(0, 0, initialInMemoryRunSize)->run(); // The only intermediate spill
+	Assert (_consumed == 0, __FILE__, __LINE__);
 
+	// Create the initial in-memory run and materialize to disk
+	string initialRunFileName = _formInMemoryRenderer(_consumed, 0, initialInMemoryRunSize)->run();
+
+	// Create the remainder in-memory renderer
 	SortedRecordRenderer * inMemoryRenderer = _formInMemoryRenderer(_consumed, 1, gracefulInMemoryRunSize);
 
+	// Create the external run
 	ExternalRun::READ_AHEAD_SIZE = SSD_PAGE_SIZE;
     ExternalRun::READ_AHEAD_THRESHOLD = std::max(0.5, ((double) SSD_PAGE_SIZE) / MEMORY_SIZE);
 	ExternalRun * externalRun = new ExternalRun(initialRunFileName, _plan->_size);
 
+	// GRACEFUL DEGRADATION
 	SortedRecordRenderer * gracefulRenderer = new GracefulRenderer(_plan->_size, inMemoryRenderer, externalRun, _plan->_removeDuplicates);
 
 	return gracefulRenderer;
@@ -197,7 +203,8 @@ SortedRecordRenderer * SortIterator::_externalSort ()
 	throw std::runtime_error("External sort not returning renderer.");
 }
 
-tuple<u_int16_t, u_int64_t> SortIterator::assignRuns(vector<string>& runNames, u_int16_t mergedRunCount) {
+tuple<u_int16_t, u_int64_t> SortIterator::assignRuns(vector<string>& runNames, u_int16_t mergedRunCount) 
+{
 	u_int64_t memoryConsumption = 0;
 	u_int64_t outputFileSize = 0;
 

@@ -1,6 +1,5 @@
 #include "Iterator.h"
 #include "Scan.h"
-#include "Filter.h"
 #include "Sort.h"
 #include "utils.h"
 #include "Witness.h"

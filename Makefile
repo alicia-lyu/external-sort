@@ -12,22 +12,22 @@ SCRS=
 
 # headers and code sources
 HDRS=	defs.h params.h\
-		Iterator.h Scan.h Filter.h Sort.h \
+		Iterator.h Scan.h Sort.h \
 		utils.h Buffer.h Witness.h TournamentTree.h, SortedRecordRenderer.h \
 		ExternalRenderer.h ExternalRun.h Verify.h Remove.h Metrics.h \
-		InMemoryRenderer.h Output.h
+		InMemoryRenderer.h Output.h GracefulRenderer.h
 SRCS=	defs.cpp Assert.cpp Test.cpp \
-		Iterator.cpp Scan.cpp Filter.cpp Sort.cpp \
+		Iterator.cpp Scan.cpp Sort.cpp \
 		utils.cpp Buffer.cpp Witness.cpp TournamentTree.cpp SortedRecordRenderer.cpp \
 		ExternalRenderer.cpp ExternalRun.cpp Verify.cpp Remove.cpp Metrics.cpp \
-		InMemoryRenderer.cpp Output.cpp
+		InMemoryRenderer.cpp Output.cpp GracefulRenderer.cpp
 
 # compilation targets
 OBJS=	defs.o Assert.o Test.o \
-		Iterator.o Scan.o Filter.o Sort.o \
+		Iterator.o Scan.o Sort.o \
 		utils.o Buffer.o Witness.o TournamentTree.o SortedRecordRenderer.o \
 		ExternalRenderer.o ExternalRun.o Verify.o Remove.o Metrics.o \
-		InMemoryRenderer.o Output.o
+		InMemoryRenderer.o Output.o GracefulRenderer.o
 
 # RCS assists
 REV=-q -f
@@ -96,6 +96,14 @@ external-2: Test.exe Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1
 external-2-lldb: Test.exe Makefile ./inputs/ ./spills/pass0 ./spills/pass1 ./spills/pass2
 	lldb -- ./Test.exe -c 40000 -s 200
 
+# 100 KB data
+graceful: Test.exe Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1
+	echo $(TIMESTAMP) > $(LOG_FILE)
+	./Test.exe -c 5000 -s 20 -t $(LOG_FILE)
+
+graceful-lldb: Test.exe Makefile ./inputs/ ./spills/pass0 ./spills/pass1
+	lldb -- ./Test.exe -c 5000 -s 20
+
 # TODO: external-sort on HDD: 100 MB can be divided into 200 pages of 500KB each
 
 # TODO: Add more test cases 10^3 * 50 (50M), 10^3 * 125 (125M), 10^5 * 120 (12 G), 10^6 * 120 (120 G) (rows, record size) and sample input by TA
@@ -113,10 +121,9 @@ ExternalSort.exe: Makefile ExternalSort.cpp
 # ./ExternalSort.exe -c 120 -s 1000 -o trace0.txt  (Example values)
 
 $(OBJS) : Makefile defs.h
-Test.o : Iterator.h Scan.h Filter.h Sort.h utils.h Buffer.h Witness.h TournamentTree.h SortedRecordRenderer.h Verify.h
-Iterator.o Scan.o Filter.o Sort.o utils.o Buffer.o Witness.o Verify.o TournamentTree.o SortedRecordRenderer.o: Iterator.h Buffer.h params.h utils.h
+Test.o : Iterator.h Scan.h Sort.h utils.h Buffer.h Witness.h TournamentTree.h SortedRecordRenderer.h Verify.h
+Iterator.o Scan.o Sort.o utils.o Buffer.o Witness.o Verify.o TournamentTree.o SortedRecordRenderer.o: Iterator.h Buffer.h params.h utils.h
 Scan.o : Scan.h 
-Filter.o : Filter.h
 Sort.o : Sort.h
 utils.o: utils.h
 Witness.o: Witness.h
@@ -129,6 +136,7 @@ SortedRecordRenderer.o: SortedRecordRenderer.h
 ExternalRun.o: ExternalRun.h
 ExternalRenderer.o: ExternalRenderer.h ExternalRun.h SortedRecordRenderer.h
 InMemoryRenderer.o: InMemoryRenderer.h SortedRecordRenderer.h
+GracefulRenderer.o: GracefulRenderer.h InMemoryRenderer.h ExternalRun.h
 
 list : Makefile
 	echo Makefile $(HDRS) $(SRCS) $(DOCS) $(SCRS) > list

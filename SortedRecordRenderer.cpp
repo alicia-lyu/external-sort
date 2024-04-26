@@ -44,7 +44,7 @@ string SortedRecordRenderer::run ()
 		materializer = nullptr;
 		return outputFileName;
 	} else {
-		return "";
+		throw std::invalid_argument("SortedRecordRenderer::run can only be invoked when Materializer is enabled.");
 	}
 } // ExternalRenderer::run
 
@@ -67,11 +67,16 @@ byte * SortedRecordRenderer::renderRow(std::function<byte *()> retrieveNext, Tou
             _lastRow == nullptr || // last row is null
             memcmp(_lastRow, rendered, _recordSize) != 0 // last row is different from the current row
         ) {
-            // copy before retrieving next, as retrieving next could overwrite the current page in ExternalRenderer
-            output = materializer->addRowToOutputBuffer(rendered);
-            _lastRow = output;
+            if (materializer != nullptr) {
+				// copy before retrieving next, as retrieving next could overwrite the current page in ExternalRenderer
+				output = materializer->addRowToOutputBuffer(rendered);
+				_lastRow = output;
+			} else {
+				_lastRow = rendered;
+				output = rendered;
+			}
             canReturn = true;
-        } else {
+        } else { // continue to the next row until a distinct one is found
             #if defined(VERBOSEL2)
 			traceprintf ("%s removed\n", rowToString(rendered, recordSize).c_str());
 			#endif
@@ -98,7 +103,7 @@ Materializer::Materializer(u_int8_t pass, u_int16_t runNumber, SortedRecordRende
 	outputBuffer = new Buffer(pageSize / renderer->_recordSize, renderer->_recordSize);
 	outputFileName = getOutputFileName(pass, runNumber);
 	outputFile = ofstream(outputFileName, std::ios::binary);
-	#if defined(VERBOSEL1) || defined(VERBOSEL2)
+	#if defined(VERBOSEL2)
 	traceprintf ("Materializer for run %d with output file %s initialized on device %d\n", runNumber, outputFileName.c_str(), deviceType);
 	#endif
 } // Materializer::Materializer

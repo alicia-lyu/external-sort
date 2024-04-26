@@ -136,7 +136,7 @@ SortedRecordRenderer * SortIterator::gracefulDegradation ()
 	string initialRunFileName = _formInMemoryRenderer(_consumed, 0, initialInMemoryRunSize)->run();
 
 	// Create the remainder in-memory renderer
-	SortedRecordRenderer * inMemoryRenderer = _formInMemoryRenderer(_consumed, 1, gracefulInMemoryRunSize);
+	SortedRecordRenderer * inMemoryRenderer = _formInMemoryRenderer(_consumed, 1, gracefulInMemoryRunSize, false);
 
 	// Create the external run
 	ExternalRun::READ_AHEAD_SIZE = SSD_PAGE_SIZE;

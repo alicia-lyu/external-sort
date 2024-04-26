@@ -28,4 +28,6 @@ private:
     u_int8_t nextStorage;
     u_int32_t _fillPage(Buffer * page);
     Buffer * getBuffer();
+    bool refillCurrentPage(); // Either by filling the current page or switching to the read-ahead page
+    void readAhead();
 };

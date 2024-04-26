@@ -9,6 +9,9 @@ ExternalRun::ExternalRun (const string &runFileName, RowSize recordSize) :
     _recordSize (recordSize),  _produced (0)
 {
     TRACE (false);
+
+    // Parse the device types and switch points from the run file name
+    // Initialize the storage, nextStorage, and _pageSize
     vector<u_int8_t> deviceTypes;
     vector<u_int64_t> switchPoints;
     std::tie(deviceTypes, switchPoints) = parseDeviceType(runFileName);
@@ -56,36 +59,19 @@ byte * ExternalRun::next ()
         #if defined(VERBOSEL2)
         traceprintf("# %llu row is null, run file: %s\n", _produced, _runFileName.c_str());
         #endif
-        if (_readAheadPage != nullptr) { // We have a read-ahead page at hand
-            delete _currentPage;
-            _currentPage = _readAheadPage;
-            _readAheadPage = nullptr;
-            ExternalRun::READ_AHEAD_SIZE += _pageSize;
-        } else { // We need to read a new page (blocking I/O)
-            u_int32_t readCount = _fillPage(_currentPage);
-        }
-        row = _currentPage->next();
-        if (row == nullptr) { // Still null, we have reached the end of the run
+        bool hasMore = refillCurrentPage();
+        if (hasMore) row = _currentPage->next();
+        else {
+            Assert(_currentPage->next() == nullptr, __FILE__, __LINE__);
             Metrics::erase(storage, std::filesystem::file_size(_runFileName) - switchPoint * _recordSize);
             // OPTIMIZATION: Erase in a smaller granularity at each fill?
             return nullptr;
         }
-    } 
-    // COMMENT: With a single thread, it is fundamentally challenging to make read-ahead non-blocking
-    // Therefore, we are only mimicking the non-blocking behavior by not counting the read-ahead cost in Metrics
-    u_int16_t recordPerPage = _pageSize / _recordSize; // max. 500 KB / 20 B = 25000 = 2^14
-    if (_produced % (recordPerPage / 10) == 0 
-        && _readAheadPage == nullptr 
-        && ExternalRun::READ_AHEAD_SIZE >= _pageSize 
-        && (double) _currentPage->sizeRead() / (_currentPage->recordSize * _currentPage->recordCount) > ExternalRun::READ_AHEAD_THRESHOLD) 
-    {
-        _readAheadPage = getBuffer();
-        u_int32_t readCount = _fillPage(_readAheadPage);
-        ExternalRun::READ_AHEAD_SIZE -= readCount;
     }
     #if defined(VERBOSEL1) || defined(VERBOSEL2)
     if (_produced % 10000 == 0) traceprintf("# %llu of %s: %s\n", _produced, _runFileName.c_str(), rowToString(row, _recordSize).c_str());
     #endif
+    readAhead(); // Read ahead if meets the criteria
     ++ _produced;
     return row;
 } // ExternalRun::next
@@ -118,9 +104,36 @@ Buffer * ExternalRun::getBuffer ()
         if (nextProducedCount > switchPoint) {
             traceprintf("# %llu: Switching device before switch point %llu\n", _produced, switchPoint);
             Metrics::erase(storage, _produced * _recordSize);
-            // We may leave a small fragment in the next device, left for future optimization
+            // We may leave a small fragment in the next device, left for future OPTIMIZATION
             storage = nextStorage;
         }
     }
     return new Buffer(_pageSize / _recordSize, _recordSize);
 } // ExternalRun::getBuffer
+
+bool ExternalRun::refillCurrentPage() 
+{
+    if (_readAheadPage != nullptr) { // We have a read-ahead page at hand
+        delete _currentPage;
+        _currentPage = _readAheadPage;
+        _readAheadPage = nullptr;
+        ExternalRun::READ_AHEAD_SIZE += _pageSize;
+    } else { // We need to read a new page (blocking I/O)
+        _fillPage(_currentPage);
+    }
+    return _currentPage->recordCount > 0;
+}
+
+void ExternalRun::readAhead()
+{
+    // With a single thread, it is fundamentally challenging to make read-ahead non-blocking
+    // Therefore, we are only mimicking the non-blocking behavior by not counting the read-ahead cost in Metrics
+    if ( _readAheadPage == nullptr 
+        && ExternalRun::READ_AHEAD_SIZE >= _pageSize 
+        && (double) _currentPage->sizeRead() / (_currentPage->recordSize * _currentPage->recordCount) > ExternalRun::READ_AHEAD_THRESHOLD) 
+    {
+        _readAheadPage = getBuffer();
+        u_int32_t readCount = _fillPage(_readAheadPage);
+        ExternalRun::READ_AHEAD_SIZE -= readCount;
+    }
+}

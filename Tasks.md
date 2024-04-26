@@ -16,7 +16,7 @@ April 29, 2024    | Submission
 ### Infrastructure: By March 11
 
 - [x] Trace existing code and disable (not remove!) excessive tracing output @Alicia
-- [x] Define class for data records @Alicia
+- [x] Define class for data records @Alicia @Yuheng
 - [x] Add data generation (random values) in ScanIterator @Alicia @Yuheng
 - [x] Test with simple plan -- scan only @Alicia
 - [x] Add parity check with new classes Witness @Alicia @Yuheng
@@ -28,11 +28,11 @@ April 29, 2024    | Submission
 - [x] Add in-memory sorting, test with 0, 1, 2, 3, 7 rows @Alicia
 - [x] Add multi-level external sort that spills to SSD, test with 0, 1, 2, 3, 10, 29, 100, 576, 1000 rows @Alicia
 - [x] Add external sort that spills to HDD @Alicia
-- [x] Add HDD and SSD metrics: @Yuheng
+- [x] Add HDD and SSD metrics: @Yuheng @Alicia
   - SSD: 0.1 ms latency, 200 MB/s bandwidth
   - HDD: 5 ms latency, 100 MB/s bandwidth
 - [ ] Test with 10^3 * 50 (50M), 10^3 * 125 (125M), 10^5 * 120 (12 G), 10^6 * 120 (120 G) (rows, record size)
-- [ ] Test with sample input provided by TA
+- [x] Test with sample input provided by TA @Yuheng
 
 ### Optimization and bonus points: By April 29
 

@@ -15,19 +15,19 @@ HDRS=	defs.h params.h\
 		Iterator.h Scan.h Filter.h Sort.h \
 		utils.h Buffer.h Witness.h TournamentTree.h, SortedRecordRenderer.h \
 		ExternalRenderer.h ExternalRun.h Verify.h Remove.h Metrics.h \
-		InMemoryRenderer.h
+		InMemoryRenderer.h Output.h
 SRCS=	defs.cpp Assert.cpp Test.cpp \
 		Iterator.cpp Scan.cpp Filter.cpp Sort.cpp \
 		utils.cpp Buffer.cpp Witness.cpp TournamentTree.cpp SortedRecordRenderer.cpp \
 		ExternalRenderer.cpp ExternalRun.cpp Verify.cpp Remove.cpp Metrics.cpp \
-		InMemoryRenderer.cpp
+		InMemoryRenderer.cpp Output.cpp
 
 # compilation targets
 OBJS=	defs.o Assert.o Test.o \
 		Iterator.o Scan.o Filter.o Sort.o \
 		utils.o Buffer.o Witness.o TournamentTree.o SortedRecordRenderer.o \
 		ExternalRenderer.o ExternalRun.o Verify.o Remove.o Metrics.o \
-		InMemoryRenderer.o
+		InMemoryRenderer.o Output.o
 
 # RCS assists
 REV=-q -f
@@ -63,15 +63,15 @@ clean-spills:
 
 test : Test.exe Makefile $(LOG_DIR) ./inputs/
 	echo $(TIMESTAMP) > $(LOG_FILE)
-	./Test.exe -c 7 -s 20 -o $(LOG_FILE) -d
+	./Test.exe -c 7 -s 20 -t $(LOG_FILE) -d insort
 
 testinput : Test.exe Makefile $(LOG_DIR) ./inputs/
 	echo $(TIMESTAMP) > $(LOG_FILE)
-	./Test.exe -c 20 -s 1023 -i input_table -o $(LOG_FILE) -d
+	./Test.exe -c 20 -s 1023 -i input_table -t $(LOG_FILE) -d insort
 
 dup : Test.exe Makefile $(LOG_DIR) ./inputs/
 	echo $(TIMESTAMP) > $(LOG_FILE)
-	./Test.exe -c 4000 -s 2 -o $(LOG_FILE) -d
+	./Test.exe -c 4000 -s 2 -t $(LOG_FILE) -d insort
 
 # Small test plan: Memory size = 100 KB, SSD page size = 2 KB
 # 50 pages per memory, 98 KB per memory run
@@ -79,7 +79,7 @@ dup : Test.exe Makefile $(LOG_DIR) ./inputs/
 # 200 KB data, 3 initial runs, 1 pass
 external: Test.exe Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1
 	echo $(TIMESTAMP) > $(LOG_FILE)
-	./Test.exe -c 10000 -s 20 -o $(LOG_FILE)
+	./Test.exe -c 10000 -s 20 -t $(LOG_FILE)
 
 external-lldb: Test.exe Makefile ./inputs/ ./spills/pass0 ./spills/pass1
 	lldb -- ./Test.exe -c 10000 -s 20
@@ -87,7 +87,7 @@ external-lldb: Test.exe Makefile ./inputs/ ./spills/pass0 ./spills/pass1
 # 8 MB data, 82 initial runs, 2 pass-1 runs, 2 pass
 external-2: Test.exe Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1 ./spills/pass2
 	echo $(TIMESTAMP) > $(LOG_FILE)
-	./Test.exe -c 40000 -s 200 -o $(LOG_FILE)
+	./Test.exe -c 40000 -s 200 -t $(LOG_FILE)
 
 external-2-lldb: Test.exe Makefile ./inputs/ ./spills/pass0 ./spills/pass1 ./spills/pass2
 	lldb -- ./Test.exe -c 40000 -s 200
@@ -120,6 +120,7 @@ Verify.o: Verify.h
 Remove.o: Remove.h
 TournamentTree.o: TournamentTree.h
 Metrics.o: Metrics.h
+Output.o: Output.h
 SortedRecordRenderer.o: SortedRecordRenderer.h
 ExternalRun.o: ExternalRun.h
 ExternalRenderer.o: ExternalRenderer.h ExternalRun.h SortedRecordRenderer.h

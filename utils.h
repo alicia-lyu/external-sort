@@ -17,9 +17,11 @@ using argparse::ArgumentParser;
 struct Config {
     RowCount recordCount;
     RowSize recordSize;
+    string tracePath;
     string outputPath;
     string inputPath;
     bool removeDuplicates;
+    string removalMethod;
 };
 
 Config getArgs(int argc, char* argv[]);

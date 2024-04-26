@@ -10,9 +10,11 @@
 Return value:
     * recordCount: Number of records to generate
     * recordSize: Size of each record, must be 20-2000
+    * tracePath: trace log path
     * outputPath: Output path
     * inputPath: Input path. If not provided, value is empty
     * removeDuplicates: remove duplicates, default is false
+    *    if provided, also provides <removal-method> 
 */
 Config getArgs(int argc, char* argv[])
 {
@@ -22,9 +24,10 @@ Config getArgs(int argc, char* argv[])
     Arguments:
         * -c, --count: Number of records to generate
         * -s, --size: Size of each record, must be 20-2000
-        * (optional) -o, --output: Output path
+        * -t, --trace: Trace log path. Default is "trace"
+        * (optional) -o, --ouput: Output path. If not provided, default to "output_table"
         * (optional) -i, --input: Input path. If not provided, generate records
-        * (optional) -d, --duplicate-removal: remove duplicates
+        * (optional) -d, --duplicate-removal: Remove duplicates. Default is false. If provided, also provides <removal-method>
     */
 
     parser.add_argument("-c", "--count")
@@ -37,17 +40,20 @@ Config getArgs(int argc, char* argv[])
         .help("Size of each record, must be 20-2000")
         .required();
 
+    parser.add_argument("-t", "--trace")
+        .help("Trace log path. If not provided, default to 'trace'")
+        .default_value(string("trace"));
+
     parser.add_argument("-o", "--output")
-        .help("Output path")
-        .default_value(string(""));
+        .help("Output path. If not provided, default to 'output_table'")
+        .default_value(string("output_table"));
 
     parser.add_argument("-i", "--input")
-        .help("Input path")
+        .help("Input path. If not provided, generate random records")
         .default_value(string(""));
     
     parser.add_argument("-d", "--duplicate-removal")
-        .help("Remove duplicates")
-        .flag();
+        .help("Remove duplicates by providing the removal method, either 'insort' or 'instream'");
 
     try {
         parser.parse_args(argc, argv);
@@ -60,9 +66,23 @@ Config getArgs(int argc, char* argv[])
     Config config;
     config.recordCount = parser.get<RowCount>("-c");
     config.recordSize = parser.get<RowSize>("-s");
+    config.tracePath = parser.get<string>("-t");
     config.outputPath = parser.get<string>("-o");
     config.inputPath = parser.get<string>("-i");
-    config.removeDuplicates = parser.get<bool>("-d");
+
+    // first check if -d is provided
+    if (parser.present("-d")) {
+        config.removeDuplicates = true;
+        config.removalMethod = parser.get<string>("-d");
+
+        // if it's not insort or instream, raise an error
+        if (config.removalMethod != "insort" && config.removalMethod != "instream") {
+            std::cerr << "Error: Expected removal method to be insort or instream, got " << config.removalMethod << '\n';
+            exit(1);
+        }
+    } else {
+        config.removeDuplicates = false;
+    }
 
     // check record size range
     if (config.recordSize < 20 || config.recordSize > 2000) {
@@ -163,7 +183,7 @@ byte * renderRow(std::function<byte *()> retrieveNext, std::function<byte *(byte
             }
             break;
         } else {
-            #if defined(VERBOSEL1)
+            #if defined(VERBOSEL2)
 			traceprintf ("%s removed\n", rowToString(rendered, recordSize).c_str());
 			#endif
         }

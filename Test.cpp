@@ -7,6 +7,7 @@
 #include "Verify.h"
 #include "Remove.h"
 #include "Metrics.h"
+#include "Output.h"
 #include <unistd.h>
 
 int main (int argc, char * argv [])
@@ -15,19 +16,18 @@ int main (int argc, char * argv [])
 
 	RowCount recordCount;
 	RowSize recordSize; // 20-2000 bytes
-	bool removeDuplicate;
 
 	Config config = getArgs(argc, argv);
 	recordCount = config.recordCount;
 	recordSize = config.recordSize;
-	removeDuplicate = config.removeDuplicates;
 
-	// output log file
-	string & outputPath = config.outputPath;
+	bool removeDuplicate = config.removeDuplicates;
+	string & removalMethod = config.removalMethod;
+
+	// trace log file
+	string & tracePath = config.tracePath;
 	int stdout_copy = dup(STDOUT_FILENO);
-	if (!outputPath.empty()) {
-		freopen(outputPath.c_str(), "w+", stdout);
-	}
+	freopen(tracePath.c_str(), "w+", stdout);
 
 	// input file
 	string & inputPath = config.inputPath;
@@ -39,14 +39,15 @@ int main (int argc, char * argv [])
 	Plan * const sortPlan = new SortPlan (witnessPlan, recordSize, recordCount, removeDuplicate);
 	Plan * const verifyPlan = new VerifyPlan (sortPlan, recordSize);
 	Plan * const witnessPlan2 = new WitnessPlan (verifyPlan, recordSize);
+	Plan * const outputPlan = new OutputPlan (witnessPlan2, recordSize, config.outputPath);
 
-	Iterator * const it = witnessPlan2->init ();
+	Iterator * const it = outputPlan->init ();
 	it->run ();
 
 	// we only delete the last Plan, since it will delete its inner plan
 	// in its destructor, and create a chain deletion
 	delete it;
-	delete witnessPlan2;
+	delete outputPlan;
 
 	// print the metrics
 	auto ssdMetrics = Metrics::getMetrics(STORAGE_SSD);
@@ -68,11 +69,9 @@ int main (int argc, char * argv [])
 	);
 	
 	// restore stdout
-	if (!outputPath.empty()) {
-		fflush(stdout);
-		dup2(stdout_copy, STDOUT_FILENO);
-		close(stdout_copy);
-	}
+	fflush(stdout);
+	dup2(stdout_copy, STDOUT_FILENO);
+	close(stdout_copy);
 
 	return 0;
 } // main

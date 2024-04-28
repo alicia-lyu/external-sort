@@ -22,7 +22,7 @@ ExternalRenderer::ExternalRenderer (RowSize recordSize,
         }
     }
 
-    if (((double) totalSize - maxSize) / totalSize > LONG_RUN_THRESHOLD) {
+    if (((double) maxSize) / (totalSize - maxSize) > LONG_RUN_THRESHOLD) {
         #if defined(VERBOSEL1) || defined(VERBOSEL2)
         traceprintf("Optimizing merge pattern because of long run file %s, total size %llu, max size %llu\n", longRunFileName.c_str(), totalSize, maxSize);
         #endif

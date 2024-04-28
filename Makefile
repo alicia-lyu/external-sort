@@ -106,9 +106,12 @@ graceful-lldb: Test.exe Makefile ./inputs/ ./spills/pass0 ./spills/pass1
 	lldb -- ./Test.exe -c 5000 -s 20
 
 # 5 MB data, 52 initial runs, 2 pass-1 run (only 1 pass-2 run with graceful degradation)
-optimized-merge: Test.exe Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1 ./spills/pass2
+optimized-merge: Test.exe Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1
 	echo $(TIMESTAMP) > $(LOG_FILE)
 	./Test.exe -c 25000 -s 200 -t $(LOG_FILE)
+
+optimized-merge-lldb: Test.exe Makefile ./inputs/ ./spills/pass0 ./spills/pass1
+	lldb -- ./Test.exe -c 25000 -s 200
 
 # TODO: external-sort on HDD: 100 MB can be divided into 200 pages of 500KB each
 

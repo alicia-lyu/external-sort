@@ -118,6 +118,9 @@ string byteToHexString(byte byte) {
 }
 
 string rowToHexString(byte * rowContent, RowSize size) {
+    if (rowContent == nullptr) {
+        return "nullptr";
+    }
     size = std::min(size, (RowSize) 20); // Curtail long output/logs
     string result = "";
     for (int i = 0; i < size; ++i) {
@@ -138,6 +141,9 @@ u_int32_t getRecordCountPerRun(RowSize recordSize, bool inSSD) {
 // convert a row of bytes to a string
 // the bytes are already converted to alphanumeric characters
 string rowToString(byte * rowContent, RowSize size) {
+    if (rowContent == nullptr) {
+        return "nullptr";
+    }
     string result(size, ' ');
     for (int i = 0; i < size; ++i) {
         byte byte = rowContent[i];

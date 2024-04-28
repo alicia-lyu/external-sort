@@ -44,6 +44,7 @@ ExternalRun::~ExternalRun ()
 {
     TRACE (false);
     delete _currentPage;
+    Metrics::erase(storage, std::filesystem::file_size(_runFileName) - switchPoint * _recordSize); // OPTIMIZATION: Erase in a smaller granularity at each fill?
     if (_readAheadPage != nullptr) delete _readAheadPage;
     _runFile.close();
     #if defined(VERBOSEL1) || defined(VERBOSEL2)
@@ -60,13 +61,8 @@ byte * ExternalRun::next ()
         traceprintf("# %llu row is null, run file: %s\n", _produced, _runFileName.c_str());
         #endif
         bool hasMore = refillCurrentPage();
-        if (hasMore) row = _currentPage->next();
-        else {
-            Assert(_currentPage->next() == nullptr, __FILE__, __LINE__);
-            Metrics::erase(storage, std::filesystem::file_size(_runFileName) - switchPoint * _recordSize);
-            // OPTIMIZATION: Erase in a smaller granularity at each fill?
-            return nullptr;
-        }
+        row = _currentPage->next();
+        Assert((row == nullptr) == !hasMore, __FILE__, __LINE__);
     }
     #if defined(VERBOSEL1) || defined(VERBOSEL2)
     if (_produced % 10000 == 0) traceprintf("# %llu of %s: %s\n", _produced, _runFileName.c_str(), rowToString(row, _recordSize).c_str());
@@ -82,15 +78,8 @@ byte * ExternalRun::peek ()
     byte * row = _currentPage->peekNext();
     if (row == nullptr) { // Reaches end of the current page
         bool hasMore = refillCurrentPage();
-        if (hasMore) {
-            row = _currentPage->peekNext();
-            Assert(row != nullptr, __FILE__, __LINE__);
-        }
-        else {
-            Assert(_currentPage->peekNext() == nullptr, __FILE__, __LINE__);
-            // Not erasing the file size here because we are not actually reading the row
-            return nullptr;
-        }
+        row = _currentPage->peekNext();
+        Assert((row == nullptr) == !hasMore, __FILE__, __LINE__);
     }
     return row;
 } // ExternalRun::peek
@@ -140,7 +129,7 @@ bool ExternalRun::refillCurrentPage()
     } else { // We need to read a new page (blocking I/O)
         _fillPage(_currentPage);
     }
-    return _currentPage->recordCount > 0;
+    return _currentPage->sizeFilled() > 0;
 }
 
 void ExternalRun::readAhead()

@@ -46,6 +46,20 @@ byte * Buffer::next ()
     return read;
 }
 
+byte * Buffer::peekNext ()
+{
+    TRACE (false);
+    // Only update toBeRead and toBeFilled when the buffer is exhausted
+    // This means calling peekNext multiple times will return the same record
+    // except when the buffer is exhausted
+    if (toBeRead >= _rowsEnd || toBeRead >= toBeFilled) {
+        toBeRead = _rows;
+        toBeFilled = _rows;
+        return nullptr;
+    }
+    return toBeRead;
+}
+
 byte * Buffer::batchFillByOverwrite (u_int64_t sizeToBeFilled)
 {
     if (sizeToBeFilled > recordSize * recordCount) {

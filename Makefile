@@ -89,7 +89,7 @@ external: Test.exe Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1
 external-lldb: Test.exe Makefile ./inputs/ ./spills/pass0 ./spills/pass1
 	lldb -- ./Test.exe -c 10000 -s 20
 
-# 8 MB data, 82 initial runs, 2 pass-1 runs, 2 pass
+# 8 MB data, 82 initial runs, 2 pass-1 runs
 external-2: Test.exe Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1 ./spills/pass2
 	echo $(TIMESTAMP) > $(LOG_FILE)
 	./Test.exe -c 40000 -s 200 -t $(LOG_FILE)
@@ -104,6 +104,11 @@ graceful: Test.exe Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1
 
 graceful-lldb: Test.exe Makefile ./inputs/ ./spills/pass0 ./spills/pass1
 	lldb -- ./Test.exe -c 5000 -s 20
+
+# 5 MB data, 52 initial runs, 2 pass-1 run (only 1 pass-2 run with graceful degradation)
+optimized-merge: Test.exe Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1 ./spills/pass2
+	echo $(TIMESTAMP) > $(LOG_FILE)
+	./Test.exe -c 25000 -s 200 -t $(LOG_FILE)
 
 # TODO: external-sort on HDD: 100 MB can be divided into 200 pages of 500KB each
 

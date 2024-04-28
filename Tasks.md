@@ -40,5 +40,5 @@ April 29, 2024    | Submission
 - [x] Add duplicate removal and evaluate performance (distinct) @Yuheng
   - [x] In stream (after sort) @Yuheng
   - [x] In sort @Yuheng
-- [x] Add graceful degradation @Alicia
+- [x] Add graceful degradation @Alicia @Yuheng
 - [x] Add 2 read-ahead buffers @Alicia

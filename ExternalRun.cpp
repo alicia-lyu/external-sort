@@ -76,6 +76,25 @@ byte * ExternalRun::next ()
     return row;
 } // ExternalRun::next
 
+byte * ExternalRun::peek ()
+{
+    TRACE (false);
+    byte * row = _currentPage->peekNext();
+    if (row == nullptr) { // Reaches end of the current page
+        bool hasMore = refillCurrentPage();
+        if (hasMore) {
+            row = _currentPage->peekNext();
+            Assert(row != nullptr, __FILE__, __LINE__);
+        }
+        else {
+            Assert(_currentPage->peekNext() == nullptr, __FILE__, __LINE__);
+            // Not erasing the file size here because we are not actually reading the row
+            return nullptr;
+        }
+    }
+    return row;
+} // ExternalRun::peek
+
 u_int32_t ExternalRun::_fillPage (Buffer * page)
 {
     TRACE (false);

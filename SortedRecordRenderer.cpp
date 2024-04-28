@@ -48,7 +48,7 @@ string SortedRecordRenderer::run ()
 	}
 } // ExternalRenderer::run
 
-byte * SortedRecordRenderer::renderRow(std::function<byte *()> retrieveNext, TournamentTree *& tree) 
+byte * SortedRecordRenderer::renderRow(std::function<byte *()> retrieveNext, TournamentTree *& tree, ExternalRun * longRun) 
 {
     byte * rendered, * retrieved;
     byte * output = nullptr;
@@ -58,7 +58,14 @@ byte * SortedRecordRenderer::renderRow(std::function<byte *()> retrieveNext, Tou
 	while (true) {
         canReturn = false;
 
-        rendered = tree->peekRoot();
+        byte * renderedFromTree = tree->peekRoot();
+		byte * renderedFromLongRun = longRun == nullptr ? nullptr : longRun->peek();
+		if (renderedFromTree == nullptr && renderedFromLongRun == nullptr) rendered = nullptr;
+		else if (renderedFromTree == nullptr) rendered = renderedFromLongRun;
+		else if (renderedFromLongRun == nullptr) rendered = renderedFromTree;
+		else if (memcmp(renderedFromTree, renderedFromLongRun, _recordSize) <= 0) rendered = renderedFromTree;
+		else rendered = renderedFromLongRun;
+
         // if no more rows, jump out
 		if (rendered == nullptr) break;
         
@@ -82,12 +89,16 @@ byte * SortedRecordRenderer::renderRow(std::function<byte *()> retrieveNext, Tou
 			#endif
         }
 
-        retrieved = retrieveNext();
-        if (retrieved == nullptr) {
-            tree->poll();
-        } else {
-            tree->pushAndPoll(retrieved);
-        }
+		if (rendered == renderedFromTree) {
+			retrieved = retrieveNext();
+			if (retrieved == nullptr) {
+				tree->poll();
+			} else {
+				tree->pushAndPoll(retrieved);
+			}
+		} else {
+			longRun->next();
+		}
 
         if (canReturn) break;
 	}

@@ -17,7 +17,8 @@ public:
     u_int8_t storage;
     ExternalRun (const string &runFileName, RowSize recordSize);
     ~ExternalRun ();
-    byte * next();
+    byte * next(); // nullptr if the run is empty
+    byte * peek(); // nullptr if the run is empty
 private:
     Buffer * _currentPage;
     Buffer * _readAheadPage;

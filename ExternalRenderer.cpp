@@ -8,6 +8,30 @@ ExternalRenderer::ExternalRenderer (RowSize recordSize,
     SortedRecordRenderer(recordSize, pass, rendererNumber, removeDuplicates)
 {
     TRACE (false);
+
+    u_int64_t totalSize = 0;
+    u_int64_t maxSize = 0;
+    string longRunFileName;
+
+    for (auto &runFileName : runFileNames) {
+        u_int64_t fileSize = std::filesystem::file_size(runFileName);
+        totalSize += fileSize;
+        if (fileSize > maxSize) {
+            longRunFileName = runFileName;
+            maxSize = fileSize;
+        }
+    }
+
+    if (((double) totalSize - maxSize) / totalSize > LONG_RUN_THRESHOLD) {
+        #if defined(VERBOSEL1) || defined(VERBOSEL2)
+        traceprintf("Optimizing merge pattern because of long run file %s, total size %llu, max size %llu\n", longRunFileName.c_str(), totalSize, maxSize);
+        #endif
+        runFileNames.erase(std::remove(runFileNames.begin(), runFileNames.end(), longRunFileName), runFileNames.end());
+        longRun = new ExternalRun(longRunFileName, _recordSize);
+    } else {
+        longRun = nullptr;
+    }
+
     vector<byte *> formingRows;
     ExternalRun::READ_AHEAD_SIZE = readAheadSize;
     ExternalRun::READ_AHEAD_THRESHOLD = std::max(0.5, ((double) readAheadSize) / MEMORY_SIZE);
@@ -39,7 +63,8 @@ byte * ExternalRenderer::next ()
 			auto run = _runs.at(bufferNum);
 			return run->next();
 		},
-		_tree
+		_tree,
+        longRun
 	);
 } // ExternalRenderer::next
 

@@ -3,6 +3,7 @@
 #include "TournamentTree.h"
 #include "params.h"
 #include "Metrics.h"
+#include "ExternalRun.h"
 #include <vector>
 #include <fstream>
 #include <functional>
@@ -25,7 +26,7 @@ protected:
     u_int64_t _produced;
     bool const _removeDuplicates;
     byte * _lastRow;
-    byte * renderRow(std::function<byte *()> retrieveNext, TournamentTree * & tree);
+    byte * renderRow(std::function<byte *()> retrieveNext, TournamentTree * & tree, ExternalRun * longRun = nullptr);
 private:
     Materializer * materializer;
 };

@@ -31,7 +31,7 @@ April 29, 2024    | Submission
 - [x] Add HDD and SSD metrics: @Yuheng @Alicia
   - SSD: 0.1 ms latency, 200 MB/s bandwidth
   - HDD: 5 ms latency, 100 MB/s bandwidth
-- [ ] Test with 10^3 * 50 (50M), 10^3 * 125 (125M), 10^5 * 120 (12 G), 10^6 * 120 (120 G) (rows, record size)
+- [ ] Test with 10^3 * 50 (50M), 10^3 * 125 (125M), 10^5 * 120 (12 G), 10^6 * 120 (120 G) (rows, record size) @Yuheng
 - [x] Test with sample input provided by TA @Yuheng
 
 ### Optimization and bonus points: By April 29
@@ -40,5 +40,8 @@ April 29, 2024    | Submission
 - [x] Add duplicate removal and evaluate performance (distinct) @Yuheng
   - [x] In stream (after sort) @Yuheng
   - [x] In sort @Yuheng
-- [x] Add graceful degradation @Alicia @Yuheng
+- [x] Add graceful degradation
+  - [x] Into merging @Alicia
+  - [ ] Beyond one merge step @Yuheng
 - [x] Add 2 read-ahead buffers @Alicia
+- [x] Add optimized merge pattern @Alicia

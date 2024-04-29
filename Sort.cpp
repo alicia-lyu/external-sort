@@ -186,15 +186,13 @@ SortedRecordRenderer * SortIterator::_externalSort ()
 				#if defined(VERBOSEL1) || defined(VERBOSEL2)
 				traceprintf("*** Graceful merge in pass %d\n", pass);
 				#endif
-
-				// TODO: Graceful merge
-
-				continue;
-			}
-
-			renderer = new ExternalRenderer(_plan->_size, 
+				std::vector<string> restOfRuns = std::vector<string>(runNames.begin() + mergedRunCountSoFar, runNames.end());
+				renderer = gracefulMerge(restOfRuns, pass, rendererNum);
+			} else {
+				renderer = new ExternalRenderer(_plan->_size, 
 				vector<string>(runNames.begin() + mergedRunCountSoFar, runNames.begin() + mergedRunCount), 
 				readAheadSize, pass, rendererNum);
+			}
 
 			if (rendererNum == 0 && mergedRunCount == runNames.size()) // The last renderer in the last pass
 			{
@@ -227,15 +225,15 @@ tuple<u_int16_t, u_int64_t, u_int64_t> SortIterator::assignRuns(vector<string>& 
 	bool isProbing = false;
 
 	// READ-AHEAD BUFFERS
-	auto hddReadAheadBuffers = profileReadAheadBuffers(runNames, mergedRunCount);
-	u_int64_t readAheadSize = hddReadAheadBuffers * Metrics::getParams(STORAGE_HDD).pageSize + 
-		(READ_AHEAD_BUFFERS_MIN - hddReadAheadBuffers) * Metrics::getParams(STORAGE_SSD).pageSize;
+
+	u_int64_t readAheadSize= profileReadAheadSize(runNames, mergedRunCount);
 	memoryConsumption += readAheadSize;
 	#if defined(VERBOSEL1) || defined(VERBOSEL2)
 	traceprintf ("%d read ahead buffers for HDD\n", hddReadAheadBuffers);
 	#endif
 
 	// INPUT BUFFERS
+	allMemoryConsumption = memoryConsumption;
 	while (mergedRunCount < runNames.size()) { // max. 120 G / 98 M = 2^11
 		string &runName = runNames.at(mergedRunCount);
 		auto deviceType = getLargestDeviceType(runName);
@@ -267,7 +265,7 @@ tuple<u_int16_t, u_int64_t, u_int64_t> SortIterator::assignRuns(vector<string>& 
 	return std::make_tuple(mergedRunCount, readAheadSize, allMemoryConsumption);
 }
 
-u_int8_t SortIterator::profileReadAheadBuffers (vector<string>& runNames, u_int16_t mergedRunCount)
+u_int64_t SortIterator::profileReadAheadSize (vector<string>& runNames, u_int16_t mergedRunCount)
 {
 	TRACE (false);
 	u_int64_t memoryConsumption = 0;
@@ -284,7 +282,71 @@ u_int8_t SortIterator::profileReadAheadBuffers (vector<string>& runNames, u_int1
 		}
 	}
 	double hddRunRatio = (double) hddRunCount / (hddRunCount + ssdRunCount);
-	if (hddRunRatio > 0.67) return 2;
-	else if (hddRunCount > 0.33) return 1;
-	else return 0;
+	int hddBufferCount;
+	if (hddRunRatio > 0.67) hddBufferCount = 2;
+	else if (hddRunCount > 0.33) hddBufferCount = 1;
+	else return hddBufferCount = 0;
+	u_int64_t readAheadSize = hddBufferCount * Metrics::getParams(STORAGE_HDD).pageSize + 
+		(READ_AHEAD_BUFFERS_MIN - hddBufferCount) * Metrics::getParams(STORAGE_SSD).pageSize;
+	return readAheadSize;
+}
+
+SortedRecordRenderer * SortIterator::gracefulMerge (vector<string>& runNames, int basePass, int rendererNum)
+{
+	TRACE (false);
+	auto readAheadSize = profileReadAheadSize(runNames, 0);
+	// Optimization problem
+	// Memory consumption of the graceful renderer < MEMORY_SIZE
+	// Minimize the size of the initial run so that it may be fit into SSD
+	int n = runNames.size();
+
+	u_int64_t inputMemoryForAllRuns = 0; // Input buffer size to contain pages from all runs
+	u_int64_t allRunSize = 0;
+	for (int i = 0; i < n; i++) {
+		auto deviceType = getLargestDeviceType(runNames.at(i));
+		auto pageSize = Metrics::getParams(deviceType).pageSize;
+		inputMemoryForAllRuns += pageSize;
+		allRunSize += std::filesystem::file_size(runNames.at(i));
+	}
+
+	int outputDevice = Metrics::getAvailableStorage(allRunSize);
+	
+	u_int64_t initialRunSize;
+	u_int64_t inputMemoryForInitialRun;
+	u_int64_t MemoryForGracefulRenderer = outputDevice == STORAGE_SSD ? SSD_PAGE_SIZE : HDD_PAGE_SIZE + readAheadSize;
+
+	// Find the smallest initial run size
+	int i;
+	for (i = 1; i < n; i++) {
+		// the last i runs are merged first
+		initialRunSize = 0;
+		inputMemoryForInitialRun = 0;
+		for (int j = 0; j < i; j++) {
+			initialRunSize += std::filesystem::file_size(runNames.at(n - 1 - j));
+			auto deviceType = getLargestDeviceType(runNames.at(n - 1 - j));
+			auto pageSize = Metrics::getParams(deviceType).pageSize;
+			inputMemoryForInitialRun += pageSize;
+		}
+		auto deviceTypeInitialRun = Metrics::getAvailableStorage(initialRunSize);
+		auto pageSizeFroInitialRun = Metrics::getParams(deviceTypeInitialRun).pageSize;
+		if (MemoryForGracefulRenderer + inputMemoryForAllRuns - inputMemoryForAllRuns + pageSizeFroInitialRun <= MEMORY_SIZE) {
+			break;
+			// Assert that the initial renderer can fit into memory 
+		}
+	}
+
+	// Create the initial run
+	ExternalRenderer * initialRenderer = new ExternalRenderer(_plan->_size, 
+		vector<string>(runNames.begin() + n - i, runNames.end()), 
+		readAheadSize, basePass, rendererNum); 
+	
+	string initialRunFileName = initialRenderer->run(); 
+
+	// Create the graceful renderer for the rest of the runs
+	vector<string> restOfRuns = std::vector<string>(runNames.begin(), runNames.begin() + n - i);
+	restOfRuns.push_back(initialRunFileName);
+	SortedRecordRenderer * gracefulRenderer = new ExternalRenderer(_plan->_size, restOfRuns, readAheadSize, basePass, rendererNum + 1);
+
+	return gracefulRenderer;
+	
 }

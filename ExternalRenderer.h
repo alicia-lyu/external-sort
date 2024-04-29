@@ -1,3 +1,5 @@
+#pragma once
+
 #include "SortedRecordRenderer.h"
 #include "ExternalRun.h"
 #include "TournamentTree.h"

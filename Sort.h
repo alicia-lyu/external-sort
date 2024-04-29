@@ -39,10 +39,6 @@ private:
 		u_int32_t memory_limit = MEMORY_SIZE - SSD_PAGE_SIZE,
 		bool materialize = true); // Returns the tree where the top node is the smallest
 	vector<string> _createInitialRuns (); // Returns the names of the files created
-	SortedRecordRenderer * gracefulDegradation (); // Returns the renderer that is ready to render the next row
+	SortedRecordRenderer * gracefulDegradation ();
 	SortedRecordRenderer * _externalSort (); // Returns the renderer that is ready to render the next row
-	tuple<u_int64_t, u_int64_t> profileReadAheadAndOutput(vector<string>& runNames, u_int16_t mergedRunCount); 
-	tuple<u_int16_t, u_int64_t> assignRuns(vector<string>& runNames, u_int16_t mergedRunCount); // The first return is updated merged run count [initial merged run count, returned merged run count) is the assigned runs; the second is the read ahead size
-	u_int64_t allMemoryForRestRuns (vector<string>& runNames, u_int16_t mergedRunCount);
-	SortedRecordRenderer * gracefulMerge (vector<string>& runNames, int basePass, int rendererNum);
 }; // class SortIterator

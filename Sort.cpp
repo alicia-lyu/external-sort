@@ -312,6 +312,7 @@ SortedRecordRenderer * SortIterator::gracefulMerge (vector<string>& runNames, in
 	int outputDevice = Metrics::getAvailableStorage(allRunSize);
 	
 	u_int64_t initialRunSize;
+	u_int64_t pageSizeForInitialRun;
 	u_int64_t inputMemoryForInitialRun;
 	u_int64_t MemoryForGracefulRenderer = outputDevice == STORAGE_SSD ? SSD_PAGE_SIZE : HDD_PAGE_SIZE + readAheadSize;
 
@@ -327,18 +328,19 @@ SortedRecordRenderer * SortIterator::gracefulMerge (vector<string>& runNames, in
 			auto pageSize = Metrics::getParams(deviceType).pageSize;
 			inputMemoryForInitialRun += pageSize;
 		}
-		auto deviceTypeInitialRun = Metrics::getAvailableStorage(initialRunSize);
-		auto pageSizeFroInitialRun = Metrics::getParams(deviceTypeInitialRun).pageSize;
-		if (MemoryForGracefulRenderer + inputMemoryForAllRuns - inputMemoryForInitialRun + pageSizeFroInitialRun <= MEMORY_SIZE) {
+		auto initialRunDevice = Metrics::getAvailableStorage(initialRunSize);
+		pageSizeForInitialRun = Metrics::getParams(initialRunDevice).pageSize; // output page size fro initialRenderer, input page size of initialRun for gracefulRenderer
+		if (MemoryForGracefulRenderer + inputMemoryForAllRuns - inputMemoryForInitialRun + pageSizeForInitialRun <= MEMORY_SIZE) {
 			break;
-			// Assert that the initial renderer can fit into memory 
 		}
 	}
 
 	// Create the initial run
+	u_int64_t initialReadAheadSize = MEMORY_SIZE - inputMemoryForInitialRun - pageSizeForInitialRun;
+	Assert (initialReadAheadSize >= 0, __FILE__, __LINE__);
 	ExternalRenderer * initialRenderer = new ExternalRenderer(_plan->_size, 
 		vector<string>(runNames.begin() + n - i, runNames.end()), 
-		readAheadSize, basePass, rendererNum); 
+		initialReadAheadSize, basePass, rendererNum); 
 	
 	string initialRunFileName = initialRenderer->run(); 
 

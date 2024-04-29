@@ -172,19 +172,20 @@ SortedRecordRenderer * SortIterator::_externalSort ()
 		u_int16_t rendererNum = 0;
 
 		while (mergedRunCount < runNames.size()) { // has more runs to merge
-			// one renderer
-			auto [mergedRunCountNew, readAheadSize, allMemoryNeeded] = assignRuns(runNames, mergedRunCount);
-			u_int16_t mergedRunCountSoFar = mergedRunCount;
-			mergedRunCount = mergedRunCountNew;
+			u_int64_t allMemoryNeeded = allMemoryForRestRuns(runNames, mergedRunCount);
+
 
 			if (allMemoryNeeded <= MEMORY_SIZE * GRACEFUL_DEGRADATION_THRESHOLD && allMemoryNeeded > MEMORY_SIZE) {
 				#if defined(VERBOSEL1) || defined(VERBOSEL2)
 				traceprintf("*** Graceful merge in pass %d: merged run count new %d, all memory needed %llu\n", pass, mergedRunCount, allMemoryNeeded);
 				#endif
-				std::vector<string> restOfRuns = std::vector<string>(runNames.begin() + mergedRunCountSoFar, runNames.end());
+				std::vector<string> restOfRuns = std::vector<string>(runNames.begin() + mergedRunCount, runNames.end());
 				renderer = gracefulMerge(restOfRuns, pass, rendererNum);
 				mergedRunCount = runNames.size(); // All are merged gracefully
 			} else {
+				u_int16_t mergedRunCountSoFar = mergedRunCount;
+				auto [mergedRunCountNew, readAheadSize] = assignRuns(runNames, mergedRunCountSoFar);
+				mergedRunCount = mergedRunCountNew;
 				#if defined(VERBOSEL1) || defined(VERBOSEL2)
 				traceprintf ("Pass %d renderer %d: Merging runs from %d to %d out of %zu\n", pass, rendererNum, mergedRunCountSoFar, mergedRunCount - 1, runNames.size() - 1);
 				#endif
@@ -216,18 +217,9 @@ SortedRecordRenderer * SortIterator::_externalSort ()
 // mergedRunCount: the number of runs that can be merged in this pass
 // readAheadSize: the size of read-ahead buffers needed in this pass
 // neededMemorySize: if merge all runs in this pass, the memory needed
-tuple<u_int16_t, u_int64_t, u_int64_t> SortIterator::assignRuns(vector<string>& runNames, u_int16_t mergedRunCount) 
+tuple<u_int16_t, u_int64_t> SortIterator::assignRuns(vector<string>& runNames, u_int16_t mergedRunCount) 
 {
-	u_int64_t readAheadSize= profileReadAheadSize(runNames, mergedRunCount);
-	u_int64_t outputPageSize = profileOutputPageSize(runNames, mergedRunCount);
-
-	// Calculate all memory consumption till the end of runNames
-	u_int64_t allMemoryConsumption = readAheadSize + outputPageSize;
-	for (int i = mergedRunCount; i < runNames.size(); i++) {
-		auto deviceType = getLargestDeviceType(runNames.at(i));
-		auto pageSize = Metrics::getParams(deviceType).pageSize;
-		allMemoryConsumption += pageSize;
-	}
+	auto [readAheadSize, outputPageSize] = profileReadAheadAndOutput(runNames, mergedRunCount);
 
 	// INPUT BUFFERS
 	u_int64_t memoryConsumption = readAheadSize + outputPageSize;
@@ -246,42 +238,33 @@ tuple<u_int16_t, u_int64_t, u_int64_t> SortIterator::assignRuns(vector<string>& 
 	Assert (memoryConsumption <= MEMORY_SIZE, __FILE__, __LINE__);
 	readAheadSize += MEMORY_SIZE - memoryConsumption; // Use the remaining memory for more read-ahead buffers if any
 
-	return std::make_tuple(mergedRunCount, readAheadSize, allMemoryConsumption);
+	return std::make_tuple(mergedRunCount, readAheadSize);
 }
 
-u_int64_t SortIterator::profileReadAheadSize (vector<string>& runNames, u_int16_t mergedRunCount)
+u_int64_t SortIterator::allMemoryForRestRuns (vector<string>& runNames, u_int16_t mergedRunCount)
 {
-	TRACE (false);
-	u_int64_t memoryConsumption = 0;
-	u_int16_t ssdRunCount = 0;
-	u_int16_t hddRunCount = 0;
+	auto [readAheadSize, outputPageSize] = profileReadAheadAndOutput(runNames, mergedRunCount);
+
+	// Calculate all memory consumption till the end of runNames
+	u_int64_t allMemoryConsumption = readAheadSize + outputPageSize;
 	for (int i = mergedRunCount; i < runNames.size(); i++) {
 		auto deviceType = getLargestDeviceType(runNames.at(i));
 		auto pageSize = Metrics::getParams(deviceType).pageSize;
-		memoryConsumption += pageSize;
-		if (memoryConsumption > MEMORY_SIZE) break;
-		else {
-			if (deviceType == 0) ssdRunCount++;
-			else hddRunCount++;
-		}
+		allMemoryConsumption += pageSize;
 	}
-	double hddRunRatio = (double) hddRunCount / (hddRunCount + ssdRunCount);
-	int hddBufferCount;
-	if (hddRunRatio > 0.67) hddBufferCount = 2;
-	else if (hddRunCount > 0.33) hddBufferCount = 1;
-	else return hddBufferCount = 0;
-	u_int64_t readAheadSize = hddBufferCount * HDD_PAGE_SIZE + 
-		(READ_AHEAD_BUFFERS_MIN - hddBufferCount) * SSD_PAGE_SIZE;
-	return readAheadSize;
+
+	return allMemoryConsumption;
 }
 
-u_int64_t SortIterator::profileOutputPageSize (vector<string>& runNames, u_int16_t mergedRunCount)
+tuple<u_int64_t, u_int64_t> SortIterator::profileReadAheadAndOutput (vector<string>& runNames, u_int16_t mergedRunCount)
 {
 	TRACE (false);
 	// A conservative estimate of the output page size
 	// The profiled outputFileSize is the largest possible
 	u_int64_t memoryConsumption = 0;
 	u_int64_t outputFileSize = 0;
+	u_int16_t ssdRunCount = 0;
+	u_int16_t hddRunCount = 0;
 	while (mergedRunCount < runNames.size()) {
 
 		string &runName = runNames.at(mergedRunCount);
@@ -293,12 +276,25 @@ u_int64_t SortIterator::profileOutputPageSize (vector<string>& runNames, u_int16
 		memoryConsumption += pageSize;
 		mergedRunCount++;
 		outputFileSize += std::filesystem::file_size(runName);
+		if (deviceType == 0) ssdRunCount++;
+		else hddRunCount++;
 	}
+
+	// Output page size
 	int deviceType = Metrics::getAvailableStorage(outputFileSize);
 	// Allocate output buffer conservatively: max page sizes of all storage devices needed
 	// But will try to write into SSD first if possible
 	auto outputPageSize = Metrics::getParams(deviceType).pageSize;
-	return outputPageSize;
+
+	// Read-ahead buffer size
+	double hddRunRatio = (double) hddRunCount / (hddRunCount + ssdRunCount);
+	int hddBufferCount;
+	if (hddRunRatio > 0.67) hddBufferCount = 2;
+	else if (hddRunCount > 0.33) hddBufferCount = 1;
+	else hddBufferCount = 0;
+	u_int64_t readAheadSize = hddBufferCount * HDD_PAGE_SIZE + 
+		(READ_AHEAD_BUFFERS_MIN - hddBufferCount) * SSD_PAGE_SIZE;
+	return std::make_tuple(readAheadSize, outputPageSize);
 }
 
 SortedRecordRenderer * SortIterator::gracefulMerge (vector<string>& runNames, int basePass, int rendererNum)
@@ -311,7 +307,7 @@ SortedRecordRenderer * SortIterator::gracefulMerge (vector<string>& runNames, in
 	// 1) Extra spill is minimized
 	// 2) Extra spill is into SSD if possible (to avoid HDD I/O)
 
-	auto gracefulReadAheadSize = profileReadAheadSize(runNames, 0); 
+	auto [gracefulReadAheadSize, ret2] = profileReadAheadAndOutput(runNames, 0);
 	// Only the first few runs whose pages can fit into memory are profiled --- for graceful renderer
 	// It is assumed that the initial renderer would have plenty of available memory for reading ahead
 	// Because we are minimizing the size of the initial run

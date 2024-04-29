@@ -34,7 +34,7 @@ ExternalRenderer::ExternalRenderer (RowSize recordSize,
 
     vector<byte *> formingRows;
     ExternalRun::READ_AHEAD_SIZE = readAheadSize;
-    ExternalRun::READ_AHEAD_THRESHOLD = std::max(0.5, ((double) readAheadSize) / MEMORY_SIZE);
+    ExternalRun::READ_AHEAD_THRESHOLD = std::max(0.5, ((double) MEMORY_SIZE - readAheadSize) / MEMORY_SIZE);
     #if defined(VERBOSEL1) || defined(VERBOSEL2)
     traceprintf ("Renderer %d: %zu run files, read-ahead size %llu threshold %f\n", rendererNumber, runFileNames.size(), readAheadSize, ExternalRun::READ_AHEAD_THRESHOLD);
     #endif

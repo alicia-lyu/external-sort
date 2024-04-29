@@ -12,9 +12,23 @@ SortPlan::SortPlan (Plan * const input, RowSize const size, RowCount const count
 	_removeDuplicates (removeDuplicates)
 {
 	TRACE (false);
-	traceprintf ("SortPlan: memory space %d, record per run %d\n", MEMORY_SIZE, _recordCountPerRun);
+
+	#ifdef PRODUCTION
+	string output = "Memory space: ";
+	output += to_string(MEMORY_SIZE) + " bytes";
+	// if memory size is larger than 1KB, also print in formatted size
+	if (MEMORY_SIZE > 1000) {
+		output += " (";
+		output += Trace::FormatSize(MEMORY_SIZE);
+		output += ")";
+	}
+	output += ", record per run: ";
+	output += to_string(_recordCountPerRun);
+
+	Trace::PrintTrace(OP_STATE, INIT_SORT, output);
 	if (_removeDuplicates)
-		traceprintf ("SortPlan: remove duplicates using in-sort method\n");
+		Trace::PrintTrace(OP_STATE, INIT_SORT, "Remove duplicates using in-sort method");
+	#endif
 } // SortPlan::SortPlan
 
 SortPlan::~SortPlan ()
@@ -38,8 +52,10 @@ SortIterator::SortIterator (SortPlan const * const plan) :
 	} else {
 		_renderer = _externalSort();
 	}
+	#if defined(VERBOSEL1) || defined(VERBOSEL2)
 	traceprintf ("consumed %lu rows\n",
 			(unsigned long) (_consumed));
+	#endif
 } // SortIterator::SortIterator
 
 SortIterator::~SortIterator ()
@@ -47,9 +63,16 @@ SortIterator::~SortIterator ()
 	TRACE (false);
 	delete _input;
 	delete _renderer;
+
+	#ifdef PRODUCTION
+	Trace::PrintTrace(OP_RESULT, SORT_RESULT, "SortPlan produced " + to_string(_produced) + " of " + to_string(_consumed) + " rows");
+	#endif
+
+	#if defined(VERBOSEL1) || defined(VERBOSEL2)
 	traceprintf ("produced %lu of %lu rows\n",
 			(unsigned long) (_produced),
 			(unsigned long) (_consumed));
+	#endif
 } // SortIterator::~SortIterator
 
 byte * SortIterator::next ()

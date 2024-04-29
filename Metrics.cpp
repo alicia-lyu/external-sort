@@ -27,12 +27,18 @@ void Metrics::read(const int device_type, const u_int64_t num_bytes, bool readAh
     StorageParams & param = instance->params[device_type];
     StorageMetrics & metric = instance->metrics[device_type];
 
-    // calculate the time spent on data transfer
-    if (!readAhead) metric.dataTransferCost += num_bytes / param.bandwidth;
-    metric.numBytesRead += num_bytes;
+    // calculate the time spent on data transfer and fixed latency if not read ahead
+    if (!readAhead) {
+        metric.dataTransferCost += num_bytes / param.bandwidth;
+        metric.accessCost += param.latency;
 
-    // calculate the fixed latency of the storage system
-    if (!readAhead) metric.accessCost += param.latency;
+        #ifdef PRODUCTION
+        double latency = num_bytes / param.bandwidth + param.latency;
+        Trace::PrintTrace(OP_ACCESS, string("A read to ") + getDeviceName(device_type) + " with " + to_string(num_bytes) + " bytes and latency " + to_string(int(latency*1e6)) + " us");
+        #endif
+    }
+
+    metric.numBytesRead += num_bytes;
     metric.numAccessesRead++;
 }
 
@@ -58,6 +64,12 @@ int Metrics::write(const int device_type, const u_int64_t num_bytes)
     metric.numAccessesWritten++;
 
     metric.storageUsed += num_bytes;
+
+    #ifdef PRODUCTION
+    // output to trace
+    double latency = num_bytes / param.bandwidth + param.latency;
+    Trace::PrintTrace(OP_ACCESS, string("A write to ") + getDeviceName(device_type) + " with " + to_string(num_bytes) + " bytes and latency " + to_string(int(latency*1e6)) + " us");
+    #endif
 
     return device_type;
 }

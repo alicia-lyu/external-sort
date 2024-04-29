@@ -45,7 +45,11 @@ CacheOptimizedRenderer::CacheOptimizedRenderer (RowSize recordSize,
     }
     _tree = new TournamentTree(formingRows, _recordSize);
 
-	#if VERBOSEL2
+	#ifdef PRODUCTION
+	Trace::PrintTrace(OP_STATE, SORT_MINI_RUNS, "Sort cache-size mini runs");
+	#endif
+
+	#if VERBOSEL1 || VERBOSEL2
 	traceprintf ("Formed cache-optimized renderer with %lu cache trees\n", _cacheTrees.size());
 	#endif
 	#if VERBOSEL2

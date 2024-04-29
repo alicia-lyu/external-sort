@@ -5,9 +5,15 @@
 #include <cstdio>
 #include <string>
 #include <filesystem>
+#include <cmath>
+#include <map>
 
 typedef unsigned char byte;
+typedef uint64_t RowCount;
+typedef u_int16_t RowSize; // 20-2000, unit: byte
 using string = std::string;
+using std::to_string;
+using std::map;
 #define SEPARATOR std::filesystem::path::preferred_separator
 
 #define slotsof(a)	(sizeof (a) / sizeof (a[0]))
@@ -38,6 +44,22 @@ void Assert (bool const predicate,
 
 // -----------------------------------------------------------------
 
+#define OP_STATE 0
+#define OP_ACCESS 1
+#define OP_RESULT 2
+#define MERGE_RUNS_HDD 3
+#define MERGE_RUNS_SSD 4
+#define MERGE_RUNS_BOTH 5
+#define SORT_MINI_RUNS 6
+#define SPILL_RUNS_SSD 7
+#define SPILL_RUNS_HDD 8
+#define READ_RUN_PAGES_SSD 9
+#define READ_RUN_PAGES_HDD 10
+#define INIT_SORT 11
+#define SORT_RESULT 12
+#define VERIFY_RESULT 13
+
+
 class Trace
 {
 public :
@@ -45,6 +67,10 @@ public :
 	Trace (bool const trace, char const * const function,
 			char const * const file, int const line);
 	~Trace ();
+
+	static void PrintTrace(int opType, const string & message);
+	static void PrintTrace(int opType, int subOpType, const string & message);
+	static string FormatSize(u_int64_t size);
 
 private :
 
@@ -54,6 +80,8 @@ private :
 	char const * const _function;
 	char const * const _file;
 	int const _line;
+
+	static map<int, string> opName;
 }; // class Trace
 
 #define TRACE(trace)	Trace __trace (trace, __FUNCTION__, __FILE__, __LINE__)

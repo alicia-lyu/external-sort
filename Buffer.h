@@ -6,9 +6,6 @@
 #include <fstream>
 #include <string>
 
-typedef uint64_t RowCount;
-typedef u_int16_t RowSize; // 20-2000, unit: 
-
 using std::random_device;
 using std::default_random_engine;
 using std::uniform_int_distribution;

@@ -42,6 +42,7 @@ private:
 	SortedRecordRenderer * gracefulDegradation (); // Returns the renderer that is ready to render the next row
 	SortedRecordRenderer * _externalSort (); // Returns the renderer that is ready to render the next row
 	u_int64_t profileReadAheadSize (vector<string>& runNames, u_int16_t mergedRunCount); // return the number of read-ahead buffers of HDD page size
+	u_int64_t profileOutputPageSize (vector<string>& runNames, u_int16_t mergedRunCount);
 	tuple<u_int16_t, u_int64_t, u_int64_t> assignRuns(vector<string>& runNames, u_int16_t mergedRunCount); // The first return is updated merged run count [initial merged run count, returned merged run count) is the assigned runs; the second is the read ahead size; the third is all memory consumption till the end of runNames
 	SortedRecordRenderer * gracefulMerge (vector<string>& runNames, int basePass, int rendererNum);
 }; // class SortIterator

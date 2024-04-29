@@ -33,7 +33,9 @@ ExternalRun::ExternalRun (const string &runFileName, RowSize recordSize) :
     else throw std::invalid_argument("More than 2 device types.");
 
     #if defined(VERBOSEL1) || defined(VERBOSEL2)
-    traceprintf("Run file %s: %zu device types, switch point %llu, page size %d\n", runFileName.c_str(), deviceTypes.size(), switchPoint, _pageSize);
+    if (switchPoints.size() == 1) {
+        traceprintf("Run file %s: %zu device types, switch point %llu, page size %d\n", runFileName.c_str(), deviceTypes.size(), switchPoint, _pageSize);
+    }
     #endif
     
     _currentPage = getBuffer();

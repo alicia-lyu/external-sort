@@ -149,7 +149,7 @@ Instead of having every record of this long run go through a series of contests 
 - Two [Witness](./Witness.h)es: TODO@Yuheng
 - [Verify](./Verify.h): TODO@Yuheng
 
-## Read ahead buffers
+### Bonus: Read ahead buffers
 
 TODO@Alicia
 

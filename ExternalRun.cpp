@@ -65,12 +65,13 @@ byte * ExternalRun::next ()
         bool hasMore = refillCurrentPage();
         row = _currentPage->next();
         Assert((row == nullptr) == !hasMore, __FILE__, __LINE__);
+        if (row == nullptr) return nullptr;
     }
     #if defined(VERBOSEL1)
+    ++ _produced;
     if (_produced % 10000 == 0) traceprintf("# %llu of %s: %s\n", _produced, _runFileName.c_str(), rowToString(row, _recordSize).c_str());
     #endif
     readAhead(); // Read ahead if meets the criteria
-    ++ _produced;
     return row;
 } // ExternalRun::next
 
@@ -88,14 +89,21 @@ byte * ExternalRun::peek ()
 
 u_int32_t ExternalRun::_fillPage (Buffer * page)
 {
+    u_int32_t readCount;
     TRACE (false);
-    if (_runFile.eof()) return 0;
-    if (_runFile.good() == false) throw std::invalid_argument("Error reading from run file.");
-    _runFile.read((char *) page->data(), _pageSize);
-    auto readCount = _runFile.gcount(); // Same scale as _pageSize
+    if (_runFile.eof()) {
+        readCount = 0;
+    } else if (_runFile.good() == false) {
+        throw std::invalid_argument("Error reading from run file.");
+    } else {
+        _runFile.read((char *) page->data(), _pageSize);
+        readCount = _runFile.gcount(); // Same scale as _pageSize
+    }
+
     #if defined(VERBOSEL2)
     traceprintf("Read %d rows from run file %s\n", readCount / _recordSize, _runFileName.c_str());
     #endif
+    // Update buffer and metrics with readCount
     if (readCount % _recordSize != 0) throw std::invalid_argument("Read count is not a multiple of record size, from file" + _runFileName);
     page->batchFillByOverwrite(readCount);
     Metrics::read(storage, readCount, page == _readAheadPage);

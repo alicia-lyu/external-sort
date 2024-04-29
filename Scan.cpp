@@ -58,10 +58,6 @@ byte * ScanIterator::next ()
 		row = _run->next();
 	} while (row == nullptr);
 
-	#ifdef VERBOSEL2
-	traceprintf ("%d produced %s\n", _count, rowToString(row, _plan->_size).c_str());
-	#endif
-
 	RowCount rowCountInCurrentScan = _count - _scanCount * _countPerScan;
 	if (rowCountInCurrentScan >= _countPerScan) {
 		_inputFile.close();
@@ -75,6 +71,9 @@ byte * ScanIterator::next ()
 		throw std::runtime_error("Error writing to input file scan" + std::to_string(_scanCount));
 	}
 	++ _count;
+	#ifdef VERBOSEL1
+	if (_count % 10000 == 0) traceprintf ("%d produced %s\n", _count, rowToString(row, _plan->_size).c_str());
+	#endif
 	return row;
 } // ScanIterator::next
 

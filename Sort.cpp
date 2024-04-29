@@ -82,12 +82,12 @@ byte * SortIterator::next ()
 	// All preliminary work (incl. creating initial runs, first n-1 level merge)
 	// is done before the first next() call
 	if (row == nullptr) return nullptr;
+	++ _produced;
 	if (_produced % 10000 == 0) {
 		#if defined(VERBOSEL1)
 		traceprintf ("#%llu produced %s\n", _produced, rowToString(row, _plan->_size).c_str());
 		#endif
 	}
-	++ _produced;
 	return row;
 } // SortIterator::next
 
@@ -95,7 +95,7 @@ byte * SortIterator::next ()
 SortedRecordRenderer * SortIterator::_formInMemoryRenderer (RowCount base, u_int16_t runNumber, u_int32_t memory_limit, bool materialize)
 {
 	vector<byte *> rows;
-	while ((_consumed - base) * _plan->_size < memory_limit) {
+	while ((_consumed - base + 1) * _plan->_size <= memory_limit) {
 		byte * received = _input->next ();
 		if (received == nullptr) break;
 		rows.push_back(received);
@@ -124,14 +124,13 @@ SortedRecordRenderer * SortIterator::_formInMemoryRenderer (RowCount base, u_int
 		int end = std::min((i + 1) * rowsPerCache, (int) rows.size());
 		vector<byte *> cacheRows(rows.begin() + start, rows.begin() + end);
 
-		#ifdef VERBOSEL2
-		traceprintf ("In-memory renderer forming cache tree %d with rows #%d-#%d\n",
-			i, start, end - 1);
-		#endif
-
 		TournamentTree * tree = new TournamentTree(cacheRows, _plan->_size);
 		cacheTrees.push_back(tree);
 	}
+
+	#if defined(VERBOSEL2)
+	traceprintf ("Formed %lu cache trees, rows per cache %d\n", cacheTrees.size(), rowsPerCache);
+	#endif
 
 	SortedRecordRenderer * renderer = new CacheOptimizedRenderer(_plan->_size, cacheTrees, runNumber, _plan->_removeDuplicates, materialize);
 	return renderer;
@@ -187,8 +186,3 @@ SortedRecordRenderer * SortIterator::_externalSort ()
 	ExternalSorter * sorter = new ExternalSorter(runNames, _plan->_size, _plan->_removeDuplicates);
 	return sorter->init();
 }
-
-// Return: mergedRunCount, readAheadSize, neededMemorySize
-// mergedRunCount: the number of runs that can be merged in this pass
-// readAheadSize: the size of read-ahead buffers needed in this pass
-// neededMemorySize: if merge all runs in this pass, the memory needed

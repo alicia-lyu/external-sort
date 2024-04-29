@@ -20,6 +20,9 @@ void Metrics::read(const int device_type, const u_int64_t num_bytes, bool readAh
     if (device_type < 0 || device_type >= NUM_STORAGE_TYPES) {
         throw std::invalid_argument("Invalid device type");
     }
+    if (num_bytes == 0) {
+        return;
+    }
     #ifdef VERBOSEL2
     traceprintf("Accessing storage %d with %lu bytes\n", device_type, num_bytes);
     #endif

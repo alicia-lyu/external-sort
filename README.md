@@ -28,13 +28,15 @@ Below are a few targets in the Makefile:
 - `make test`: test the overall function of the program, with random data generation and duplicate removal.
 - `make insort`: test the duplicate removal. It generates 4000 records of size 2, so it is guaranteed to have duplicated records. Then, it will use insort method to remove duplicates.
 - `make instream`: similar to `make insort`, but use instream method.
-- TODO@Yuheng
+- `make 1g`: a test case with 1G data.
+- `make 120g`: a huge test case with 120G data (please ensure you have sufficient disk space).
 
 In the Makefile, you can control the level of log output by defining verbosity macros in `CPPFLAGS`:
 
 - (no such macro): prints out key information of the program, such as the number of records generated, whether the final outcome is sorted and whether there are duplicated records.
-- `-DVERBOSEL1`: (default) prints out key information of a plan. For example, for `VerifyPlan`, the program will print out the number of rows consumed and produced; for `WitnessPlan`, it will also print out the initial parity.
+- `-DVERBOSEL1`: prints out key information of a plan. For example, for `VerifyPlan`, the program will print out the number of rows consumed and produced; for `WitnessPlan`, it will also print out the initial parity.
 - `-DVERBOSEL2`: prints out information about each record, such as whether it is a duplicated or an out-of-order record. Warning: will produce huge output.
+- `-DPRODUCTION`: (enabled by default) prints out production traces in the form of `[Operation] -> [Type]: <message>`.
 
 ## Design Overview
 
@@ -89,7 +91,9 @@ Two methods are implemented to remove duplicated records:
 
 ### Cache-size mini runs
 
-TODO@Yuheng
+Cache-size mini runs are implemented in class [`CacheOptimizedRenderer`](./InMemoryRenderer.cpp). It first splits the input data into several mini segments so that each segment can be fitted into the cache. Then, for each segment, it creates a cache-size run by building a tournament tree. After building the runs, the renderer builds one tournament tree with leaves pointing to the top of the trees of these cache-size runs.
+
+When doing an in-memory sort, the [`SortIterator::_formInMemoryRenderer`](./sort.cpp) computes the number of rows (records) in cache, and the number of cache-size runs needed (`numCaches`). It creates a tournamant tree for each of the runs. The tree is then passed to `CacheOptimizedRenderer`, where a list of rows of length `numCaches` is formed by polling one element out from each tree, and a master tournament tree is built from these rows. When sorting, this renderer first finds (from the master tree) which tree the smallest element belongs to; then, it tries to get the second largest element from that tree. If such element exists, this element is then pushed into the master tree to maintain the order of the trees. This is repeated until all elements are exhausted.
 
 ### Device-optimized page sizes
 
@@ -146,8 +150,9 @@ Instead of having every record of this long run go through a series of contests 
 
 ### Verifiers
 
-- Two [Witness](./Witness.h)es: TODO@Yuheng
-- [Verify](./Verify.h): TODO@Yuheng
+- Two [Witness](./Witness.h)es: The witness does a simple integrity check on the data to ensure no record is altered during the sort. Therefore, this witness would not work if there are duplicates in the data and we ask for duplicate removal. The witness creates a check record of the same size as the input records, with initial value `0xFF` for all bytes. It then loops through all the given data, and apply an xor to the check record with the given record (i.e., `checkRecord = checkRecord xor inputRecord`). The final value of the check record will be displayed at the end.
+  There are two witnesses in the program, one before the sorting, one after the sorting. If we do not ask for duplicate removal, or if there is no duplicates in the data, then we should expect the two witnesses' check records equal to each other.
+- [Verify](./Verify.h): The VerifyPlan is another integrity check on the data to ensure the records are sorted and duplicates are removed. The VerifyPlan reads in the outcome of the SortPlan and maintains the "previous record". If current record is larger than the previous record, then the outcome is not sorted; if current record is equal to the previous record, then there are duplicates in the outcome. The results of the sorted & duplicates check are printed at the end.
 
 ### Bonus: Read ahead buffers
 

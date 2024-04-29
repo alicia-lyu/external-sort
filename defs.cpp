@@ -42,14 +42,76 @@ map<int, string> Trace::opName = {
 	{METRICS_RESULT, "METRICS"}
 };
 
+int Trace::lastOp = -1;
+
 void Trace::PrintTrace(int opType, const string & message)
 {
+	if (lastOp == OP_ACCESS && opType != OP_ACCESS) {
+		FlushAccess();
+	}
+
 	printf ("[%s] -> %s\n", opName[opType].c_str(), message.c_str());
+	lastOp = opType;
 }
 
 void Trace::PrintTrace(int opType, int subOpType, const string & message)
 {
+	if (lastOp == OP_ACCESS && opType != OP_ACCESS) {
+		FlushAccess();
+	}
+
 	printf ("[%s] -> [%s]: %s\n", opName[opType].c_str(), opName[subOpType].c_str(), message.c_str());
+	lastOp = opType;
+}
+
+map<tuple<int, int>, tuple<double, u_int64_t, u_int64_t>> Trace::accessTrace = {
+	{{ACCESS_READ, STORAGE_SSD}, {0.0, 0, 0}},
+	{{ACCESS_READ, STORAGE_HDD}, {0.0, 0, 0}},
+	{{ACCESS_WRITE, STORAGE_SSD}, {0.0, 0, 0}},
+	{{ACCESS_WRITE, STORAGE_HDD}, {0.0, 0, 0}}
+};
+
+void Trace::TraceAccess(int accessOp, int deviceType, double latency, u_int64_t numBytes)
+{
+	auto key = make_tuple(accessOp, deviceType);
+	auto it = accessTrace.find(key);
+	if (it == accessTrace.end()) {
+		accessTrace[key] = make_tuple(latency, numBytes, 1);
+	} else {
+		auto & [totalLatency, totalBytes, totalAccess] = it->second;
+		totalLatency += latency;
+		totalBytes += numBytes;
+		totalAccess += 1;
+	}
+	lastOp = OP_ACCESS;
+}
+
+void Trace::FlushAccess()
+{
+	// enumerate all pairs of (accessOp, deviceType)
+	for (auto & [key, value] : accessTrace) {
+		auto & [latency, numBytes, numAccess] = value;
+		if (numBytes > 0) {
+			WriteAccess(std::get<0>(key), std::get<1>(key), latency, numBytes, numAccess);
+			latency = 0.0;
+			numBytes = 0;
+		}
+	}
+}
+
+void Trace::WriteAccess(int accessOp, int deviceType, double latency, u_int64_t numBytes, u_int64_t numAccess)
+{
+	string output = "A total of " + to_string(numAccess);;
+	output += (accessOp == ACCESS_READ) ? " reads" : " writes";
+	output += " to ";
+	output += getDeviceName(deviceType);
+	output += " device were made with ";
+	output += to_string(numBytes) + " bytes ";
+	if (numBytes > 1000) {
+		output += "(" + FormatSize(numBytes) + ") ";
+	}
+	output += "and latency " + to_string(int(latency*1e6)) + " us";
+	PrintTrace(OP_ACCESS, output);
 }
 
 string Trace::FormatSize(u_int64_t size)

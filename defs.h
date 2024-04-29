@@ -7,6 +7,9 @@
 #include <filesystem>
 #include <cmath>
 #include <map>
+#include <tuple>
+
+#include "params.h"
 
 typedef unsigned char byte;
 typedef uint64_t RowCount;
@@ -14,6 +17,8 @@ typedef u_int16_t RowSize; // 20-2000, unit: byte
 using string = std::string;
 using std::to_string;
 using std::map;
+using std::tuple;
+using std::make_tuple;
 #define SEPARATOR std::filesystem::path::preferred_separator
 
 #define slotsof(a)	(sizeof (a) / sizeof (a[0]))
@@ -62,8 +67,8 @@ void Assert (bool const predicate,
 #define METRICS_RESULT 15
 
 // used to record access to storage devices
-#define STORAGE_READ 16
-#define STORAGE_WRITE 17
+#define ACCESS_READ 16
+#define ACCESS_WRITE 17
 
 
 class Trace
@@ -77,6 +82,7 @@ public :
 	static void PrintTrace(int opType, const string & message);
 	static void PrintTrace(int opType, int subOpType, const string & message);
 	static string FormatSize(u_int64_t size);
+	static void TraceAccess(int accessType, int deviceType, double latency, u_int64_t numBytes);
 
 private :
 
@@ -88,6 +94,13 @@ private :
 	int const _line;
 
 	static map<int, string> opName;
+
+	// mapping between (accessOp, deviceType) to latency, numBytes, numAccesses
+	static map<tuple<int, int>, tuple<double, u_int64_t, u_int64_t>> accessTrace;
+	static int lastOp;
+
+	static void WriteAccess(int accessOp, int deviceType, double latency, u_int64_t numBytes, u_int64_t numAccesses);
+	static void FlushAccess();
 }; // class Trace
 
 #define TRACE(trace)	Trace __trace (trace, __FUNCTION__, __FILE__, __LINE__)

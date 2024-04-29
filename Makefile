@@ -111,6 +111,9 @@ external-2-lldb: Test.exe Makefile ./inputs/ ./spills/pass0 ./spills/pass1 ./spi
 	echo $(TIMESTAMP) > $(LOG_FILE)
 	./Test.exe -c 800000 -s 1250 -t $(LOG_FILE)
 
+1g-lldb: Test.exe Makefile ./inputs/ ./spills/pass0 ./spills/pass1 ./spills/pass2
+	lldb -- ./Test.exe -c 800000 -s 1250
+
 # 120 GB data
 120g: Test.exe Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1 ./spills/pass2
 	echo $(TIMESTAMP) > $(LOG_FILE)

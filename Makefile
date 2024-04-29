@@ -130,8 +130,8 @@ ExternalSort.exe: Makefile ExternalSort.cpp
 # ./ExternalSort.exe -c 120 -s 1000 -o trace0.txt  (Example values)
 
 $(OBJS) : Makefile defs.h
-Test.o : Iterator.h Scan.h Sort.h utils.h Buffer.h Witness.h TournamentTree.h SortedRecordRenderer.h Verify.h
-Iterator.o Scan.o Sort.o utils.o Buffer.o Witness.o Verify.o TournamentTree.o SortedRecordRenderer.o: Iterator.h Buffer.h params.h utils.h
+Test.o : Iterator.h Scan.h Sort.h utils.h Buffer.h Witness.h TournamentTree.h SortedRecordRenderer.h Verify.h Remove.h Metrics.h Output.h GracefulRenderer.h ExternalRenderer.h ExternalRun.h
+Iterator.o Scan.o Sort.o utils.o Buffer.o Witness.o TournamentTree.o SortedRecordRenderer.o Verify.o Remove.o Metrics.o Output.o GracefulRenderer.o ExternalRenderer.o ExternalRun.o: Iterator.h Buffer.h params.h utils.h
 Scan.o : Scan.h 
 Sort.o : Sort.h
 utils.o: utils.h

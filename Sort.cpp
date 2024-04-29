@@ -176,9 +176,21 @@ SortedRecordRenderer * SortIterator::_externalSort ()
 			auto [mergedRunCountNew, readAheadSize] = assignRuns(runNames, mergedRunCount);
 			u_int16_t mergedRunCountSoFar = mergedRunCount;
 			mergedRunCount = mergedRunCountNew;
+
 			#if defined(VERBOSEL1) || defined(VERBOSEL2)
-			traceprintf ("Pass %d renderer %d: Merging runs from %d to %d\n", pass, rendererNum, mergedRunCountSoFar, mergedRunCount - 1);
+			traceprintf ("Pass %d renderer %d: Merging runs from %d to %d, runName size: %zu\n", pass, rendererNum, mergedRunCountSoFar, mergedRunCount - 1, runNames.size());
 			#endif
+
+			// check graceful merge
+			if ((mergedRunCountNew - mergedRunCountSoFar) * GRACEFUL_DEGRADATION_THRESHOLD >= runNames.size() - mergedRunCountSoFar) {
+				#if defined(VERBOSEL1) || defined(VERBOSEL2)
+				traceprintf("*** Graceful merge in pass %d\n", pass);
+				#endif
+
+				// TODO: Graceful merge
+				
+				continue;
+			}
 
 			renderer = new ExternalRenderer(_plan->_size, 
 				vector<string>(runNames.begin() + mergedRunCountSoFar, runNames.begin() + mergedRunCount), 

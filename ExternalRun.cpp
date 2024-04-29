@@ -64,7 +64,7 @@ byte * ExternalRun::next ()
         row = _currentPage->next();
         Assert((row == nullptr) == !hasMore, __FILE__, __LINE__);
     }
-    #if defined(VERBOSEL1) || defined(VERBOSEL2)
+    #if defined(VERBOSEL2)
     if (_produced % 10000 == 0) traceprintf("# %llu of %s: %s\n", _produced, _runFileName.c_str(), rowToString(row, _recordSize).c_str());
     #endif
     readAhead(); // Read ahead if meets the criteria

@@ -163,7 +163,7 @@ string rowRawValueToString(byte * rowContent, RowSize size) {
     return result;
 }
 
-tuple<vector<u_int8_t>, vector<u_int64_t>> parseDeviceType(string filename) {
+tuple<vector<u_int8_t>, vector<u_int64_t>> parseDeviceType(const string &filename) {
     vector<u_int8_t> deviceTypes;
     vector<u_int64_t> switchPoints;
     std::regex deviceTypePattern("device(\\d+)");
@@ -191,7 +191,7 @@ tuple<vector<u_int8_t>, vector<u_int64_t>> parseDeviceType(string filename) {
     return std::make_tuple(deviceTypes, switchPoints);
 }
 
-u_int8_t getLargestDeviceType(string filename) {
+u_int8_t getLargestDeviceType(const string &filename) {
     vector<u_int8_t> deviceTypes;
     vector<u_int64_t> switchPoints;
     std::tie(deviceTypes, switchPoints) = parseDeviceType(filename);

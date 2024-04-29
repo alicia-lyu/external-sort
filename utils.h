@@ -30,5 +30,5 @@ string rowToHexString(byte * rowContent, RowSize size);
 u_int32_t getRecordCountPerRun(RowSize recordSize, bool inSSD); // TODO: use Metrics::getAvailableStorage
 string rowToString(byte * rowContent, RowSize size);
 string rowRawValueToString(byte * rowContent, RowSize size);
-tuple<vector<u_int8_t>, vector<u_int64_t>> parseDeviceType(string filename);
-u_int8_t getLargestDeviceType(string filename);
+tuple<vector<u_int8_t>, vector<u_int64_t>> parseDeviceType(const string &filename);
+u_int8_t getLargestDeviceType(const string &filename);

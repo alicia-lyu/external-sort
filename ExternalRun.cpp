@@ -37,6 +37,9 @@ ExternalRun::ExternalRun (const string &runFileName, RowSize recordSize) :
         traceprintf("Run file %s: %zu device types, switch point %llu, page size %d\n", runFileName.c_str(), deviceTypes.size(), switchPoint, _pageSize);
     }
     #endif
+
+    // page size is the largest multiple of record size
+    _pageSize = _pageSize / _recordSize * _recordSize;
     
     _currentPage = getBuffer();
     _fillPage(_currentPage);

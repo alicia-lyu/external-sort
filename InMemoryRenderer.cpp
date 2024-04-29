@@ -45,7 +45,7 @@ CacheOptimizedRenderer::CacheOptimizedRenderer (RowSize recordSize,
     }
     _tree = new TournamentTree(formingRows, _recordSize);
 
-	#if VERBOSEL1 || VERBOSEL2
+	#if VERBOSEL2
 	traceprintf ("Formed cache-optimized renderer with %lu cache trees\n", _cacheTrees.size());
 	#endif
 	#if VERBOSEL2
@@ -61,7 +61,7 @@ CacheOptimizedRenderer::~CacheOptimizedRenderer ()
         delete cacheTree;
     }
 
-	#if defined(VERBOSEL1) || defined(VERBOSEL2)
+	#if defined(VERBOSEL2)
 	traceprintf("Produced %llu rows\n", _produced);
 	#endif
 } // CacheOptimizedRenderer::~CacheOptimizedRenderer

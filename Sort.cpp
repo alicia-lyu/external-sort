@@ -187,11 +187,11 @@ SortedRecordRenderer * SortIterator::_externalSort ()
 				traceprintf("*** Graceful merge in pass %d\n", pass);
 				#endif
 				std::vector<string> restOfRuns = std::vector<string>(runNames.begin() + mergedRunCountSoFar, runNames.end());
-				renderer = gracefulMerge(restOfRuns, pass, rendererNum);
+				renderer = gracefulMerge(restOfRuns, pass, rendererNum, _plan->_removeDuplicates);
 			} else {
 				renderer = new ExternalRenderer(_plan->_size, 
 				vector<string>(runNames.begin() + mergedRunCountSoFar, runNames.begin() + mergedRunCount), 
-				readAheadSize, pass, rendererNum);
+				readAheadSize, pass, rendererNum, _plan->_removeDuplicates);
 			}
 
 			if (rendererNum == 0 && mergedRunCount == runNames.size()) // The last renderer in the last pass
@@ -222,15 +222,12 @@ tuple<u_int16_t, u_int64_t, u_int64_t> SortIterator::assignRuns(vector<string>& 
 	u_int64_t memoryConsumption = 0;
 	u_int64_t outputFileSize = 0;
 	u_int64_t allMemoryConsumption = 0;
+	u_int16_t realMergedRunCount = 0;
 	bool isProbing = false;
 
 	// READ-AHEAD BUFFERS
-
 	u_int64_t readAheadSize= profileReadAheadSize(runNames, mergedRunCount);
 	memoryConsumption += readAheadSize;
-	#if defined(VERBOSEL1) || defined(VERBOSEL2)
-	traceprintf ("%d read ahead buffers for HDD\n", hddReadAheadBuffers);
-	#endif
 
 	// INPUT BUFFERS
 	allMemoryConsumption = memoryConsumption;
@@ -248,8 +245,12 @@ tuple<u_int16_t, u_int64_t, u_int64_t> SortIterator::assignRuns(vector<string>& 
 			}
 			else {
 				mergedRunCount++;
+				realMergedRunCount = mergedRunCount;
 				outputFileSize += std::filesystem::file_size(runName);
 			}
+		}
+		else {
+			mergedRunCount++;
 		}
 	}
 
@@ -262,7 +263,7 @@ tuple<u_int16_t, u_int64_t, u_int64_t> SortIterator::assignRuns(vector<string>& 
 
 	readAheadSize += MEMORY_SIZE - memoryConsumption; // Use the remaining memory for more read-ahead buffers
 
-	return std::make_tuple(mergedRunCount, readAheadSize, allMemoryConsumption);
+	return std::make_tuple(realMergedRunCount, readAheadSize, allMemoryConsumption);
 }
 
 u_int64_t SortIterator::profileReadAheadSize (vector<string>& runNames, u_int16_t mergedRunCount)
@@ -291,7 +292,7 @@ u_int64_t SortIterator::profileReadAheadSize (vector<string>& runNames, u_int16_
 	return readAheadSize;
 }
 
-SortedRecordRenderer * SortIterator::gracefulMerge (vector<string>& runNames, int basePass, int rendererNum)
+SortedRecordRenderer * SortIterator::gracefulMerge (vector<string>& runNames, int basePass, int rendererNum, bool removeDuplicates)
 {
 	TRACE (false);
 	auto readAheadSize = profileReadAheadSize(runNames, 0);
@@ -311,26 +312,23 @@ SortedRecordRenderer * SortIterator::gracefulMerge (vector<string>& runNames, in
 
 	int outputDevice = Metrics::getAvailableStorage(allRunSize);
 	
-	u_int64_t initialRunSize;
+	u_int64_t initialRunSize = 0;
 	u_int64_t pageSizeForInitialRun;
-	u_int64_t inputMemoryForInitialRun;
-	u_int64_t MemoryForGracefulRenderer = outputDevice == STORAGE_SSD ? SSD_PAGE_SIZE : HDD_PAGE_SIZE + readAheadSize;
+	u_int64_t inputMemoryForInitialRun = 0;
+	u_int64_t MemoryForGracefulRenderer = Metrics::getParams(outputDevice).pageSize + readAheadSize;
 
 	// Find the smallest initial run size
 	int i;
 	for (i = 1; i < n; i++) {
 		// the last i runs are merged first
-		initialRunSize = 0;
-		inputMemoryForInitialRun = 0;
-		for (int j = 0; j < i; j++) {
-			initialRunSize += std::filesystem::file_size(runNames.at(n - 1 - j));
-			auto deviceType = getLargestDeviceType(runNames.at(n - 1 - j));
-			auto pageSize = Metrics::getParams(deviceType).pageSize;
-			inputMemoryForInitialRun += pageSize;
-		}
+		initialRunSize += std::filesystem::file_size(runNames.at(n - i));
+		auto deviceType = getLargestDeviceType(runNames.at(n - i));
+		auto pageSize = Metrics::getParams(deviceType).pageSize;
+		inputMemoryForInitialRun += pageSize;
+
 		auto initialRunDevice = Metrics::getAvailableStorage(initialRunSize);
 		pageSizeForInitialRun = Metrics::getParams(initialRunDevice).pageSize; // output page size fro initialRenderer, input page size of initialRun for gracefulRenderer
-		if (MemoryForGracefulRenderer + inputMemoryForAllRuns - inputMemoryForInitialRun + pageSizeForInitialRun <= MEMORY_SIZE) {
+		if (i >= 2 && MemoryForGracefulRenderer + inputMemoryForAllRuns - inputMemoryForInitialRun + pageSizeForInitialRun <= MEMORY_SIZE) {
 			break;
 		}
 	}
@@ -340,14 +338,14 @@ SortedRecordRenderer * SortIterator::gracefulMerge (vector<string>& runNames, in
 	Assert (initialReadAheadSize >= 0, __FILE__, __LINE__);
 	ExternalRenderer * initialRenderer = new ExternalRenderer(_plan->_size, 
 		vector<string>(runNames.begin() + n - i, runNames.end()), 
-		initialReadAheadSize, basePass, rendererNum); 
+		initialReadAheadSize, basePass, rendererNum, removeDuplicates);
 	
 	string initialRunFileName = initialRenderer->run(); 
 
 	// Create the graceful renderer for the rest of the runs
 	vector<string> restOfRuns = std::vector<string>(runNames.begin(), runNames.begin() + n - i);
 	restOfRuns.push_back(initialRunFileName);
-	SortedRecordRenderer * gracefulRenderer = new ExternalRenderer(_plan->_size, restOfRuns, readAheadSize, basePass, rendererNum + 1);
+	SortedRecordRenderer * gracefulRenderer = new ExternalRenderer(_plan->_size, restOfRuns, readAheadSize, basePass, rendererNum + 1, removeDuplicates);
 
 	return gracefulRenderer;
 	

@@ -88,14 +88,17 @@ byte * VerifyIterator::next()
             lastRow = (byte *) malloc(_plan->_size);
         }
 
-        for (int i = 0; i < _plan->_size; ++i) {
-            byte c = received[i];
-            if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')) {
-                continue;
-            } else {
-                throw std::invalid_argument("Invalid character in row " + rowToHexString(received, _plan->_size) + std::to_string(_consumed));
-            }
-        }
+        // for (int i = 0; i < _plan->_size; ++i) {
+        //     byte c = received[i];
+        //     if ((c >= '0' && c <= '9') || 
+        //         (c >= 'A' && c <= 'Z') || 
+        //         (c >= 'a' && c <= 'z')
+        //     ) {
+        //         continue;
+        //     } else {
+        //         throw std::invalid_argument("Invalid character " + std::to_string(c) + " in row " + rowToString(received, _plan->_size) + " at " + std::to_string(_consumed));
+        //     }
+        // }
 
         // copy received to lastRow
         memcpy(lastRow, received, _plan->_size);

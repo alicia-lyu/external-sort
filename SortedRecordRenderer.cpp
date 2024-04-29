@@ -167,11 +167,12 @@ bool Materializer::flushOutputBuffer(u_int32_t sizeFilled)
 	#endif
 
 	Assert (sizeFilled % renderer->_recordSize == 0, __FILE__, __LINE__);
-	for (u_int32_t i = 0; i < sizeFilled; i += renderer->_recordSize) {
-		byte * row = outputBuffer->data() + i;
-		outputFile.write((char*) row, renderer->_recordSize); // Write to file before creating a new buffer
-		outputFile.write("\n", 1);
-	}
+	// for (u_int32_t i = 0; i < sizeFilled; i += renderer->_recordSize) {
+	// 	byte * row = outputBuffer->data() + i;
+	// 	outputFile.write((char*) row, renderer->_recordSize); // Write to file before creating a new buffer
+	// 	outputFile.write("\n", 1);
+	// }
+	outputFile.write((char *) outputBuffer->data(), sizeFilled);
 	
 	// Metrics: switch device if necessary
 	int deviceType = switchDevice(sizeFilled);

@@ -104,7 +104,7 @@ u_int32_t ExternalRun::_fillPage (Buffer * page)
     traceprintf("Read %d rows from run file %s\n", readCount / _recordSize, _runFileName.c_str());
     #endif
     // Update buffer and metrics with readCount
-    if (readCount % _recordSize != 0) throw std::invalid_argument("Read count is not a multiple of record size, from file" + _runFileName);
+    if (readCount % _recordSize != 0) throw std::invalid_argument("Read count is not a multiple of record size, from file " + _runFileName + " with read count " + std::to_string(readCount) + " at " + std::to_string(_produced));
     page->batchFillByOverwrite(readCount);
     Metrics::read(storage, readCount, page == _readAheadPage);
     return readCount;

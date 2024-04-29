@@ -246,10 +246,10 @@ tuple<u_int16_t, u_int64_t, u_int64_t> SortIterator::assignRuns(vector<string>& 
 				memoryConsumption -= pageSize;
 				isProbing = true;
 			}
-
-			// isProbing: not really merge, just probing how much memory is needed
-			mergedRunCount++;
-			outputFileSize += std::filesystem::file_size(runName);
+			else {
+				mergedRunCount++;
+				outputFileSize += std::filesystem::file_size(runName);
+			}
 		}
 	}
 

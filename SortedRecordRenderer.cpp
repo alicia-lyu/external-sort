@@ -114,6 +114,12 @@ Materializer::Materializer(u_int8_t pass, u_int16_t runNumber, SortedRecordRende
 	outputBuffer = new Buffer(pageSize / renderer->_recordSize, renderer->_recordSize);
 	outputFileName = getOutputFileName(pass, runNumber);
 	outputFile = ofstream(outputFileName, std::ios::binary);
+
+	#ifdef PRODUCTION
+	Trace::PrintTrace(OP_STATE, deviceType == STORAGE_SSD? SPILL_RUNS_SSD : SPILL_RUNS_HDD, 
+		string("Spill sorted runs to the ") + getDeviceName(deviceType) + " device");
+	#endif
+
 	#if defined(VERBOSEL2)
 	traceprintf ("Materializer for run %d with output file %s initialized on device %d\n", runNumber, outputFileName.c_str(), deviceType);
 	#endif

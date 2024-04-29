@@ -20,14 +20,12 @@ SortedRecordRenderer * ExternalSorter::init () {
 	// Multi-pass merge
 	while (runNames.size() > 1) { // Need another pass to merge the runs
 		++ pass;
-		printf ("======= Pass %d: %lu runs in total =======\n", pass, runNames.size());
 
 		u_int16_t rendererNum = 0;
 
 		// Gracefully merge all in one pass if possible (this is the last pass if there is only one renderer)
 		u_int64_t allMemoryNeeded = calculateMemoryForAll(runNames);
 		if (allMemoryNeeded <= MEMORY_SIZE * GRACEFUL_DEGRADATION_THRESHOLD && allMemoryNeeded > MEMORY_SIZE) {
-			printf("******* Graceful merge in pass %d: merging %zu runs, all memory needed %llu / %d\n", pass, runNames.size(), allMemoryNeeded, MEMORY_SIZE);
 			std::vector<string> restOfRuns = std::vector<string>(runNames.begin(), runNames.end());
 			renderer = gracefulMerge(restOfRuns, pass, rendererNum);
 			return renderer;
@@ -49,7 +47,6 @@ SortedRecordRenderer * ExternalSorter::init () {
 
 			if (rendererNum == 0 && mergedRunCount == runNames.size()) // The last renderer in the last pass
 			{
-				printf("******* Multi-level merge stopped in pass %d\n", pass);
 				return renderer;
 			} else { // Need another pass for merged runs
 				mergedRunNames.push_back(renderer->run());
@@ -194,9 +191,6 @@ SortedRecordRenderer * ExternalSorter::gracefulMerge (vector<string>& runNames, 
 		}
 	}
 
-	// Create the initial run
-	traceprintf ("Creating initial run with %d runs. Run size %llu, page size %llu, input memory %llu\n", i, initialRunSize, initialPageSize, initialInputMemory);
-
 	u_int64_t initialReadAheadSize = MEMORY_SIZE - initialInputMemory - initialPageSize;
 	Assert (initialReadAheadSize >= 0, __FILE__, __LINE__);
 
@@ -207,7 +201,6 @@ SortedRecordRenderer * ExternalSorter::gracefulMerge (vector<string>& runNames, 
 	string initialRunFileName = initialRenderer->run();
 
 	// Create the graceful renderer for the rest of the runs + initial run
-	traceprintf ("Creating graceful renderer with %d runs, to device %d\n", n - i, gracefulOutputDevice);
 	vector<string> restOfRuns = std::vector<string>(runNames.begin(), runNames.end() - i);
 	restOfRuns.push_back(initialRunFileName);
 	SortedRecordRenderer * gracefulRenderer = new ExternalRenderer(recordSize, restOfRuns, gracefulReadAheadSize, basePass, rendererNum, removeDuplicates);

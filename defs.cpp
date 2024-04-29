@@ -23,6 +23,64 @@ void Trace::_trace (char const lead [])
 		printf ("%s %s (%s:%d)\n", lead, _function, _file, _line);
 } // Trace::_trace
 
+map<int, string> Trace::opName = {
+	{OP_STATE, "STATE"},
+	{OP_ACCESS, "ACCESS"},
+	{OP_RESULT, "RESULT"},
+	{MERGE_RUNS_HDD, "MERGE_RUNS_HDD"},
+	{MERGE_RUNS_SSD, "MERGE_RUNS_SSD"},
+	{MERGE_RUNS_BOTH, "MERGE_RUNS_BOTH"},
+	{SORT_MINI_RUNS, "SORT_MINI_RUNS"},
+	{SPILL_RUNS_SSD, "SPILL_RUNS_SSD"},
+	{SPILL_RUNS_HDD, "SPILL_RUNS_HDD"},
+	{READ_RUN_PAGES_SSD, "READ_RUN_PAGES_SSD"},
+	{READ_RUN_PAGES_HDD, "READ_RUN_PAGES_HDD"},
+	{INIT_SORT, "INIT_SORT"},
+	{SORT_RESULT, "SORT"},
+	{VERIFY_RESULT, "VERIFY"},
+	{WITNESS_RESULT, "WITNESS"},
+	{METRICS_RESULT, "METRICS"}
+};
+
+void Trace::PrintTrace(int opType, const string & message)
+{
+	printf ("[%s] -> %s\n", opName[opType].c_str(), message.c_str());
+}
+
+void Trace::PrintTrace(int opType, int subOpType, const string & message)
+{
+	printf ("[%s] -> [%s]: %s\n", opName[opType].c_str(), opName[subOpType].c_str(), message.c_str());
+}
+
+string Trace::FormatSize(u_int64_t size)
+{
+	string unit = "B";
+	double size_d = size;
+	if (size_d >= 1000) {
+		size_d /= 1000;
+		unit = "KB";
+	}
+	if (size_d >= 1000) {
+		size_d /= 1000;
+		unit = "MB";
+	}
+	if (size_d >= 1000) {
+		size_d /= 1000;
+		unit = "GB";
+	}
+
+	char buffer[100];
+
+	// if is an integer, don't show decimal places
+	if (size_d == (int) size_d) {
+		snprintf(buffer, 99, "%d ", (int) size_d);
+	} else {
+		snprintf(buffer, 99, "%.2f ", size_d);
+	}
+
+	return string(buffer) + unit;
+}
+
 // -----------------------------------------------------------------
 
 size_t Random (size_t const range)

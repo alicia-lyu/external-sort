@@ -6,7 +6,9 @@ InStreamRemovePlan::InStreamRemovePlan (Plan * const input, RowSize const size, 
 {
     TRACE(false);
     if (_activated) {
-        traceprintf("InStreamRemovePlan: remove duplicates using in-stream method\n");
+        #ifdef PRODUCTION
+        Trace::PrintTrace(OP_STATE, INIT_SORT, "Remove duplicates using in-stream method");
+        #endif
     }
 } // InStreamRemovePlan::InStreamRemovePlan
 
@@ -34,9 +36,8 @@ InStreamRemoveIterator::~InStreamRemoveIterator()
     TRACE(false);
     delete _input;
     if (_plan->_activated) {
-        traceprintf("Removed %lu rows\n", (unsigned long)(_removed));
-
         #if defined(VERBOSEL2) || defined(VERBOSEL1)
+        traceprintf("Removed %lu rows\n", (unsigned long)(_removed));
         traceprintf("produced %lu of %lu rows\n",
                     (unsigned long)(_produced),
                     (unsigned long)(_consumed));

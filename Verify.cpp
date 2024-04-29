@@ -35,8 +35,18 @@ VerifyIterator::~VerifyIterator()
     free(lastRow);
 
     delete _input;
-    traceprintf("Result is %s %s\n", isSorted ? "sorted" : "not sorted", _descending ? "descending" : "ascending");
-    traceprintf("Result has %s\n", hasDuplicates ? "duplicates" : "no duplicates");
+
+    #ifdef PRODUCTION
+    string output = "Result is ";
+    output += isSorted ? "sorted" : "not sorted";
+    output += " ";
+    output += _descending ? "descending" : "ascending";
+    Trace::PrintTrace(OP_RESULT, VERIFY_RESULT, output);
+
+    output = "Result has ";
+    output += hasDuplicates ? "duplicates" : "no duplicates";
+    Trace::PrintTrace(OP_RESULT, VERIFY_RESULT, output);
+    #endif
 
     #if defined(VERBOSEL2) || defined(VERBOSEL1)
     traceprintf ("produced %lu of %lu rows\n",

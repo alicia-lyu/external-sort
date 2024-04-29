@@ -1,7 +1,7 @@
 CPPOPT=-g -Og -D_DEBUG
 # -O2 -Os -Ofast
 # -fprofile-generate -fprofile-use
-CPPFLAGS=$(CPPOPT) -Wall -ansi -pedantic -std=c++17 -DVERBOSEL1
+CPPFLAGS=$(CPPOPT) -Wall -ansi -pedantic -std=c++17 -DPRODUCTION
 DEBUGFLAGS=-DCMAKE_BUILD_TYPE=Debug -DLLDB_EXPORT_ALL_SYMBOLS=ON -std=c++17
 # -Wparentheses -Wno-unused-parameter -Wformat-security
 # -fno-rtti -std=c++11 -std=c++98
@@ -93,6 +93,16 @@ external-lldb: Test.exe Makefile ./inputs/ ./spills/pass0 ./spills/pass1
 external-2: Test.exe Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1 ./spills/pass2
 	echo $(TIMESTAMP) > $(LOG_FILE)
 	./Test.exe -c 40000 -s 200 -t $(LOG_FILE)
+
+# 1 GB data
+1g: Test.exe Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1 ./spills/pass2
+	echo $(TIMESTAMP) > $(LOG_FILE)
+	./Test.exe -c 50000 -s 20000 -t $(LOG_FILE)
+
+# 120 GB data
+120g: Test.exe Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1 ./spills/pass2
+	echo $(TIMESTAMP) > $(LOG_FILE)
+	./Test.exe -c 125000000 -s 960 -t $(LOG_FILE)
 
 external-2-lldb: Test.exe Makefile ./inputs/ ./spills/pass0 ./spills/pass1 ./spills/pass2
 	lldb -- ./Test.exe -c 40000 -s 200

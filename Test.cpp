@@ -37,20 +37,20 @@ int main (int argc, char * argv [])
 	// u_int16_t runCount = recordCount / recordCountPerRun; // 4000 -- 40
 	// traceprintf("recordCountPerRun: %u, runCount: %u\n", recordCountPerRun, runCount);
 	Plan * const scanPlan = new ScanPlan (recordCount, recordSize, inputPath);
-	Plan * const witnessPlan = new WitnessPlan (scanPlan, recordSize);
+	Plan * const witnessPlan = new WitnessPlan (scanPlan, recordSize, false);
 	Plan * const sortPlan = new SortPlan (witnessPlan, recordSize, recordCount, useInsort);
 	Plan * const removePlan = new InStreamRemovePlan (sortPlan, recordSize, useInstream);
 	Plan * const verifyPlan = new VerifyPlan (removePlan, recordSize);
-	Plan * const witnessPlan2 = new WitnessPlan (verifyPlan, recordSize);
-	Plan * const outputPlan = new OutputPlan (witnessPlan2, recordSize, config.outputPath);
+	Plan * const witnessPlan2 = new WitnessPlan (verifyPlan, recordSize, true);
+	// Plan * const outputPlan = new OutputPlan (witnessPlan2, recordSize, config.outputPath);
 
-	Iterator * const it = outputPlan->init ();
+	Iterator * const it = witnessPlan2->init ();
 	it->run ();
 
 	// we only delete the last Plan, since it will delete its inner plan
 	// in its destructor, and create a chain deletion
 	delete it;
-	delete outputPlan;
+	delete witnessPlan2;
 
 	// print the metrics
 	auto ssdMetrics = Metrics::getMetrics(STORAGE_SSD);

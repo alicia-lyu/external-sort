@@ -1,7 +1,7 @@
 CPPOPT=-g -Og -D_DEBUG
 # -O2 -Os -Ofast
 # -fprofile-generate -fprofile-use
-CPPFLAGS=$(CPPOPT) -Wall -ansi -pedantic -std=c++17 -DPRODUCTION
+CPPFLAGS=$(CPPOPT) -Wall -ansi -pedantic -std=c++17 -DPRODUCTION -DVERBOSEL1
 DEBUGFLAGS=-DCMAKE_BUILD_TYPE=Debug -DLLDB_EXPORT_ALL_SYMBOLS=ON -std=c++17
 # -Wparentheses -Wno-unused-parameter -Wformat-security
 # -fno-rtti -std=c++11 -std=c++98
@@ -49,13 +49,13 @@ $(LOG_DIR) :
 	mkdir -p ./inputs/
 	rm -rf ./inputs/*
 
-./spills/pass0:
+./spills/pass0: clean-spills
 	mkdir -p ./spills/pass0
 
-./spills/pass1:
+./spills/pass1: clean-spills
 	mkdir -p ./spills/pass1
 
-./spills/pass2:
+./spills/pass2: clean-spills
 	mkdir -p ./spills/pass2
 
 clean-spills:
@@ -94,10 +94,10 @@ external-2: Test.exe Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1
 	echo $(TIMESTAMP) > $(LOG_FILE)
 	./Test.exe -c 40000 -s 200 -t $(LOG_FILE)
 
-# 1 GB data
+# 1 GB data: 800000 * 1250
 1g: Test.exe Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1 ./spills/pass2
 	echo $(TIMESTAMP) > $(LOG_FILE)
-	./Test.exe -c 50000 -s 20000 -t $(LOG_FILE)
+	./Test.exe -c 800000 -s 1250 -t $(LOG_FILE)
 
 # 120 GB data
 120g: Test.exe Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1 ./spills/pass2

@@ -34,5 +34,4 @@ private:
     RowCount _consumed, _produced;
     bool isSorted, hasDuplicates;
     bool const _descending;
-    bool isFirstRow;
 }; // class VerifyIterator

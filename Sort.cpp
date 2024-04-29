@@ -82,8 +82,12 @@ byte * SortIterator::next ()
 	// All preliminary work (incl. creating initial runs, first n-1 level merge)
 	// is done before the first next() call
 	if (row == nullptr) return nullptr;
+	if (_produced % 10000 == 0) {
+		#if defined(VERBOSEL1)
+		traceprintf ("#%llu produced %s\n", _produced, rowToString(row, _plan->_size).c_str());
+		#endif
+	}
 	++ _produced;
-	// traceprintf ("#%llu produced %s\n", _produced, rowToHexString(row, _plan->_size).c_str());
 	return row;
 } // SortIterator::next
 

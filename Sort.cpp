@@ -329,7 +329,7 @@ SortedRecordRenderer * SortIterator::gracefulMerge (vector<string>& runNames, in
 		}
 		auto deviceTypeInitialRun = Metrics::getAvailableStorage(initialRunSize);
 		auto pageSizeFroInitialRun = Metrics::getParams(deviceTypeInitialRun).pageSize;
-		if (MemoryForGracefulRenderer + inputMemoryForAllRuns - inputMemoryForAllRuns + pageSizeFroInitialRun <= MEMORY_SIZE) {
+		if (MemoryForGracefulRenderer + inputMemoryForAllRuns - inputMemoryForInitialRun + pageSizeFroInitialRun <= MEMORY_SIZE) {
 			break;
 			// Assert that the initial renderer can fit into memory 
 		}

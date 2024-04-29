@@ -58,6 +58,12 @@ void Assert (bool const predicate,
 #define INIT_SORT 11
 #define SORT_RESULT 12
 #define VERIFY_RESULT 13
+#define WITNESS_RESULT 14
+#define METRICS_RESULT 15
+
+// used to record access to storage devices
+#define STORAGE_READ 16
+#define STORAGE_WRITE 17
 
 
 class Trace

@@ -4,10 +4,12 @@
 #include "ExternalRun.h"
 #include "TournamentTree.h"
 #include <vector>
+#include <set>
 
 using std::string;
 using std::vector;
 using std::ofstream;
+using std::set;
 
 class ExternalRenderer : public SortedRecordRenderer
 {

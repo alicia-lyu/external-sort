@@ -37,7 +37,9 @@ map<int, string> Trace::opName = {
 	{READ_RUN_PAGES_HDD, "READ_RUN_PAGES_HDD"},
 	{INIT_SORT, "INIT_SORT"},
 	{SORT_RESULT, "SORT"},
-	{VERIFY_RESULT, "VERIFY"}
+	{VERIFY_RESULT, "VERIFY"},
+	{WITNESS_RESULT, "WITNESS"},
+	{METRICS_RESULT, "METRICS"}
 };
 
 void Trace::PrintTrace(int opType, const string & message)

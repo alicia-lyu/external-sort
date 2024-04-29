@@ -22,6 +22,31 @@ ExternalRenderer::ExternalRenderer (RowSize recordSize,
         }
     }
 
+    #ifdef PRODUCTION
+    // check the devices of the files
+    set<int> deviceTypes;
+    for (auto &runFileName : runFileNames) {
+        auto [deviceType, deviceSize] = parseDeviceType(runFileName);
+        for (auto &type : deviceType) {
+            deviceTypes.insert(type);
+        }
+    }
+
+    if (deviceTypes.size() == 1) {
+        auto deviceType = *deviceTypes.begin();
+        string output = "Merge sorted runs on the ";
+        output += getDeviceName(deviceType);
+        output += " device";
+        Trace::PrintTrace(OP_STATE, deviceType == STORAGE_SSD? MERGE_RUNS_SSD : MERGE_RUNS_HDD, output);
+    }
+    else if (deviceTypes.size() == 2) {
+        Trace::PrintTrace(OP_STATE, MERGE_RUNS_BOTH, "Merge sorted runs on both devices");
+    }
+    else {
+        throw std::invalid_argument("ExternalRenderer: run files are on more than two devices");
+    }
+    #endif
+
     if (((double) maxSize) / (totalSize - maxSize) > LONG_RUN_THRESHOLD) {
         #if defined(VERBOSEL1) || defined(VERBOSEL2)
         traceprintf("Optimizing merge pattern because of long run file %s, total size %llu, max size %llu\n", longRunFileName.c_str(), totalSize, maxSize);

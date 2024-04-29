@@ -1,5 +1,6 @@
 #include <vector>
 #include "ExternalRenderer.h"
+#include "defs.h"
 
 using std::vector;
 using std::string;

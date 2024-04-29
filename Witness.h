@@ -7,12 +7,13 @@ class WitnessPlan : public Plan
 {
 	friend class WitnessIterator;
 public:
-	WitnessPlan (Plan * const input, RowSize const size);
+	WitnessPlan (Plan * const input, RowSize const size, bool final = false);
 	~WitnessPlan ();
 	Iterator * init () const;
 private:
 	Plan * const _input;
 	RowSize const _size;
+	bool const _final;
 }; // class WitnessPlan
 
 class WitnessIterator : public Iterator

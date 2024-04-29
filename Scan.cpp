@@ -40,9 +40,11 @@ ScanIterator::~ScanIterator ()
 	TRACE (false);
 	delete _run;
 	_inputFile.close();
+	#if defined(VERBOSEL2) || defined(VERBOSEL1)
 	traceprintf ("produced %lu of %lu rows\n",
 			(unsigned long) (_count),
 			(unsigned long) (_plan->_count));
+	#endif
 } // ScanIterator::~ScanIterator
 
 byte * ScanIterator::next ()

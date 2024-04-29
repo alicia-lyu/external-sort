@@ -96,6 +96,7 @@ SortedRecordRenderer * SortIterator::_formInMemoryRenderer (RowCount base, u_int
 {
 	vector<byte *> rows;
 	while ((_consumed - base + 1) * _plan->_size <= memory_limit) {
+		Assert(_consumed - base < _plan->_recordCountPerRun, __FILE__, __LINE__);
 		byte * received = _input->next ();
 		if (received == nullptr) break;
 		rows.push_back(received);
@@ -122,17 +123,18 @@ SortedRecordRenderer * SortIterator::_formInMemoryRenderer (RowCount base, u_int
 		// start is inclusive, end is exclusive
 		int start = i * rowsPerCache;
 		int end = std::min((i + 1) * rowsPerCache, (int) rows.size());
+		#if defined(VERBOSEL2)
+		traceprintf ("Cache %d: start %d, end %d\n", i, start, end);
+		#endif
 		vector<byte *> cacheRows(rows.begin() + start, rows.begin() + end);
 
 		TournamentTree * tree = new TournamentTree(cacheRows, _plan->_size);
 		cacheTrees.push_back(tree);
 	}
 
-	#if defined(VERBOSEL2)
-	traceprintf ("Formed %lu cache trees, rows per cache %d\n", cacheTrees.size(), rowsPerCache);
-	#endif
-
 	SortedRecordRenderer * renderer = new CacheOptimizedRenderer(_plan->_size, cacheTrees, runNumber, _plan->_removeDuplicates, materialize);
+	// TournamentTree * tree = new TournamentTree(rows, _plan->_size);
+	// SortedRecordRenderer * renderer = new NaiveRenderer(_plan->_size, tree, runNumber, _plan->_removeDuplicates, materialize);
 	return renderer;
 }
 

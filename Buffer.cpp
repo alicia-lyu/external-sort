@@ -2,7 +2,7 @@
 #include <iostream>
 
 // Base class: Buffer
-Buffer::Buffer(u_int16_t recordCount, RowSize recordSize):
+Buffer::Buffer(u_int32_t recordCount, RowSize recordSize):
     recordCount(recordCount), recordSize(recordSize), pageSize(recordCount * recordSize)
 {
     TRACE(false);
@@ -13,6 +13,9 @@ Buffer::Buffer(u_int16_t recordCount, RowSize recordSize):
     toBeRead = _rows;
     toBeFilled = _rows;
     _rowsEnd = _rows + recordSize * recordCount;
+    #if defined(VERBOSEL2)
+    traceprintf("Buffer created with %d records of size %d, page size %llu.\n", recordCount, recordSize, pageSize);
+    #endif
 }
 
 Buffer::~Buffer ()
@@ -80,7 +83,7 @@ byte * Buffer::batchFillByOverwrite (u_int64_t sizeToBeFilled)
 
 
 // Derived class: RandomBuffer
-RandomBuffer::RandomBuffer (u_int16_t recordCount, RowSize recordSize):
+RandomBuffer::RandomBuffer (u_int32_t recordCount, RowSize recordSize):
     Buffer(recordCount, recordSize),
     _engine(_device()), _device(),_distribution(0, RANDOM_BYTE_UPPER_BOUND - 1)
 {
@@ -123,6 +126,9 @@ byte * RandomBuffer::fillRandomly ()
 {
     if (toBeFilled >= _rowsEnd) {
         toBeFilled = _rows;
+        #if defined(VERBOSEL1) || defined(VERBOSEL2)
+        traceprintf("Buffer cleared for refill.\n");
+        #endif
         return nullptr;
     }
     std::generate(toBeFilled, toBeFilled + recordSize, [this](){ return getRandomAlphaNumeric(); });
@@ -143,7 +149,7 @@ byte * RandomBuffer::next ()
 
 
 // Derived class: InFileBuffer
-InFileBuffer::InFileBuffer (u_int16_t recordCount, RowSize recordSize, const string & inputPath):
+InFileBuffer::InFileBuffer (u_int32_t recordCount, RowSize recordSize, const string & inputPath):
     Buffer(recordCount, recordSize)
 {
     TRACE (false);

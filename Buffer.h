@@ -21,10 +21,10 @@ using std::string;
 class Buffer
 {
 public:
-    u_int16_t const recordCount; // max: 100 MB / 20 B = 5 * 10^3 = 2^13
+    u_int32_t const recordCount; // max: 100 MB / 20 B = 2 ^ 25
     RowSize const recordSize;
     u_int64_t const pageSize;
-    Buffer (u_int16_t recordCount, RowSize recordSize);
+    Buffer (u_int32_t recordCount, RowSize recordSize);
     virtual ~Buffer ();
     byte * data() { return _rows; };
     u_int64_t sizeFilled() { return toBeFilled - _rows; };
@@ -47,7 +47,7 @@ protected:
 class RandomBuffer : public Buffer
 {
 public:
-    RandomBuffer (u_int16_t recordCount, RowSize recordSize);
+    RandomBuffer (u_int32_t recordCount, RowSize recordSize);
     ~RandomBuffer ();
     byte * fillRandomly(); // Fill the first bytes not filled yet with random bytes. Return the pointer to the filled bytes.
     // alpha numeric characters
@@ -69,7 +69,7 @@ private:
 class InFileBuffer : public Buffer
 {
 public:
-    InFileBuffer (u_int16_t recordCount, RowSize recordSize, const string & inputPath);
+    InFileBuffer (u_int32_t recordCount, RowSize recordSize, const string & inputPath);
     ~InFileBuffer ();
     byte * next() override;
 private:

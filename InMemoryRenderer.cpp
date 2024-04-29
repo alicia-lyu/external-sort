@@ -49,7 +49,7 @@ CacheOptimizedRenderer::CacheOptimizedRenderer (RowSize recordSize,
 	Trace::PrintTrace(OP_STATE, SORT_MINI_RUNS, "Sort cache-size mini runs");
 	#endif
 
-	#if VERBOSEL2
+	#if VERBOSEL1
 	this->print();
 	#endif
 } // CacheOptimizedRenderer::CacheOptimizedRenderer

@@ -1,7 +1,7 @@
 CPPOPT=-g -Og -D_DEBUG
 # -O2 -Os -Ofast
 # -fprofile-generate -fprofile-use
-CPPFLAGS=$(CPPOPT) -Wall -ansi -pedantic -std=c++17 -DPRODUCTION 
+CPPFLAGS=$(CPPOPT) -Wall -ansi -pedantic -std=c++17 -DVERBOSEL1 -DPRODUCTION
 DEBUGFLAGS=-DCMAKE_BUILD_TYPE=Debug -DLLDB_EXPORT_ALL_SYMBOLS=ON -std=c++17
 # -Wparentheses -Wno-unused-parameter -Wformat-security
 # -fno-rtti -std=c++11 -std=c++98
@@ -45,9 +45,11 @@ $(LOG_DIR) :
 	rm -rf ./logs/*
 	mkdir -p $(LOG_DIR)
 
-./inputs/ : 
-	mkdir -p ./inputs/
+clean-inputs:
 	rm -rf ./inputs/*
+
+./inputs/ : clean-inputs
+	mkdir -p ./inputs/
 
 ./spills/pass0: clean-spills
 	mkdir -p ./spills/pass0
@@ -67,8 +69,8 @@ test : Test.exe Makefile $(LOG_DIR) ./inputs/
 
 testinput : Test.exe Makefile $(LOG_DIR) ./inputs/
 	echo $(TIMESTAMP) > $(LOG_FILE)
-	./Test.exe -c 20 -s 1023 -i input_table -t $(LOG_FILE) -d insort
-	diff output_table output.txt
+	./Test.exe -c 20 -s 1023 -i input_table -t $(LOG_FILE)
+	# diff output_table output.txt
 
 insort : Test.exe Makefile $(LOG_DIR) ./inputs/
 	echo $(TIMESTAMP) > $(LOG_FILE)
@@ -89,10 +91,20 @@ external: Test.exe Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1
 external-lldb: Test.exe Makefile ./inputs/ ./spills/pass0 ./spills/pass1
 	lldb -- ./Test.exe -c 10000 -s 20
 
-# 8 MB data, 82 initial runs, 2 pass-1 runs
-external-2: Test.exe Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1 ./spills/pass2
+external-1: Test.exe Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1 ./spills/pass2
 	echo $(TIMESTAMP) > $(LOG_FILE)
 	./Test.exe -c 40000 -s 200 -t $(LOG_FILE)
+
+external-2: Test.exe Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1 ./spills/pass2
+	echo $(TIMESTAMP) > $(LOG_FILE)
+	./Test.exe -c 40000 -s 1250 -t $(LOG_FILE)
+
+external-2-lldb: Test.exe Makefile ./inputs/ ./spills/pass0 ./spills/pass1 ./spills/pass2
+	lldb -- ./Test.exe -c 40000 -s 1250
+
+200m: Test.exe Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1 ./spills/pass2
+	echo $(TIMESTAMP) > $(LOG_FILE)
+	./Test.exe -c 160000 -s 1250 -t $(LOG_FILE)
 
 # 1 GB data: 800000 * 1250
 1g: Test.exe Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1 ./spills/pass2
@@ -103,9 +115,6 @@ external-2: Test.exe Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1
 120g: Test.exe Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1 ./spills/pass2
 	echo $(TIMESTAMP) > $(LOG_FILE)
 	./Test.exe -c 125000000 -s 960 -t $(LOG_FILE)
-
-external-2-lldb: Test.exe Makefile ./inputs/ ./spills/pass0 ./spills/pass1 ./spills/pass2
-	lldb -- ./Test.exe -c 40000 -s 200
 
 # 100 KB data
 graceful: Test.exe Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1

@@ -6,9 +6,6 @@ ScanPlan::ScanPlan (RowCount const count, RowSize const size, const string &inpu
 	_count (count), _size (size), _countPerRun (getRecordCountPerRun(size, true)), _inputPath(inputPath)
 {
 	TRACE (false);
-	// CHECK WITH TA: Do we need to evaluate the metrics of data read & final write? 
-	// Since they are the same across different implementation, may as well only evaluate the spills
-	// This way, we also don't need to modify Scan when introducing HDD
 } // ScanPlan::ScanPlan
 
 ScanPlan::~ScanPlan ()
@@ -65,15 +62,15 @@ byte * ScanIterator::next ()
 		_scanCount++;
 	}
 	if (_inputFile.good()) {
-		_inputFile.write(reinterpret_cast<char *>(row), _plan->_size);
+		_inputFile.write((char *) row, _plan->_size);
 		_inputFile.write("\n", 1);
 	} else {
 		throw std::runtime_error("Error writing to input file scan" + std::to_string(_scanCount));
 	}
-	++ _count;
 	#ifdef VERBOSEL1
-	if (_count % 10000 == 0) traceprintf ("%d produced %s\n", _count, rowToString(row, _plan->_size).c_str());
+	if (_count % 10000 == 0) traceprintf ("# %llu produced %s\n", _count, rowToString(row, _plan->_size).c_str());
 	#endif
+	++ _count;
 	return row;
 } // ScanIterator::next
 

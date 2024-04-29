@@ -11,3 +11,4 @@ temp.*
 .DS_Store
 *.tmp
 output.txt
+trace

@@ -29,4 +29,4 @@
 #define GRACEFUL_DEGRADATION_THRESHOLD 1.5
 #define LONG_RUN_THRESHOLD 2
 
-#define MAX_INPUT_FILE_SIZE 18000000 // Change to 10 GB
+#define MAX_INPUT_FILE_SIZE 120000000000 // Not curtail input file size

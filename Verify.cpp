@@ -25,8 +25,7 @@ VerifyIterator::VerifyIterator(VerifyPlan const * const plan)
         isSorted(true), hasDuplicates(false), _descending(_plan->_descending)
 {
     TRACE(false);
-    lastRow = (byte *)malloc(_plan->_size);
-    isFirstRow = true;
+    lastRow = nullptr;
 } // VerifyIterator::VerifyIterator
 
 VerifyIterator::~VerifyIterator()
@@ -74,8 +73,8 @@ byte * VerifyIterator::next()
             if (_descending ? cmp < 0 : cmp > 0) {
                 isSorted = false;
 
-                #ifdef VERBOSEL2
-                traceprintf ("#%lu not sorted with value %s\n", (unsigned long) (_consumed), rowToString(received, _plan->_size).c_str());
+                #ifdef VERBOSEL1
+                traceprintf ("!!!!!! Sort error: #%lu || %s #%lu || %s\n", (unsigned long) (_consumed - 1), rowToString(lastRow, _plan->_size).c_str(), (unsigned long) (_consumed), rowToString(received, _plan->_size).c_str());
                 #endif
             }
             else if (cmp == 0) {
@@ -85,11 +84,12 @@ byte * VerifyIterator::next()
                 traceprintf ("#%lu has duplicates with value %s\n", (unsigned long) (_consumed), rowToString(lastRow, _plan->_size).c_str());
                 #endif
             }
+        } else {
+            lastRow = (byte *) malloc(_plan->_size);
         }
 
         // copy received to lastRow
         memcpy(lastRow, received, _plan->_size);
-        isFirstRow = false;
         
         ++ _produced;
         

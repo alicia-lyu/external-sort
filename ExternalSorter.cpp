@@ -47,6 +47,9 @@ SortedRecordRenderer * ExternalSorter::init () {
 
 			if (rendererNum == 0 && mergedRunCount == runNames.size()) // The last renderer in the last pass
 			{
+				#if defined(VERBOSEL1) || defined(VERBOSEL2)
+				traceprintf ("====== Stopped at pass %d\n", pass);
+				#endif
 				return renderer;
 			} else { // Need another pass for merged runs
 				mergedRunNames.push_back(renderer->run());
@@ -145,11 +148,13 @@ SortedRecordRenderer * ExternalSorter::gracefulMerge (vector<string>& runNames, 
 {
 	TRACE (false);
 
+	#if defined(VERBOSEL1) || defined(VERBOSEL2)
+	traceprintf ("====== Pass %d Graceful merge %zu runs\n", basePass, runNames.size());
+	#endif
+
 	// Optimization problem:
 	// Memory consumption of the graceful renderer <= MEMORY_SIZE
 	// Minimize the size of the initial run so that 
-	// 1) Extra spill is minimized
-	// 2) Extra spill is into SSD if possible (to avoid HDD I/O)
 
 	auto [gracefulReadAheadSize, ret2] = profileReadAheadAndOutput(runNames, 0);
 	// Only the first few runs whose pages can fit into memory are profiled --- for graceful renderer

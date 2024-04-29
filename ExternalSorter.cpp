@@ -20,42 +20,36 @@ SortedRecordRenderer * ExternalSorter::init () {
 	// Multi-pass merge
 	while (runNames.size() > 1) { // Need another pass to merge the runs
 		++ pass;
-		#if defined(VERBOSEL1) || defined(VERBOSEL2)
-		traceprintf ("Pass %d: %lu runs in total\n", pass, runNames.size());
-		#endif
+		printf ("======= Pass %d: %lu runs in total =======\n", pass, runNames.size());
+
+		u_int16_t rendererNum = 0;
+
+		// Gracefully merge all in one pass if possible (this is the last pass if there is only one renderer)
+		u_int64_t allMemoryNeeded = calculateMemoryForAll(runNames);
+		if (allMemoryNeeded <= MEMORY_SIZE * GRACEFUL_DEGRADATION_THRESHOLD && allMemoryNeeded > MEMORY_SIZE) {
+			printf("******* Graceful merge in pass %d: merging %zu runs, all memory needed %llu / %d\n", pass, runNames.size(), allMemoryNeeded, MEMORY_SIZE);
+			std::vector<string> restOfRuns = std::vector<string>(runNames.begin(), runNames.end());
+			renderer = gracefulMerge(restOfRuns, pass, rendererNum);
+			return renderer;
+		}
 
 		u_int16_t mergedRunCount = 0;
 		vector<string> mergedRunNames;
-		u_int16_t rendererNum = 0;
 
-		while (mergedRunCount < runNames.size()) { // has more runs to merge
-			u_int64_t allMemoryNeeded = allMemoryForRestRuns(runNames, mergedRunCount);
-
-
-			if (allMemoryNeeded <= MEMORY_SIZE * GRACEFUL_DEGRADATION_THRESHOLD && allMemoryNeeded > MEMORY_SIZE) {
-				#if defined(VERBOSEL1) || defined(VERBOSEL2)
-				traceprintf("*** Graceful merge in pass %d: merged run count new %d, all memory needed %llu\n", pass, mergedRunCount, allMemoryNeeded);
-				#endif
-				std::vector<string> restOfRuns = std::vector<string>(runNames.begin() + mergedRunCount, runNames.end());
-				renderer = gracefulMerge(restOfRuns, pass, rendererNum);
-				mergedRunCount = runNames.size(); // All are merged gracefully
-			} else {
-				u_int16_t mergedRunCountSoFar = mergedRunCount;
-				auto [mergedRunCountNew, readAheadSize] = assignRuns(runNames, mergedRunCountSoFar);
-				mergedRunCount = mergedRunCountNew;
-				#if defined(VERBOSEL1) || defined(VERBOSEL2)
-				traceprintf ("Pass %d renderer %d: Merging runs from %d to %d out of %zu\n", pass, rendererNum, mergedRunCountSoFar, mergedRunCount - 1, runNames.size() - 1);
-				#endif
-				renderer = new ExternalRenderer(recordSize, 
-				vector<string>(runNames.begin() + mergedRunCountSoFar, runNames.begin() + mergedRunCount), 
-				readAheadSize, pass, rendererNum, removeDuplicates);
-			}
+		while (mergedRunCount < runNames.size()) { // has more runs to merge, may still be the last pass if  allMemoryNeeded <= MEMORY_SIZE
+			u_int16_t mergedRunCountSoFar = mergedRunCount;
+			auto [mergedRunCountNew, readAheadSize] = assignRuns(runNames, mergedRunCountSoFar);
+			mergedRunCount = mergedRunCountNew;
+			#if defined(VERBOSEL1) || defined(VERBOSEL2)
+			traceprintf ("Pass %d renderer %d: Merging runs from %d to %d out of %zu\n", pass, rendererNum, mergedRunCountSoFar, mergedRunCount - 1, runNames.size() - 1);
+			#endif
+			renderer = new ExternalRenderer(recordSize, 
+			vector<string>(runNames.begin() + mergedRunCountSoFar, runNames.begin() + mergedRunCount), 
+			readAheadSize, pass, rendererNum, removeDuplicates);
 
 			if (rendererNum == 0 && mergedRunCount == runNames.size()) // The last renderer in the last pass
 			{
-				#if defined(VERBOSEL1) || defined(VERBOSEL2)
-				traceprintf("*** Multi-level merge stopped in pass %d\n", pass);
-				#endif
+				printf("******* Multi-level merge stopped in pass %d\n", pass);
 				return renderer;
 			} else { // Need another pass for merged runs
 				mergedRunNames.push_back(renderer->run());
@@ -94,13 +88,13 @@ tuple<u_int16_t, u_int64_t> ExternalSorter::assignRuns(vector<string>& runNames,
 	return std::make_tuple(mergedRunCount, readAheadSize);
 }
 
-u_int64_t ExternalSorter::allMemoryForRestRuns (vector<string>& runNames, u_int16_t mergedRunCount)
+u_int64_t ExternalSorter::calculateMemoryForAll (vector<string>& runNames)
 {
-	auto [readAheadSize, outputPageSize] = profileReadAheadAndOutput(runNames, mergedRunCount);
+	auto [readAheadSize, outputPageSize] = profileReadAheadAndOutput(runNames, 0);
 
 	// Calculate all memory consumption till the end of runNames
 	u_int64_t allMemoryConsumption = readAheadSize + outputPageSize;
-	for (int i = mergedRunCount; i < runNames.size(); i++) {
+	for (int i = 0; i < runNames.size(); i++) {
 		auto deviceType = getLargestDeviceType(runNames.at(i));
 		auto pageSize = Metrics::getParams(deviceType).pageSize;
 		allMemoryConsumption += pageSize;

@@ -32,10 +32,10 @@ void Metrics::read(const int device_type, const u_int64_t num_bytes, bool readAh
         metric.dataTransferCost += num_bytes / param.bandwidth;
         metric.accessCost += param.latency;
 
-        #ifdef PRODUCTION
-        double latency = num_bytes / param.bandwidth + param.latency;
-        Trace::PrintTrace(OP_ACCESS, string("A read to ") + getDeviceName(device_type) + " with " + to_string(num_bytes) + " bytes and latency " + to_string(int(latency*1e6)) + " us");
-        #endif
+        // #ifdef PRODUCTION
+        // double latency = num_bytes / param.bandwidth + param.latency;
+        // Trace::PrintTrace(OP_ACCESS, string("A read to ") + getDeviceName(device_type) + " with " + to_string(num_bytes) + " bytes and latency " + to_string(int(latency*1e6)) + " us");
+        // #endif
     }
 
     metric.numBytesRead += num_bytes;
@@ -65,11 +65,11 @@ int Metrics::write(const int device_type, const u_int64_t num_bytes)
 
     metric.storageUsed += num_bytes;
 
-    #ifdef PRODUCTION
-    // output to trace
-    double latency = num_bytes / param.bandwidth + param.latency;
-    Trace::PrintTrace(OP_ACCESS, string("A write to ") + getDeviceName(device_type) + " with " + to_string(num_bytes) + " bytes and latency " + to_string(int(latency*1e6)) + " us");
-    #endif
+    // #ifdef PRODUCTION
+    // // output to trace
+    // double latency = num_bytes / param.bandwidth + param.latency;
+    // Trace::PrintTrace(OP_ACCESS, string("A write to ") + getDeviceName(device_type) + " with " + to_string(num_bytes) + " bytes and latency " + to_string(int(latency*1e6)) + " us");
+    // #endif
 
     return device_type;
 }

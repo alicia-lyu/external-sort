@@ -173,7 +173,7 @@ SortedRecordRenderer * SortIterator::_externalSort ()
 
 		while (mergedRunCount < runNames.size()) { // has more runs to merge
 			// one renderer
-			auto [mergedRunCountNew, readAheadSize] = assignRuns(runNames, mergedRunCount);
+			auto [mergedRunCountNew, readAheadSize, allMemoryNeeded] = assignRuns(runNames, mergedRunCount);
 			u_int16_t mergedRunCountSoFar = mergedRunCount;
 			mergedRunCount = mergedRunCountNew;
 
@@ -182,13 +182,13 @@ SortedRecordRenderer * SortIterator::_externalSort ()
 			#endif
 
 			// check graceful merge
-			if ((mergedRunCountNew - mergedRunCountSoFar) * GRACEFUL_DEGRADATION_THRESHOLD >= runNames.size() - mergedRunCountSoFar) {
+			if (allMemoryNeeded <= MEMORY_SIZE * GRACEFUL_DEGRADATION_THRESHOLD) {
 				#if defined(VERBOSEL1) || defined(VERBOSEL2)
 				traceprintf("*** Graceful merge in pass %d\n", pass);
 				#endif
 
 				// TODO: Graceful merge
-				
+
 				continue;
 			}
 
@@ -215,10 +215,16 @@ SortedRecordRenderer * SortIterator::_externalSort ()
 	throw std::runtime_error("External sort not returning renderer.");
 }
 
-tuple<u_int16_t, u_int64_t> SortIterator::assignRuns(vector<string>& runNames, u_int16_t mergedRunCount) 
+// Return: mergedRunCount, readAheadSize, neededMemorySize
+// mergedRunCount: the number of runs that can be merged in this pass
+// readAheadSize: the size of read-ahead buffers needed in this pass
+// neededMemorySize: if merge all runs in this pass, the memory needed
+tuple<u_int16_t, u_int64_t, u_int64_t> SortIterator::assignRuns(vector<string>& runNames, u_int16_t mergedRunCount) 
 {
 	u_int64_t memoryConsumption = 0;
 	u_int64_t outputFileSize = 0;
+	u_int64_t allMemoryConsumption = 0;
+	bool isProbing = false;
 
 	// READ-AHEAD BUFFERS
 	auto hddReadAheadBuffers = profileReadAheadBuffers(runNames, mergedRunCount);
@@ -231,15 +237,22 @@ tuple<u_int16_t, u_int64_t> SortIterator::assignRuns(vector<string>& runNames, u
 
 	// INPUT BUFFERS
 	while (mergedRunCount < runNames.size()) { // max. 120 G / 98 M = 2^11
-		string runName = runNames.at(mergedRunCount);
+		string &runName = runNames.at(mergedRunCount);
 		auto deviceType = getLargestDeviceType(runName);
-		memoryConsumption += Metrics::getParams(deviceType).pageSize; // 1 input buffer for this run
-		if (memoryConsumption > MEMORY_SIZE) {
-			memoryConsumption -= Metrics::getParams(deviceType).pageSize;
-			break;
+		auto pageSize = Metrics::getParams(deviceType).pageSize;
+		allMemoryConsumption += pageSize;
+
+		if (!isProbing) {
+			memoryConsumption += pageSize; // 1 input buffer for this run
+			if (memoryConsumption > MEMORY_SIZE) {
+				memoryConsumption -= pageSize;
+				isProbing = true;
+			}
+
+			// isProbing: not really merge, just probing how much memory is needed
+			mergedRunCount++;
+			outputFileSize += std::filesystem::file_size(runName);
 		}
-		mergedRunCount++;
-		outputFileSize += std::filesystem::file_size(runName);
 	}
 
 	// OUTPUT BUFFER
@@ -251,7 +264,7 @@ tuple<u_int16_t, u_int64_t> SortIterator::assignRuns(vector<string>& runNames, u
 
 	readAheadSize += MEMORY_SIZE - memoryConsumption; // Use the remaining memory for more read-ahead buffers
 
-	return std::make_tuple(mergedRunCount, readAheadSize);
+	return std::make_tuple(mergedRunCount, readAheadSize, allMemoryConsumption);
 }
 
 u_int8_t SortIterator::profileReadAheadBuffers (vector<string>& runNames, u_int16_t mergedRunCount)

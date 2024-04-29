@@ -246,10 +246,10 @@ tuple<u_int16_t, u_int64_t, u_int64_t> SortIterator::assignRuns(vector<string>& 
 				memoryConsumption -= pageSize;
 				isProbing = true;
 			}
-
-			// isProbing: not really merge, just probing how much memory is needed
-			mergedRunCount++;
-			outputFileSize += std::filesystem::file_size(runName);
+			else {
+				mergedRunCount++;
+				outputFileSize += std::filesystem::file_size(runName);
+			}
 		}
 	}
 
@@ -329,7 +329,7 @@ SortedRecordRenderer * SortIterator::gracefulMerge (vector<string>& runNames, in
 		}
 		auto deviceTypeInitialRun = Metrics::getAvailableStorage(initialRunSize);
 		auto pageSizeFroInitialRun = Metrics::getParams(deviceTypeInitialRun).pageSize;
-		if (MemoryForGracefulRenderer + inputMemoryForAllRuns - inputMemoryForAllRuns + pageSizeFroInitialRun <= MEMORY_SIZE) {
+		if (MemoryForGracefulRenderer + inputMemoryForAllRuns - inputMemoryForInitialRun + pageSizeFroInitialRun <= MEMORY_SIZE) {
 			break;
 			// Assert that the initial renderer can fit into memory 
 		}

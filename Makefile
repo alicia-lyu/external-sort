@@ -92,7 +92,7 @@ external-lldb: Test.exe Makefile ./inputs/ ./spills/pass0 ./spills/pass1
 # 8 MB data, 82 initial runs, 2 pass-1 runs
 external-2: Test.exe Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1 ./spills/pass2
 	echo $(TIMESTAMP) > $(LOG_FILE)
-	./Test.exe -c 40000 -s 200
+	./Test.exe -c 40000 -s 200 -t $(LOG_FILE)
 
 external-2-lldb: Test.exe Makefile ./inputs/ ./spills/pass0 ./spills/pass1 ./spills/pass2
 	lldb -- ./Test.exe -c 40000 -s 200

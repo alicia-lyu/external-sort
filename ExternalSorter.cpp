@@ -3,7 +3,7 @@
 #include "ExternalSorter.h"
 #include "utils.h"
 
-ExternalSorter::ExternalSorter (vector<string>& runNames, RowSize recordSize, bool removeDuplicates) 
+ExternalSorter::ExternalSorter (const vector<string>& runNames, RowSize recordSize, bool removeDuplicates) 
 : recordSize(recordSize), removeDuplicates(removeDuplicates), runNames(runNames)
 {
     TRACE (false);
@@ -17,6 +17,7 @@ ExternalSorter::~ExternalSorter ()
 SortedRecordRenderer * ExternalSorter::init () {
 	u_int8_t pass = 0;
 	SortedRecordRenderer * renderer = nullptr;
+	vector<string> mergedRunNames;
 	// Multi-pass merge
 	while (runNames.size() > 1) { // Need another pass to merge the runs
 		++ pass;
@@ -26,13 +27,12 @@ SortedRecordRenderer * ExternalSorter::init () {
 		// Gracefully merge all in one pass if possible (this is the last pass if there is only one renderer)
 		u_int64_t allMemoryNeeded = calculateMemoryForAll(runNames);
 		if (allMemoryNeeded <= MEMORY_SIZE * GRACEFUL_DEGRADATION_THRESHOLD && allMemoryNeeded > MEMORY_SIZE) {
-			std::vector<string> restOfRuns = std::vector<string>(runNames.begin(), runNames.end());
-			renderer = gracefulMerge(restOfRuns, pass, rendererNum);
+			renderer = gracefulMerge(runNames, pass, rendererNum);
 			return renderer;
 		}
 
 		u_int16_t mergedRunCount = 0;
-		vector<string> mergedRunNames;
+		mergedRunNames.clear();
 
 		while (mergedRunCount < runNames.size()) { // has more runs to merge, may still be the last pass if  allMemoryNeeded <= MEMORY_SIZE
 			u_int16_t mergedRunCountSoFar = mergedRunCount;
@@ -42,7 +42,7 @@ SortedRecordRenderer * ExternalSorter::init () {
 			traceprintf ("Pass %d renderer %d: Merging runs from %d to %d out of %zu\n", pass, rendererNum, mergedRunCountSoFar, mergedRunCount - 1, runNames.size() - 1);
 			#endif
 			renderer = new ExternalRenderer(recordSize, 
-			vector<string>(runNames.begin() + mergedRunCountSoFar, runNames.begin() + mergedRunCount), 
+			runNames.cbegin() + mergedRunCountSoFar, runNames.cbegin() + mergedRunCount,
 			readAheadSize, pass, rendererNum, removeDuplicates);
 
 			if (rendererNum == 0 && mergedRunCount == runNames.size()) // The last renderer in the last pass
@@ -64,7 +64,7 @@ SortedRecordRenderer * ExternalSorter::init () {
 	throw std::runtime_error("External sort not returning renderer.");
 }
 
-tuple<u_int16_t, u_int64_t> ExternalSorter::assignRuns(vector<string>& runNames, u_int16_t mergedRunCount) 
+tuple<u_int16_t, u_int64_t> ExternalSorter::assignRuns(const vector<string>& runNames, u_int16_t mergedRunCount) 
 {
 	auto [readAheadSize, outputPageSize] = profileReadAheadAndOutput(runNames, mergedRunCount);
 
@@ -72,7 +72,7 @@ tuple<u_int16_t, u_int64_t> ExternalSorter::assignRuns(vector<string>& runNames,
 	u_int64_t memoryConsumption = readAheadSize + outputPageSize;
 	while (mergedRunCount < runNames.size()) { // max. 120 G / 98 M = 2^11
 
-		string &runName = runNames.at(mergedRunCount);
+		const string &runName = runNames.at(mergedRunCount);
 		auto deviceType = getLargestDeviceType(runName);
 		auto pageSize = Metrics::getParams(deviceType).pageSize;
 
@@ -88,7 +88,7 @@ tuple<u_int16_t, u_int64_t> ExternalSorter::assignRuns(vector<string>& runNames,
 	return std::make_tuple(mergedRunCount, readAheadSize);
 }
 
-u_int64_t ExternalSorter::calculateMemoryForAll (vector<string>& runNames)
+u_int64_t ExternalSorter::calculateMemoryForAll (const vector<string>& runNames)
 {
 	auto [readAheadSize, outputPageSize] = profileReadAheadAndOutput(runNames, 0);
 
@@ -103,7 +103,7 @@ u_int64_t ExternalSorter::calculateMemoryForAll (vector<string>& runNames)
 	return allMemoryConsumption;
 }
 
-tuple<u_int64_t, u_int64_t> ExternalSorter::profileReadAheadAndOutput (vector<string>& runNames, u_int16_t mergedRunCount)
+tuple<u_int64_t, u_int64_t> ExternalSorter::profileReadAheadAndOutput (const vector<string>& runNames, u_int16_t mergedRunCount)
 {
 	TRACE (false);
 	// A conservative estimate of the output page size
@@ -114,7 +114,7 @@ tuple<u_int64_t, u_int64_t> ExternalSorter::profileReadAheadAndOutput (vector<st
 	u_int16_t hddRunCount = 0;
 	while (mergedRunCount < runNames.size()) {
 
-		string &runName = runNames.at(mergedRunCount);
+		const string &runName = runNames.at(mergedRunCount);
 		auto deviceType = getLargestDeviceType(runName);
 		auto pageSize = Metrics::getParams(deviceType).pageSize;
 
@@ -144,7 +144,7 @@ tuple<u_int64_t, u_int64_t> ExternalSorter::profileReadAheadAndOutput (vector<st
 	return std::make_tuple(readAheadSize, outputPageSize);
 }
 
-SortedRecordRenderer * ExternalSorter::gracefulMerge (vector<string>& runNames, int basePass, int rendererNum)
+SortedRecordRenderer * ExternalSorter::gracefulMerge (const vector<string>& runNames, int basePass, int rendererNum)
 {
 	TRACE (false);
 
@@ -202,15 +202,15 @@ SortedRecordRenderer * ExternalSorter::gracefulMerge (vector<string>& runNames, 
 	Assert (initialReadAheadSize >= 0, __FILE__, __LINE__);
 
 	ExternalRenderer * initialRenderer = new ExternalRenderer(recordSize, 
-		vector<string>(runNames.end() - i, runNames.end()),
+		runNames.cend() - i, runNames.cend(),
 		initialReadAheadSize, basePass, rendererNum + 1, removeDuplicates
 	); // rendererNum + 1: This run will not be pushed back to mergedRunNames in _externalSort
 	string initialRunFileName = initialRenderer->run();
 
 	// Create the graceful renderer for the rest of the runs + initial run
-	vector<string> restOfRuns = std::vector<string>(runNames.begin(), runNames.end() - i);
+	vector<string> restOfRuns = vector<string>(runNames.begin(), runNames.end() - i);
 	restOfRuns.push_back(initialRunFileName);
-	SortedRecordRenderer * gracefulRenderer = new ExternalRenderer(recordSize, restOfRuns, gracefulReadAheadSize, basePass, rendererNum, removeDuplicates);
+	SortedRecordRenderer * gracefulRenderer = new ExternalRenderer(recordSize, restOfRuns.cbegin(), restOfRuns.cend(), gracefulReadAheadSize, basePass, rendererNum, removeDuplicates);
 
 	return gracefulRenderer;
 	

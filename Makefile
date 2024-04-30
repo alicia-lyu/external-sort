@@ -1,7 +1,7 @@
 CPPOPT=-g -Og -D_DEBUG
 # -O2 -Os -Ofast
 # -fprofile-generate -fprofile-use
-CPPFLAGS=$(CPPOPT) -Wall -ansi -pedantic -std=c++17 -DVERBOSEL1 -DPRODUCTION
+CPPFLAGS=$(CPPOPT) -Wall -ansi -pedantic -std=c++17 -DPRODUCTION
 DEBUGFLAGS=-DCMAKE_BUILD_TYPE=Debug -DLLDB_EXPORT_ALL_SYMBOLS=ON -std=c++17
 # -Wparentheses -Wno-unused-parameter -Wformat-security
 # -fno-rtti -std=c++11 -std=c++98
@@ -118,6 +118,11 @@ external-2-lldb: Test.exe Makefile ./inputs/ ./spills/pass0 ./spills/pass1 ./spi
 120g: Test.exe Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1 ./spills/pass2
 	echo $(TIMESTAMP) > $(LOG_FILE)
 	./Test.exe -c 125000000 -s 960 -t $(LOG_FILE)
+
+# 30 GB data
+30g: Test.exe Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1 ./spills/pass2
+	echo $(TIMESTAMP) > $(LOG_FILE)
+	./Test.exe -c 30000000 -s 1000 -t $(LOG_FILE)
 
 # 100 KB data
 graceful: Test.exe Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1

@@ -42,7 +42,6 @@ int main (int argc, char * argv [])
 	Plan * const removePlan = new InStreamRemovePlan (sortPlan, recordSize, useInstream);
 	Plan * const verifyPlan = new VerifyPlan (removePlan, recordSize);
 	Plan * const witnessPlan2 = new WitnessPlan (verifyPlan, recordSize, true);
-	// Plan * const outputPlan = new OutputPlan (witnessPlan2, recordSize, config.outputPath);
 
 	Iterator * const it = witnessPlan2->init ();
 	it->run ();
@@ -51,6 +50,9 @@ int main (int argc, char * argv [])
 	// in its destructor, and create a chain deletion
 	delete it;
 	delete witnessPlan2;
+
+	OutputPrinter printer(config.outputPath, recordSize);
+	printer.Print();
 
 	// print the metrics
 	auto ssdMetrics = Metrics::getMetrics(STORAGE_SSD);

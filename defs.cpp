@@ -44,6 +44,8 @@ map<int, string> Trace::opName = {
 
 int Trace::lastOp = -1;
 
+string Trace::finalOutputFileName = "";
+
 void Trace::PrintTrace(int opType, const string & message)
 {
 	if (lastOp == OP_ACCESS && opType != OP_ACCESS) {
@@ -99,6 +101,8 @@ void Trace::FlushAccess()
 	}
 }
 
+char Trace::buffer[50];
+
 void Trace::WriteAccess(int accessOp, int deviceType, double latency, u_int64_t numBytes, u_int64_t numAccess)
 {
 	string output = "A total of " + to_string(numAccess);;
@@ -131,13 +135,11 @@ string Trace::FormatSize(u_int64_t size)
 		unit = "GB";
 	}
 
-	char buffer[100];
-
 	// if is an integer, don't show decimal places
 	if (size_d == (int) size_d) {
-		snprintf(buffer, 99, "%d ", (int) size_d);
+		snprintf(buffer, 49, "%d ", (int) size_d);
 	} else {
-		snprintf(buffer, 99, "%.2f ", size_d);
+		snprintf(buffer, 49, "%.2f ", size_d);
 	}
 
 	return string(buffer) + unit;

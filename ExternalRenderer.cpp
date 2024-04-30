@@ -2,7 +2,9 @@
 #include "utils.h"
 
 ExternalRenderer::ExternalRenderer (RowSize recordSize, 
-    vector<string> runFileNames, u_int64_t readAheadSize,
+    vector<string>::const_iterator runFileNames_begin,
+    vector<string>::const_iterator runFileNames_end,
+    u_int64_t readAheadSize,
     u_int8_t pass, u_int16_t rendererNumber, 
     bool removeDuplicates) :  // 500 KB = 2^19
     SortedRecordRenderer(recordSize, pass, rendererNumber, removeDuplicates)
@@ -13,7 +15,8 @@ ExternalRenderer::ExternalRenderer (RowSize recordSize,
     u_int64_t maxSize = 0;
     string longRunFileName;
 
-    for (auto &runFileName : runFileNames) {
+    for (auto it = runFileNames_begin; it != runFileNames_end; ++it) {
+        auto &runFileName = *it;
         u_int64_t fileSize = std::filesystem::file_size(runFileName);
         totalSize += fileSize;
         if (fileSize > maxSize) {
@@ -25,7 +28,8 @@ ExternalRenderer::ExternalRenderer (RowSize recordSize,
     #ifdef PRODUCTION
     // check the devices of the files
     set<int> deviceTypes;
-    for (auto &runFileName : runFileNames) {
+    for (auto it = runFileNames_begin; it != runFileNames_end; ++it) {
+        auto &runFileName = *it;
         auto [deviceType, deviceSize] = parseDeviceType(runFileName);
         for (auto &type : deviceType) {
             deviceTypes.insert(type);
@@ -51,7 +55,6 @@ ExternalRenderer::ExternalRenderer (RowSize recordSize,
         #if defined(VERBOSEL1) || defined(VERBOSEL2)
         traceprintf("Optimizing merge pattern because of long run file %s, total size %llu, max size %llu\n", longRunFileName.c_str(), totalSize, maxSize);
         #endif
-        runFileNames.erase(std::remove(runFileNames.begin(), runFileNames.end(), longRunFileName), runFileNames.end());
         longRun = new ExternalRun(longRunFileName, _recordSize);
     } else {
         longRun = nullptr;
@@ -63,7 +66,9 @@ ExternalRenderer::ExternalRenderer (RowSize recordSize,
     #if defined(VERBOSEL1) || defined(VERBOSEL2)
     traceprintf ("Renderer %d: %zu run files, read-ahead size %llu threshold %f\n", rendererNumber, runFileNames.size(), readAheadSize, ExternalRun::READ_AHEAD_THRESHOLD);
     #endif
-    for (auto &runFileName : runFileNames) {
+    for (auto it = runFileNames_begin; it != runFileNames_end; ++it) {
+        auto &runFileName = *it;
+        if (longRun != nullptr && runFileName == longRunFileName) continue;
         ExternalRun * run = new ExternalRun(runFileName, _recordSize);
         _runs.push_back(run);
         formingRows.push_back(run->next());

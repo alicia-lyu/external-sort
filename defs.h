@@ -84,6 +84,8 @@ public :
 	static string FormatSize(u_int64_t size);
 	static void TraceAccess(int accessType, int deviceType, double latency, u_int64_t numBytes);
 
+	static string finalOutputFileName;
+
 private :
 
 	void _trace (char const lead []);
@@ -101,6 +103,7 @@ private :
 
 	static void WriteAccess(int accessOp, int deviceType, double latency, u_int64_t numBytes, u_int64_t numAccesses);
 	static void FlushAccess();
+	static char buffer[50];
 }; // class Trace
 
 #define TRACE(trace)	Trace __trace (trace, __FUNCTION__, __FILE__, __LINE__)

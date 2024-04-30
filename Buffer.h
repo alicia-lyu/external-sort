@@ -49,7 +49,6 @@ class RandomBuffer : public Buffer
 public:
     RandomBuffer (u_int32_t recordCount, RowSize recordSize);
     ~RandomBuffer ();
-    byte * fillRandomly(); // Fill the first bytes not filled yet with random bytes. Return the pointer to the filled bytes.
     // alpha numeric characters
     static byte toAlphaNumeric(const byte randomByte);
     byte * next() override;

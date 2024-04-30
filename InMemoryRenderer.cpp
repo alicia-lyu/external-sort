@@ -43,7 +43,7 @@ CacheOptimizedRenderer::CacheOptimizedRenderer (RowSize recordSize,
         }
         formingRows.push_back(row);
     }
-    _tree = new TournamentTree(formingRows, _recordSize);
+    _tree = new TournamentTree(formingRows.cbegin(), _recordSize, formingRows.size());
 
 	#ifdef PRODUCTION
 	Trace::PrintTrace(OP_STATE, SORT_MINI_RUNS, "Sort cache-size mini runs");

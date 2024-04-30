@@ -143,9 +143,8 @@ SortedRecordRenderer * SortIterator::_formInMemoryRenderer (RowCount base, u_int
 		#if defined(VERBOSEL2)
 		traceprintf ("Cache %d: start %d, end %d\n", i, start, end);
 		#endif
-		vector<byte *> cacheRows(rows.begin() + start, rows.begin() + end);
 
-		TournamentTree * tree = new TournamentTree(cacheRows, _plan->_size);
+		TournamentTree * tree = new TournamentTree(rows.cbegin() + start, _plan->_size, end - start);
 		cacheTrees.push_back(tree);
 	}
 

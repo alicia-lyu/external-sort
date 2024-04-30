@@ -73,7 +73,7 @@ ExternalRenderer::ExternalRenderer (RowSize recordSize,
         _runs.push_back(run);
         formingRows.push_back(run->next());
     }
-    _tree = new TournamentTree(formingRows, _recordSize);
+    _tree = new TournamentTree(formingRows.cbegin(), _recordSize, formingRows.size());
 } // ExternalRenderer::ExternalRenderer
 
 ExternalRenderer::~ExternalRenderer ()

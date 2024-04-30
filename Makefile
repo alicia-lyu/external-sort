@@ -176,7 +176,7 @@ $(OBJS) : Makefile defs.h
 Test.o : Iterator.h Scan.h Sort.h utils.h Buffer.h Witness.h TournamentTree.h SortedRecordRenderer.h Verify.h Remove.h Metrics.h Output.h GracefulRenderer.h ExternalRenderer.h ExternalRun.h
 Iterator.o Scan.o Sort.o utils.o Buffer.o Witness.o TournamentTree.o SortedRecordRenderer.o Verify.o Remove.o Metrics.o Output.o GracefulRenderer.o ExternalRenderer.o ExternalRun.o: Iterator.h Buffer.h params.h utils.h
 Scan.o : Scan.h 
-Sort.o : Sort.h
+Sort.o : Sort.h TournamentTree.h SortedRecordRenderer.h
 utils.o: utils.h
 Witness.o: Witness.h
 Verify.o: Verify.h
@@ -186,9 +186,9 @@ Metrics.o: Metrics.h
 Output.o: Output.h
 SortedRecordRenderer.o: SortedRecordRenderer.h
 ExternalRun.o: ExternalRun.h
-ExternalRenderer.o: ExternalRenderer.h ExternalRun.h SortedRecordRenderer.h
-InMemoryRenderer.o: InMemoryRenderer.h SortedRecordRenderer.h
-GracefulRenderer.o: GracefulRenderer.h InMemoryRenderer.h ExternalRun.h
+ExternalRenderer.o: ExternalRenderer.h ExternalRun.h SortedRecordRenderer.h TournamentTree.h
+InMemoryRenderer.o: InMemoryRenderer.h SortedRecordRenderer.h TournamentTree.h
+GracefulRenderer.o: GracefulRenderer.h InMemoryRenderer.h ExternalRun.h TournamentTree.h
 ExternalSorter.o: ExternalRenderer.h utils.h
 
 list : Makefile

@@ -12,3 +12,4 @@ temp.*
 *.tmp
 output.txt
 trace
+time

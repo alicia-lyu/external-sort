@@ -52,6 +52,8 @@ ExternalRun::~ExternalRun ()
     Metrics::erase(storage, std::filesystem::file_size(_runFileName) - switchPoint * _recordSize); // OPTIMIZATION: Erase in a smaller granularity at each fill?
     if (_readAheadPage != nullptr) delete _readAheadPage;
     _runFile.close();
+    std::remove(_runFileName.c_str()); // Delete file to save space
+    Trace::PrintStdout("Deleted run file %s after reading data from it.\n", _runFileName.c_str());
     #if defined(VERBOSEL1) || defined(VERBOSEL2)
     traceprintf("Produced %llu rows from run file %s\n", _produced, _runFileName.c_str());
     #endif

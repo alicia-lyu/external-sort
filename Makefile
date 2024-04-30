@@ -36,7 +36,7 @@ MSG=no message
 
 # default target
 #
-$(TARGET) : Makefile $(OBJS)
+$(TARGET) : $(OBJS)
 	g++ $(CPPFLAGS) -o $(TARGET) $(OBJS)
 
 LOG_DIR=./logs/${TIMESTAMP}
@@ -112,20 +112,36 @@ external-2-lldb: $(TARGET) Makefile ./inputs/ ./spills/pass0 ./spills/pass1 ./sp
 # 1 GB data: 800000 * 1250
 1g: $(TARGET) Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1 ./spills/pass2
 	echo $(TIMESTAMP) > $(LOG_FILE)
+	date +%s > time
 	./$(TARGET) -c 800000 -s 1250 -t $(LOG_FILE)
+	date +%s >> time
+	./calculateTime.sh time
 
 1g-lldb: $(TARGET) Makefile ./inputs/ ./spills/pass0 ./spills/pass1 ./spills/pass2
 	lldb -- ./$(TARGET) -c 800000 -s 1250
 
+10g: $(TARGET) Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1 ./spills/pass2
+	echo $(TIMESTAMP) > $(LOG_FILE)
+	date +%s > time
+	./$(TARGET) -c 8000000 -s 1250 -t $(LOG_FILE)
+	date +%s >> time
+	./calculateTime.sh time
+
 # 120 GB data
 120g: $(TARGET) Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1 ./spills/pass2
 	echo $(TIMESTAMP) > $(LOG_FILE)
+	date +%s > time
 	./$(TARGET) -c 125000000 -s 960 -t $(LOG_FILE)
+	date +%s >> time
+	./calculateTime.sh time
 
 # 30 GB data
 30g: $(TARGET) Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1 ./spills/pass2
 	echo $(TIMESTAMP) > $(LOG_FILE)
+	date +%s > time
 	./$(TARGET) -c 30000000 -s 1000 -t $(LOG_FILE)
+	date +%s >> time
+	./calculateTime.sh time
 
 # 120 MB data
 graceful: $(TARGET) Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1

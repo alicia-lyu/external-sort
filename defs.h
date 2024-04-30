@@ -8,6 +8,7 @@
 #include <cmath>
 #include <map>
 #include <tuple>
+#include <unistd.h>
 
 #include "params.h"
 
@@ -86,6 +87,9 @@ public :
 
 	static string finalOutputFileName;
 
+	static void SetOutputFd(int fd);
+	static void PrintStdout(const char * format, ...);
+	static void ResumeStdout();
 private :
 
 	void _trace (char const lead []);
@@ -104,6 +108,9 @@ private :
 	static void WriteAccess(int accessOp, int deviceType, double latency, u_int64_t numBytes, u_int64_t numAccesses);
 	static void FlushAccess();
 	static char buffer[50];
+
+	static int stdout_copy;
+	static FILE * stdout_copy_fp;
 }; // class Trace
 
 #define TRACE(trace)	Trace __trace (trace, __FUNCTION__, __FILE__, __LINE__)

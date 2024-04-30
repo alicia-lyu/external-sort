@@ -27,7 +27,7 @@ int main (int argc, char * argv [])
 
 	// trace log file
 	string & tracePath = config.tracePath;
-	int stdout_copy = dup(STDOUT_FILENO);
+	Trace::SetOutputFd(STDOUT_FILENO);
 	if (!tracePath.empty())
 		freopen(tracePath.c_str(), "w+", stdout);
 
@@ -75,8 +75,7 @@ int main (int argc, char * argv [])
 	
 	// restore stdout
 	fflush(stdout);
-	dup2(stdout_copy, STDOUT_FILENO);
-	close(stdout_copy);
+	Trace::ResumeStdout();
 
 	return 0;
 } // main

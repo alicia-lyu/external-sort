@@ -22,6 +22,8 @@ SortedRecordRenderer * ExternalSorter::init () {
 	while (runNames.size() > 1) { // Need another pass to merge the runs
 		++ pass;
 
+		Trace::PrintStdout("Pass %d: Merging %zu runs\n", pass, runNames.size());
+
 		u_int16_t rendererNum = 0;
 
 		// Gracefully merge all in one pass if possible (this is the last pass if there is only one renderer)
@@ -56,6 +58,9 @@ SortedRecordRenderer * ExternalSorter::init () {
 				rendererNum++;
 				delete renderer;
 			}
+
+			// print progress: (XX / XX)
+			Trace::PrintStdout("Pass %d: Merged %d runs out of %zu\n", pass, mergedRunCount, runNames.size());
 		}
 
 		runNames = mergedRunNames;

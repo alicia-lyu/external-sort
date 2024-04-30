@@ -46,6 +46,9 @@ int Trace::lastOp = -1;
 
 string Trace::finalOutputFileName = "";
 
+int Trace::stdout_copy = -1;
+FILE * Trace::stdout_copy_fp = nullptr;
+
 void Trace::PrintTrace(int opType, const string & message)
 {
 	if (lastOp == OP_ACCESS && opType != OP_ACCESS) {
@@ -143,6 +146,38 @@ string Trace::FormatSize(u_int64_t size)
 	}
 
 	return string(buffer) + unit;
+}
+
+void Trace::SetOutputFd(int fd)
+{
+	stdout_copy = dup(fileno(stdout));
+	stdout_copy_fp = fdopen(stdout_copy, "w");
+}
+
+void Trace::PrintStdout(const char * format, ...)
+{
+	if (stdout_copy_fp == nullptr) {
+		return;
+	}
+
+	va_list args;
+	va_start(args, format);
+	vfprintf(stdout_copy_fp, format, args);
+	va_end(args);
+	fflush(stdout_copy_fp);
+}
+
+void Trace::ResumeStdout()
+{
+	if (stdout_copy_fp != nullptr) {
+		fclose(stdout_copy_fp);
+		stdout_copy_fp = nullptr;
+	}
+	if (stdout_copy != -1) {
+		dup2(stdout_copy, fileno(stdout));
+		close(stdout_copy);
+		stdout_copy = -1;
+	}
 }
 
 // -----------------------------------------------------------------

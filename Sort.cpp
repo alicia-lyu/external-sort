@@ -163,7 +163,7 @@ vector<string> SortIterator::_createInitialRuns () // metrics
 		delete renderer; // Only after deleting the renderer, the run file is flushed and closed
 		runNames.push_back(runName);
 
-		Trace::PrintStdout("Initial run: %d / %d\n", _consumed, _plan->_count);
+		Trace::PrintStdout("Initial run: %d / %d (%.2lf%%)\n", _consumed, _plan->_count, 100.0 * (double) _consumed / _plan->_count);
 	}
 	#if defined(VERBOSEL1) || defined(VERBOSEL2)
 	traceprintf ("Created %lu initial runs\n", runNames.size());

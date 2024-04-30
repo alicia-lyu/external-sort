@@ -6,10 +6,14 @@ calculate_time_difference() {
     TIME_DIFFERENCE=$((END_TIME - START_TIME))
     UNIT="seconds"
     if [ $TIME_DIFFERENCE -gt 500 ]; then
-        TIME_DIFFERENCE=$((TIME_DIFFERENCE / 60))
-        UNIT="minutes"
+        TIME_DIFFERENCE_M=$((TIME_DIFFERENCE / 60))
+        UNIT_M="minutes"
+        TIME_DIFFERENCE_S=$((TIME_DIFFERENCE % 60))
+        UNIT_S="seconds"
+        echo "Took $TIME_DIFFERENCE_M $UNIT_M $TIME_DIFFERENCE_S $UNIT_S"
+    else
+        echo "Took $TIME_DIFFERENCE $UNIT"
     fi
-    echo "Took $TIME_DIFFERENCE $UNIT"
 }
 
 calculate_time_difference "$1"

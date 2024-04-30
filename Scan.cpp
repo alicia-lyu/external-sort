@@ -93,6 +93,7 @@ string ScanIterator::_getInputFileName()
 
 bool ScanIterator::forceFlushBuffer()
 {
+	Trace::PrintStdout("Buffer forced to flush %d / %d.\n", _run->sizeFilled(), _run->pageSize);
 	delete _run;
 	auto countPerRunNew = getRecordCountPerRun(_plan->_size);
 	if (_plan->_inputPath.empty()) {

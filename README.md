@@ -1,6 +1,6 @@
 # External-Sort
 
-External sort project.
+External sort project. Individual contributions are listed in the [Tasks](./Tasks.md) file.
 
 ## Getting started
 

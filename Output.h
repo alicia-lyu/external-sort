@@ -20,5 +20,6 @@ private:
     ifstream answerFile;
     ofstream outputFile;
     RowSize const _recordSize;
+    u_int64_t bytesPerRead, bytesRead;
     byte * _lastRow;
 }; // class OutputPrinter

@@ -123,7 +123,7 @@ external-2-lldb: $(TARGET) Makefile ./inputs/ ./spills/pass0 ./spills/pass1 ./sp
 10g: $(TARGET) Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1 ./spills/pass2
 	echo $(TIMESTAMP) > $(LOG_FILE)
 	date +%s > time
-	./$(TARGET) -c 8000000 -s 1250 -t $(LOG_FILE)
+	./$(TARGET) -c 12500000 -s 800 -t $(LOG_FILE)
 	date +%s >> time
 	./calculateTime.sh time
 

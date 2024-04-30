@@ -29,11 +29,11 @@ Below are a few targets in the Makefile:
 - `make test`: test the overall function of the program, with random data generation and duplicate removal.
 - `make insort`: test the duplicate removal. It generates 4000 records of size 2, so it is guaranteed to have duplicated records. Then, it will use insort method to remove duplicates.
 - `make instream`: similar to `make insort`, but use instream method.
-- `make 200m`: a test case with 200M data.
-- `make 1g`: a test case with 1G data. Takes 15 seconds on our computers.
-- `make 10g`: a test case with 10G data. Takes about 2 minutes on our computers.
-- `make 30g`: a test case with 30G data.
-- `make 120g`: a huge test case with 120G data (please ensure you have sufficient disk space). Takes about 45+ minutes on our computers.
+- `make 200m`: a test case with 200M data, 160000 records of 1250 bytes.
+- `make 1g`: a test case with 1G data, 800000 records of 1250 bytes. Takes 15 seconds on our computers.
+- `make 10g`: a test case with 10G data, 1250000 records of 800 bytes. Takes about 210 seconds on our computers.
+- `make 30g`: a test case with 30G data, 30000000 records of 1000 bytes. Takes about 10 minutes on our computers.
+- `make 120g`: a huge test case with 120G data (please ensure you have sufficient disk space), 125000000 records of 960 bytes. Takes 45+ minutes on our computers.
 
 P.S. We used MacBook Pro (M1 Pro) 2021 with 16 GB memory and 300 GB spare disk space to profile the time needed.
 

@@ -3,6 +3,7 @@
 #include "Buffer.h"
 #include "params.h"
 #include "Metrics.h"
+#include <cstdlib> // for deleting files
 #include <fstream>
 #include <string>
 

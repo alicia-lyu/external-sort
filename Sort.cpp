@@ -8,7 +8,7 @@
 
 SortPlan::SortPlan (Plan * const input, RowSize const size, RowCount const count, bool removeDuplicates) : 
 	_input (input), _size (size), _count (count),
-	_recordCountPerRun (getRecordCountPerRun(size, true)),
+	_recordCountPerRun (getRecordCountPerRun(size)),
 	_removeDuplicates (removeDuplicates)
 {
 	TRACE (false);
@@ -94,11 +94,16 @@ byte * SortIterator::next ()
 
 SortedRecordRenderer * SortIterator::_formInMemoryRenderer (RowCount base, u_int16_t runNumber, u_int32_t memory_limit, bool materialize)
 {
+	if (memory_limit == 0) {
+		memory_limit = getRecordCountPerRun(_plan->_size) * _plan->_size;
+	}
 	vector<byte *> rows;
 	while ((_consumed - base + 1) * _plan->_size <= memory_limit) {
-		Assert(_consumed - base < _plan->_recordCountPerRun, __FILE__, __LINE__);
 		byte * received = _input->next ();
 		if (received == nullptr) break;
+		if (_consumed - base >= _plan->_recordCountPerRun) {
+			throw std::runtime_error("In-memory renderer exceeds the record count per run " + std::to_string(_consumed - base) + "/" + std::to_string(_plan->_recordCountPerRun) + " at " + std::to_string(_consumed) + " limit " + std::to_string(memory_limit / _plan->_size));
+		}
 		rows.push_back(received);
 		++ _consumed;
 	}
@@ -157,10 +162,12 @@ vector<string> SortIterator::_createInitialRuns () // metrics
 
 SortedRecordRenderer * SortIterator::gracefulDegradation ()
 {
+	Trace::PrintStdout("GRACEFUL DEGRADATION\n");
 	// Determine the size of the initial in-memory run (the only intermediate spill)
-	u_int64_t gracefulInMemoryRunSize = MEMORY_SIZE - SSD_PAGE_SIZE * 3; // One page for output, one page for external renderer run page, one page for external renderer read-ahead
+	int storageProfiled = Metrics::getAvailableStorage(MEMORY_SIZE * GRACEFUL_DEGRADATION_THRESHOLD); // Expected to be SSD, as the data is barely larger than memory
+	u_int64_t gracefulInMemoryRunSize = (MEMORY_SIZE - Metrics::getParams(storageProfiled).pageSize * 3) / _plan->_size * _plan->_size; // One page for output, one page for external renderer run page, one page for external renderer read-ahead
 	u_int64_t initialInMemoryRunSize = _plan->_size * _plan->_count - gracefulInMemoryRunSize;
-	Assert (initialInMemoryRunSize <= MEMORY_SIZE - SSD_PAGE_SIZE, __FILE__, __LINE__);
+	Assert (initialInMemoryRunSize <= getRecordCountPerRun(_plan->_size) * _plan->_size, __FILE__, __LINE__);
 	Assert (_consumed == 0, __FILE__, __LINE__);
 
 	// Create the initial in-memory run and materialize to disk

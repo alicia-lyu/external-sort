@@ -5,6 +5,7 @@
 #include <regex>
 #include "Iterator.h"
 #include "utils.h"
+#include "Metrics.h"
 
 /*
 Return value:
@@ -133,8 +134,9 @@ string rowToHexString(byte * rowContent, RowSize size) {
     return result;
 }
 
-u_int32_t getRecordCountPerRun(RowSize recordSize, bool inSSD) {
-    u_int32_t recordCountPerRun = inSSD ? (MEMORY_SIZE - SSD_PAGE_SIZE) / recordSize : (MEMORY_SIZE - HDD_PAGE_SIZE) / recordSize;
+u_int32_t getRecordCountPerRun(RowSize recordSize) {
+    int device = Metrics::getAvailableStorage();
+    u_int32_t recordCountPerRun = (MEMORY_SIZE - Metrics::getParams(device).pageSize) / recordSize;
     return recordCountPerRun;
 }
 

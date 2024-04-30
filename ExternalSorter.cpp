@@ -153,6 +153,8 @@ SortedRecordRenderer * ExternalSorter::gracefulMerge (const vector<string>& runN
 {
 	TRACE (false);
 
+	Trace::PrintStdout("GRACEFUL MERGE\n");
+
 	#if defined(VERBOSEL1) || defined(VERBOSEL2)
 	traceprintf ("====== Pass %d Graceful merge %zu runs\n", basePass, runNames.size());
 	#endif

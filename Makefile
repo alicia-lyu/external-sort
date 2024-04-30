@@ -125,10 +125,10 @@ external-2-lldb: $(TARGET) Makefile ./inputs/ ./spills/pass0 ./spills/pass1 ./sp
 	echo $(TIMESTAMP) > $(LOG_FILE)
 	./$(TARGET) -c 30000000 -s 1000 -t $(LOG_FILE)
 
-# 100 KB data
+# 120 MB data
 graceful: $(TARGET) Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1
 	echo $(TIMESTAMP) > $(LOG_FILE)
-	./$(TARGET) -c 5000 -s 20 -t $(LOG_FILE)
+	./$(TARGET) -c 1000000 -s 120 -t $(LOG_FILE)
 
 graceful-lldb: $(TARGET) Makefile ./inputs/ ./spills/pass0 ./spills/pass1
 	lldb -- ./$(TARGET) -c 5000 -s 20

@@ -36,7 +36,7 @@ private:
 	RowCount _consumed, _produced;
 	SortedRecordRenderer * _renderer;
 	SortedRecordRenderer * _formInMemoryRenderer (RowCount base = 0, u_int16_t runNumber = 0, 
-		u_int32_t memory_limit = MEMORY_SIZE - SSD_PAGE_SIZE,
+		u_int32_t memory_limit = 0,
 		bool materialize = true); // Returns the tree where the top node is the smallest
 	vector<string> _createInitialRuns (); // Returns the names of the files created
 	SortedRecordRenderer * gracefulDegradation ();

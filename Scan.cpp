@@ -3,7 +3,7 @@
 #include <memory>
 
 ScanPlan::ScanPlan (RowCount const count, RowSize const size, const string &inputPath) : 
-	_count (count), _size (size), _countPerRun (getRecordCountPerRun(size, true)), _inputPath(inputPath)
+	_count (count), _size (size), _countPerRun (getRecordCountPerRun(size)), _inputPath(inputPath)
 {
 	TRACE (false);
 } // ScanPlan::ScanPlan

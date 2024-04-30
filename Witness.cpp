@@ -72,3 +72,8 @@ byte * WitnessIterator::next ()
         return row;
     }
 } // WitnessIterator::next
+
+bool WitnessIterator::forceFlushBuffer()
+{
+    return _input->forceFlushBuffer();
+} // WitnessIterator::isFinal

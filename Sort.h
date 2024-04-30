@@ -13,14 +13,13 @@ class SortPlan : public Plan
 {
 	friend class SortIterator;
 public:
-	SortPlan (Plan * const input, RowSize const size, RowCount const count, bool removeDuplicates = false);
+	SortPlan (Plan * const input, RowSize const size, RowCount const count, bool removeDuplicates = false, std::function<void ()> forceFlushBufferHandler = nullptr);
 	~SortPlan ();
 	Iterator * init () const;
 private:
 	Plan * const _input;
 	RowSize const _size;
 	RowCount const _count;
-	u_int32_t _recordCountPerRun; // Changes when spill to HDD
 	bool _removeDuplicates;
 }; // class SortPlan
 

@@ -6,29 +6,11 @@
 #include "ExternalSorter.h"
 #include <stdexcept>
 
-SortPlan::SortPlan (Plan * const input, RowSize const size, RowCount const count, bool removeDuplicates) : 
+SortPlan::SortPlan (Plan * const input, RowSize const size, RowCount const count, bool removeDuplicates, std::function<void ()> forceFlushBufferHandler) : 
 	_input (input), _size (size), _count (count),
-	_recordCountPerRun (getRecordCountPerRun(size)),
 	_removeDuplicates (removeDuplicates)
 {
 	TRACE (false);
-
-	#ifdef PRODUCTION
-	string output = "Memory space: ";
-	output += to_string(MEMORY_SIZE) + " bytes";
-	// if memory size is larger than 1KB, also print in formatted size
-	if (MEMORY_SIZE > 1000) {
-		output += " (";
-		output += Trace::FormatSize(MEMORY_SIZE);
-		output += ")";
-	}
-	output += ", record per run: ";
-	output += to_string(_recordCountPerRun);
-
-	Trace::PrintTrace(OP_STATE, INIT_SORT, output);
-	if (_removeDuplicates)
-		Trace::PrintTrace(OP_STATE, INIT_SORT, "Remove duplicates using in-sort method");
-	#endif
 } // SortPlan::SortPlan
 
 SortPlan::~SortPlan ()
@@ -47,7 +29,23 @@ SortIterator::SortIterator (SortPlan const * const plan) :
 	_plan (plan), _input (plan->_input->init ()), _consumed (0), _produced (0)
 {
 	TRACE (false);
-	if (_plan->_count <= _plan->_recordCountPerRun) {
+	auto recordCountPerRun = getRecordCountPerRun(_plan->_size);
+	#ifdef PRODUCTION
+	string output = "Memory space: ";
+	output += to_string(MEMORY_SIZE) + " bytes";
+	// if memory size is larger than 1KB, also print in formatted size
+	if (MEMORY_SIZE > 1000) {
+		output += " (";
+		output += Trace::FormatSize(MEMORY_SIZE);
+		output += ")";
+	}
+	output += ", record count per run: " + to_string(recordCountPerRun);
+
+	Trace::PrintTrace(OP_STATE, INIT_SORT, output);
+	if (_plan->_removeDuplicates)
+		Trace::PrintTrace(OP_STATE, INIT_SORT, "Remove duplicates using in-sort method");
+	#endif
+	if (_plan->_count <= recordCountPerRun) {
 		_renderer = _formInMemoryRenderer();
 	} else {
 		_renderer = _externalSort();
@@ -94,18 +92,31 @@ byte * SortIterator::next ()
 
 SortedRecordRenderer * SortIterator::_formInMemoryRenderer (RowCount base, u_int16_t runNumber, u_int32_t memory_limit, bool materialize)
 {
+	bool forceFlushBuffer = false;
+	auto scanBufferSize = getRecordCountPerRun(_plan->_size) * _plan->_size;
 	if (memory_limit == 0) {
-		memory_limit = getRecordCountPerRun(_plan->_size) * _plan->_size;
+		memory_limit = scanBufferSize; 
+		// Should be the same as the last returned value of getRecordCountPerRun called in ScanIterator
+	} else {
+		Assert(memory_limit <= scanBufferSize, __FILE__, __LINE__);
+		forceFlushBuffer = true;
+		// Not the same as the last returned value of getRecordCountPerRun called in ScanIterator
+		// Forcing the buffer to flush
 	}
 	vector<byte *> rows;
 	while ((_consumed - base + 1) * _plan->_size <= memory_limit) {
 		byte * received = _input->next ();
 		if (received == nullptr) break;
-		if (_consumed - base >= _plan->_recordCountPerRun) {
-			throw std::runtime_error("In-memory renderer exceeds the record count per run " + std::to_string(_consumed - base) + "/" + std::to_string(_plan->_recordCountPerRun) + " at " + std::to_string(_consumed) + " limit " + std::to_string(memory_limit / _plan->_size));
+		auto recordCountPerRun = getRecordCountPerRun(_plan->_size);
+		if (_consumed - base >= recordCountPerRun) {
+			throw std::runtime_error("In-memory renderer exceeds the record count per run " + std::to_string(_consumed - base) + "/" + std::to_string(recordCountPerRun) + " at " + std::to_string(_consumed) + " limit " + std::to_string(memory_limit / _plan->_size));
 		}
 		rows.push_back(received);
 		++ _consumed;
+	}
+
+	if (forceFlushBuffer) {
+		_input->forceFlushBuffer();
 	}
 
 	#if defined(VERBOSEL2)

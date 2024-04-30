@@ -31,3 +31,9 @@ void Iterator::run ()
 			(unsigned long) _count);
 	#endif
 } // Iterator::run
+
+bool Iterator::forceFlushBuffer ()
+{
+	TRACE (false);
+	return false;
+} // Iterator::forceFlushBuffer

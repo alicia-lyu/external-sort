@@ -21,6 +21,7 @@ public:
 	virtual ~Iterator ();
 	void run ();
 	virtual byte * next () = 0;
+	virtual bool forceFlushBuffer ();
 private:
 	RowCount _count;
 }; // class Iterator

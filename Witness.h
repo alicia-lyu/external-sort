@@ -23,6 +23,7 @@ public:
 	WitnessIterator (WitnessPlan const * const plan);
 	~WitnessIterator ();
 	byte * next ();
+	bool forceFlushBuffer ();
 private:
 	WitnessPlan const * const _plan;
 	Iterator * const _input;

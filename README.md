@@ -29,9 +29,6 @@ Below are a few targets in the Makefile:
 - `make test`: test the overall function of the program, with random data generation and duplicate removal.
 - `make insort`: test the duplicate removal. It generates 4000 records of size 2, so it is guaranteed to have duplicated records. Then, it will use insort method to remove duplicates.
 - `make instream`: similar to `make insort`, but use instream method.
-- `make external`: test the external sort.
-- `make external-2`: test the external sort with a larger input.
-- `make graceful`: test the graceful degradation where the total record size is slightly above the memory size.
 - `make 200m`: a test case with 200M data.
 - `make 1g`: a test case with 1G data.
 - `make 30g`: a test case with 30G data.

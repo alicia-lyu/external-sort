@@ -95,9 +95,9 @@ We implemented a "tree of losers" to merge sorted runs. Key methods:
 
 A few techniques are implemented to minimize the number of accesses to storage devices, please refer to each section for details.
 
-- Read ahead buffers
+- [Read ahead buffers](#bonus-implementation-read-ahead-buffers): As read ahead buffers do not block operations, we save the cost of reading from storage devices.
 - [Device-optimized page sizes](#device-optimized-page-sizes): Different page sizes are chosen for different storage devices, so that larger batch of data can be read/written together for the slower device.
-- Graceful degradation
+- [Graceful degradation](#graceful-degradation): Graceful degradation, both from in-memory sort to external sort and from n-1 passes to n passes, reduces the intermediate spills, compared to sharp degradation which results in extra spills of the total size of the data.
 - [In-sort duplicate removal](#duplicate-removal): This method of duplicate removal eagerly reduces data size, so that less merge efforts are needed afterwards, potentially leading to fewer passes and less spill.
 
 ### Duplicate removal
@@ -109,9 +109,7 @@ Two methods are implemented to remove duplicated records:
 
 ### Cache-size mini runs
 
-Cache-size mini runs are implemented in class [`CacheOptimizedRenderer`](./InMemoryRenderer.cpp). It first splits the input data into several mini segments so that each segment can be fitted into the cache. Then, for each segment, it creates a cache-size run by building a tournament tree. After building the runs, the renderer builds one tournament tree with leaves pointing to the top of the trees of these cache-size runs.
-
-When doing an in-memory sort, the [`SortIterator::_formInMemoryRenderer`](./sort.cpp) computes the number of rows (records) in cache, and the number of cache-size runs needed (`numCaches`). It creates a tournamant tree for each of the runs. The tree is then passed to `CacheOptimizedRenderer`, where a list of rows of length `numCaches` is formed by polling one element out from each tree, and a master tournament tree is built from these rows. When sorting, this renderer first finds (from the master tree) which tree the smallest element belongs to; then, it tries to get the second largest element from that tree. If such element exists, this element is then pushed into the master tree to maintain the order of the trees. This is repeated until all elements are exhausted.
+Cache-size mini runs are implemented in class [`CacheOptimizedRenderer`](./InMemoryRenderer.cpp). It first splits the input data into several mini segments so that each segment can be fitted into the cache. Then, for each segment, it creates a cache-size run by building a tournament tree, or, as we call it, a `cacheTree`. After building the runs, the renderer builds one tournament tree with leaves pointing to the top of the `cacheTree`s.
 
 ### Device-optimized page sizes
 
@@ -144,7 +142,7 @@ When the data size is only a little larger than the size of a memory run ("a lit
 
 #### Beyond one merge step: [`SortedRecordRenderer * ExternalSorter::gracefulMerge (vector<string>& runNames, int basePass, int rendererNum)`](./ExternalSorter.cpp)
 
-When the runs can barely fit into one pass (`allMemoryNeeded <= MEMORY_SIZE * GRACEFUL_DEGRADATION_THRESHOLD`), instead of merging them in two pass, we gracefully degrade the merging. We merge some of the runs in an `ExternalRenderer` and spill the result to storage devices by calling `string SortedRecordRenderer::run()` which returns the file name. Then, we merge the rest of the runs with the spilled run in another `ExternalRenderer`.
+When the runs can barely fit into n pass (`allMemoryNeeded <= MEMORY_SIZE * GRACEFUL_DEGRADATION_THRESHOLD`), instead of merging them in n+1 pass, we gracefully degrade the merging. We merge some of the runs in an `ExternalRenderer` and spill the result to storage devices by calling `string SortedRecordRenderer::run()` which returns the file name. Then, we merge the rest of the runs with the spilled run in another `ExternalRenderer`.
 
 The gracefulMerge algorithm is expressed as an optimization problem:
 

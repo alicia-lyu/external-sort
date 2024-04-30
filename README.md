@@ -9,7 +9,8 @@ First, intall `argparse` as dependency: [installation](https://github.com/p-rana
 Use the command line to run the program:
 
 ```bash
-Text.exe -c <record count> -s <record size> [-o <output path>] [-t <trace path>] [-i <input path>] [-d <removal-method>]
+make ExternalSort.exe
+ExternalSort.exe -c <record count> -s <record size> [-o <output path>] [-t <trace path>] [-i <input path>] [-d <removal-method>]
 ```
 
 The program accepts the following command line parameters:
@@ -42,6 +43,10 @@ In the Makefile, you can control the level of log output by defining verbosity m
 - `-DVERBOSEL1`: prints out key information of a plan. For example, for `VerifyPlan`, the program will print out the number of rows consumed and produced; for `WitnessPlan`, it will also print out the initial parity.
 - `-DVERBOSEL2`: prints out information about each record, such as whether it is a duplicated or an out-of-order record. Warning: will produce huge output.
 - `-DPRODUCTION`: (enabled by default) prints out production traces in the form of `[Operation] -> [Type]: <message>`.
+
+### Trace
+
+Metrics:
 
 ## Design Overview
 

@@ -58,6 +58,8 @@ Sorting is divided into a few classes:
 - [ExternalRun](./ExternalRun.h): Reads an intermediate file and render records in sorted order from that file. One `ExternalRenderer` typically merges multiple `ExternalRun`s.
 - [ExternalSorter](./ExternalSorter.h): Takes a list of in-memory runs and merges them into a single `ExternalRenderer`, potentially taking multiple passes. This final renderer will be used to output records one by one in `SortIterator::next()`.
 
+In addition, the in-memory run (while it is being sorted in memory) and the in-memory page of an external run are expressed by a class [Buffer](./Buffer.h). The `Buffer` class manages a contiguous memory block that consist of multiple records. It maintains two pointers: `toBeRead` and `toBeFilled`. A `next()` call is used to scan records from the buffer one by one. For a page of an external run, data is copied from the external run file sequentially page by page. For an in-memory run, alphanumeric data is generated randomly record by record or read from an input file.
+
 ## Features Implemented
 
 This section is written assuming that you have read the [Design Overview](#design-overview) section.
@@ -150,13 +152,27 @@ Instead of having every record of this long run go through a series of contests 
 
 ### Verifiers
 
-- Two [Witness](./Witness.h)es: The witness does a simple integrity check on the data to ensure no record is altered during the sort. Therefore, this witness would not work if there are duplicates in the data and we ask for duplicate removal. The witness creates a check record of the same size as the input records, with initial value `0xFF` for all bytes. It then loops through all the given data, and apply an xor to the check record with the given record (i.e., `checkRecord = checkRecord xor inputRecord`). The final value of the check record will be displayed at the end.
-  There are two witnesses in the program, one before the sorting, one after the sorting. If we do not ask for duplicate removal, or if there is no duplicates in the data, then we should expect the two witnesses' check records equal to each other.
-- [Verify](./Verify.h): The VerifyPlan is another integrity check on the data to ensure the records are sorted and duplicates are removed. The VerifyPlan reads in the outcome of the SortPlan and maintains the "previous record". If current record is larger than the previous record, then the outcome is not sorted; if current record is equal to the previous record, then there are duplicates in the outcome. The results of the sorted & duplicates check are printed at the end.
+- Two [Witness](./Witness.h)es: The witness does an integrity check on the data to ensure no record is altered during the sort by calculating a parity of all records before and after sort. Note that the parity will not match with duplicate removal. The witness creates a check record of the same size as the input records, with initial value `0xFF` for all bytes. It then loops through all the given data, and apply an XOR to the check record with the given record (i.e., `checkRecord = checkRecord xor inputRecord`). The final value of the check record will be displayed at the end.
+- [Verify](./Verify.h): The VerifyPlan is another check and inspect the following 3 properties of the data after sort:
+  - Whether records are sorted.
+  - Whether there are duplicates.
+  - Whether there are non-alphanumeric characters in the records.
+  
+  The VerifyPlan reads in the outcome of the SortPlan and maintains the "previous record". If current record is larger than the previous record, then the outcome is not sorted ascending; if current record is equal to the previous record, then there are duplicates in the outcome.
 
-### Bonus: Read ahead buffers
+### Bonus implementation: Read ahead buffers
 
-TODO@Alicia
+Relevant functions:
+
+- [`void ExternalRun::readAhead()`](./ExternalRun.cpp)
+- [`ExternalRenderer::ExternalRenderer (RowSize recordSize, vector<string>::const_iterator runFileNames_begin, vector<string>::const_iterator runFileNames_end, u_int64_t readAheadSize, u_int8_t pass, u_int16_t rendererNumber, bool removeDuplicates)`](./ExternalRenderer.cpp)
+- [`tuple<u_int64_t, u_int64_t> ExternalSorter::profileReadAheadAndOutput (const vector<string>& runNames, u_int16_t mergedRunCount)`](./ExternalSorter.cpp)
+
+As an additional optimization technique, we implemented read ahead buffers for an `ExternalRenderer`. The read ahead buffer is used to read data from the run files in advance, whose pages are exhausted faster than other runs.
+
+All `ExternalRun`s in an `ExternalRenderer` share `READ_AHEAD_SIZE`. "Exhausted faster" is defined by which run reaches a threshold value `READ_AHEAD_THRESHOLD` first. Both `READ_AHEAD_SIZE` and `READ_AHEAD_THRESHOLD` are implemented as static variables in `ExternalRun` and are initialized in the constructor of `ExternalRenderer`.
+
+Typically, extra memory are allocated for at least 2 such buffers. The size of each buffer depends on the distribution of the run files on storage devices. Currently, when 67% or more of the runs are on HDD, 2 are both of HDD page size; when 33%--67% of the runs are on HDD, 1 is of SSD page size and 1 is of HDD page size; otherwise, 2 are both of SSD page size. The actual profiling algorithm is implemented in `ExternalSorter::profileReadAheadAndOutput`. After allocating memory to all input pages, output pages, and the profiled read ahead size, extra memory is additionally allocated for the read ahead buffers.
 
 ## Appendix: Documentation
 

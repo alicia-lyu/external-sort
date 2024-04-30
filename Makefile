@@ -9,6 +9,7 @@ TIMESTAMP=$(shell date +%Y-%m-%d-%H-%M-%S)
 # documents and scripts
 DOCS=Tasks.md InformationSession.md
 SCRS=
+TARGET=ExternalSort.exe
 
 # headers and code sources
 HDRS=	defs.h params.h\
@@ -35,8 +36,8 @@ MSG=no message
 
 # default target
 #
-Test.exe : Makefile $(OBJS)
-	g++ $(CPPFLAGS) -o Test.exe $(OBJS)
+$(TARGET) : Makefile $(OBJS)
+	g++ $(CPPFLAGS) -o $(TARGET) $(OBJS)
 
 LOG_DIR=./logs/${TIMESTAMP}
 LOG_FILE=$(LOG_DIR)/trace
@@ -63,93 +64,90 @@ clean-inputs:
 clean-spills:
 	rm -rf ./spills/*
 
-test : Test.exe Makefile $(LOG_DIR) ./inputs/
+test : $(TARGET) Makefile $(LOG_DIR) ./inputs/
 	echo $(TIMESTAMP) > $(LOG_FILE)
-	./Test.exe -c 7 -s 20 -t $(LOG_FILE) -d insort
+	./$(TARGET) -c 7 -s 20 -t $(LOG_FILE) -d insort
 
-testinput : Test.exe Makefile $(LOG_DIR) ./inputs/
+testinput : $(TARGET) Makefile $(LOG_DIR) ./inputs/
 	echo $(TIMESTAMP) > $(LOG_FILE)
-	./Test.exe -c 20 -s 1023 -i input_table -t $(LOG_FILE)
+	./$(TARGET) -c 20 -s 1023 -i input_table -t $(LOG_FILE)
 	# diff output_table output.txt
 
-insort : Test.exe Makefile $(LOG_DIR) ./inputs/
+insort : $(TARGET) Makefile $(LOG_DIR) ./inputs/
 	echo $(TIMESTAMP) > $(LOG_FILE)
-	./Test.exe -c 4000 -s 2 -t $(LOG_FILE) -d insort
+	./$(TARGET) -c 4000 -s 2 -t $(LOG_FILE) -d insort
 
-instream : Test.exe Makefile $(LOG_DIR) ./inputs/
+instream : $(TARGET) Makefile $(LOG_DIR) ./inputs/
 	echo $(TIMESTAMP) > $(LOG_FILE)
-	./Test.exe -c 4000 -s 2 -t $(LOG_FILE) -d instream
+	./$(TARGET) -c 4000 -s 2 -t $(LOG_FILE) -d instream
 
 # Small test plan: Memory size = 100 KB, SSD page size = 2 KB
 # 50 pages per memory, 98 KB per memory run
 
 # 200 KB data, 3 initial runs, 1 pass
-external: Test.exe Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1
+external: $(TARGET) Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1
 	echo $(TIMESTAMP) > $(LOG_FILE)
-	./Test.exe -c 10000 -s 20 -t $(LOG_FILE)
+	./$(TARGET) -c 10000 -s 20 -t $(LOG_FILE)
 
-external-lldb: Test.exe Makefile ./inputs/ ./spills/pass0 ./spills/pass1
-	lldb -- ./Test.exe -c 10000 -s 20
+external-lldb: $(TARGET) Makefile ./inputs/ ./spills/pass0 ./spills/pass1
+	lldb -- ./$(TARGET) -c 10000 -s 20
 
-external-1: Test.exe Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1 ./spills/pass2
+external-1: $(TARGET) Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1 ./spills/pass2
 	echo $(TIMESTAMP) > $(LOG_FILE)
-	./Test.exe -c 40000 -s 200 -t $(LOG_FILE)
+	./$(TARGET) -c 40000 -s 200 -t $(LOG_FILE)
 
-external-2: Test.exe Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1 ./spills/pass2
+external-2: $(TARGET) Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1 ./spills/pass2
 	echo $(TIMESTAMP) > $(LOG_FILE)
-	./Test.exe -c 40000 -s 1250 -t $(LOG_FILE)
+	./$(TARGET) -c 40000 -s 1250 -t $(LOG_FILE)
 
-external-2-lldb: Test.exe Makefile ./inputs/ ./spills/pass0 ./spills/pass1 ./spills/pass2
-	lldb -- ./Test.exe -c 40000 -s 1250
+external-2-lldb: $(TARGET) Makefile ./inputs/ ./spills/pass0 ./spills/pass1 ./spills/pass2
+	lldb -- ./$(TARGET) -c 40000 -s 1250
 
-200m: Test.exe Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1 ./spills/pass2
+200m: $(TARGET) Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1 ./spills/pass2
 	echo $(TIMESTAMP) > $(LOG_FILE)
-	./Test.exe -c 160000 -s 1250 -t $(LOG_FILE)
+	./$(TARGET) -c 160000 -s 1250 -t $(LOG_FILE)
 
 # 1 GB data: 800000 * 1250
-1g: Test.exe Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1 ./spills/pass2
+1g: $(TARGET) Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1 ./spills/pass2
 	echo $(TIMESTAMP) > $(LOG_FILE)
-	./Test.exe -c 800000 -s 1250 -t $(LOG_FILE)
+	./$(TARGET) -c 800000 -s 1250 -t $(LOG_FILE)
 
-1g-lldb: Test.exe Makefile ./inputs/ ./spills/pass0 ./spills/pass1 ./spills/pass2
-	lldb -- ./Test.exe -c 800000 -s 1250
+1g-lldb: $(TARGET) Makefile ./inputs/ ./spills/pass0 ./spills/pass1 ./spills/pass2
+	lldb -- ./$(TARGET) -c 800000 -s 1250
 
 # 120 GB data
-120g: Test.exe Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1 ./spills/pass2
+120g: $(TARGET) Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1 ./spills/pass2
 	echo $(TIMESTAMP) > $(LOG_FILE)
-	./Test.exe -c 125000000 -s 960 -t $(LOG_FILE)
+	./$(TARGET) -c 125000000 -s 960 -t $(LOG_FILE)
 
 # 30 GB data
-30g: Test.exe Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1 ./spills/pass2
+30g: $(TARGET) Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1 ./spills/pass2
 	echo $(TIMESTAMP) > $(LOG_FILE)
-	./Test.exe -c 30000000 -s 1000 -t $(LOG_FILE)
+	./$(TARGET) -c 30000000 -s 1000 -t $(LOG_FILE)
 
 # 100 KB data
-graceful: Test.exe Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1
+graceful: $(TARGET) Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1
 	echo $(TIMESTAMP) > $(LOG_FILE)
-	./Test.exe -c 5000 -s 20 -t $(LOG_FILE)
+	./$(TARGET) -c 5000 -s 20 -t $(LOG_FILE)
 
-graceful-lldb: Test.exe Makefile ./inputs/ ./spills/pass0 ./spills/pass1
-	lldb -- ./Test.exe -c 5000 -s 20
+graceful-lldb: $(TARGET) Makefile ./inputs/ ./spills/pass0 ./spills/pass1
+	lldb -- ./$(TARGET) -c 5000 -s 20
 
 # 5 MB data, 52 initial runs, 2 pass-1 run (only 1 pass-2 run with graceful degradation)
-optimized-merge: Test.exe Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1
+optimized-merge: $(TARGET) Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1
 	echo $(TIMESTAMP) > $(LOG_FILE)
-	./Test.exe -c 25000 -s 200 -t $(LOG_FILE)
+	./$(TARGET) -c 25000 -s 200 -t $(LOG_FILE)
 
-optimized-merge-lldb: Test.exe Makefile ./inputs/ ./spills/pass0 ./spills/pass1
-	lldb -- ./Test.exe -c 25000 -s 200
+optimized-merge-lldb: $(TARGET) Makefile ./inputs/ ./spills/pass0 ./spills/pass1
+	lldb -- ./$(TARGET) -c 25000 -s 200
 
 # TODO: external-sort on HDD: 100 MB can be divided into 200 pages of 500KB each
 
 # TODO: Add more test cases 10^3 * 50 (50M), 10^3 * 125 (125M), 10^5 * 120 (12 G), 10^6 * 120 (120 G) (rows, record size) and sample input by TA
 
-lldb : Test.exe
-	lldb -- ./Test.exe -c 7 -s 20
+lldb : $(TARGET)
+	lldb -- ./$(TARGET) -c 7 -s 20
 
-# TODO: We eventually need a ExternalSort.exe target
-ExternalSort.exe: Makefile ExternalSort.cpp
-	g++ $(CPPFLAGS) -o ExternalSort.exe ExternalSort.cpp
 # Where, 
 # "-c" gives the total number of records 
 # "-s" is the individual record size 
@@ -187,7 +185,7 @@ co :
 	co $(REV) -l $(HDRS) $(SRCS) $(DOCS) $(SCRS)
 
 clean :
-	@rm -f $(OBJS) Test.exe Test.exe.stackdump trace
+	@rm -f $(OBJS) $(TARGET) $(TARGET).stackdump trace
 
 temp.exe : temp.cpp
 	g++ $(CPPFLAGS) -o temp.exe temp.cpp

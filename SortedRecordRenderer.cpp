@@ -114,6 +114,14 @@ Materializer::Materializer(u_int8_t pass, u_int16_t runNumber, SortedRecordRende
 	outputBuffer = new Buffer(pageSize / renderer->_recordSize, renderer->_recordSize);
 	outputFileName = getOutputFileName(pass, runNumber);
 	outputFile = ofstream(outputFileName, std::ios::binary);
+
+	Trace::finalOutputFileName = outputFileName;
+
+	#ifdef PRODUCTION
+	Trace::PrintTrace(OP_STATE, deviceType == STORAGE_SSD? SPILL_RUNS_SSD : SPILL_RUNS_HDD, 
+		string("Spill sorted runs to the ") + getDeviceName(deviceType) + " device");
+	#endif
+
 	#if defined(VERBOSEL2)
 	traceprintf ("Materializer for run %d with output file %s initialized on device %d\n", runNumber, outputFileName.c_str(), deviceType);
 	#endif
@@ -160,7 +168,13 @@ bool Materializer::flushOutputBuffer(u_int32_t sizeFilled)
 	traceprintf ("Run %d: output buffer flushed with %llu rows produced\n", _runNumber, _produced);
 	#endif
 
-	outputFile.write((char*) outputBuffer->data(), sizeFilled); // Write to file before creating a new buffer
+	Assert (sizeFilled % renderer->_recordSize == 0, __FILE__, __LINE__);
+	// for (u_int32_t i = 0; i < sizeFilled; i += renderer->_recordSize) {
+	// 	byte * row = outputBuffer->data() + i;
+	// 	outputFile.write((char*) row, renderer->_recordSize); // Write to file before creating a new buffer
+	// 	outputFile.write("\n", 1);
+	// }
+	outputFile.write((char *) outputBuffer->data(), sizeFilled);
 	
 	// Metrics: switch device if necessary
 	int deviceType = switchDevice(sizeFilled);

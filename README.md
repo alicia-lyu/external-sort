@@ -16,8 +16,8 @@ The program accepts the following command line parameters:
 
 - `-c, --count`: the number of records
 - `-s, --size`: the size of each record, should be between 20 and 2000
-- `-o, --output`: the path of the output result, default to "output.txt"
-- `-t, --trace`: the path of the trace log file, default to "trace"
+- `-o, --output`: the path of the output result, default to `./output.txt`
+- `-t, --trace`: the path of the trace log file, default to `logs/<current timestamp>/trace`
 - `-i, --input`: (optional) the path of the input file which stores the record values. If not provided, will generate random records.
 - `-d, --duplicate-removal`: (optional) if provided, will remove duplicated records. The `<removal-method>` should be `"instream"` or `"insort"`.
 
@@ -28,13 +28,20 @@ Below are a few targets in the Makefile:
 - `make test`: test the overall function of the program, with random data generation and duplicate removal.
 - `make insort`: test the duplicate removal. It generates 4000 records of size 2, so it is guaranteed to have duplicated records. Then, it will use insort method to remove duplicates.
 - `make instream`: similar to `make insort`, but use instream method.
-- TODO@Yuheng
+- `make external`: test the external sort.
+- `make external-2`: test the external sort with a larger input.
+- `make graceful`: test the graceful degradation where the total record size is slightly above the memory size.
+- `make 200m`: a test case with 200M data.
+- `make 1g`: a test case with 1G data.
+- `make 30g`: a test case with 30G data.
+- `make 120g`: a huge test case with 120G data (please ensure you have sufficient disk space).
 
 In the Makefile, you can control the level of log output by defining verbosity macros in `CPPFLAGS`:
 
 - (no such macro): prints out key information of the program, such as the number of records generated, whether the final outcome is sorted and whether there are duplicated records.
-- `-DVERBOSEL1`: (default) prints out key information of a plan. For example, for `VerifyPlan`, the program will print out the number of rows consumed and produced; for `WitnessPlan`, it will also print out the initial parity.
+- `-DVERBOSEL1`: prints out key information of a plan. For example, for `VerifyPlan`, the program will print out the number of rows consumed and produced; for `WitnessPlan`, it will also print out the initial parity.
 - `-DVERBOSEL2`: prints out information about each record, such as whether it is a duplicated or an out-of-order record. Warning: will produce huge output.
+- `-DPRODUCTION`: (enabled by default) prints out production traces in the form of `[Operation] -> [Type]: <message>`.
 
 ## Design Overview
 
@@ -55,6 +62,8 @@ Sorting is divided into a few classes:
 - [ExternalRenderer](./ExternalRenderer.h): Derived from `SortedRecordRenderer`, it conducts **one pass** of merging runs from files (either in-memory runs or external runs) and renders records in sorted order from the runs.
 - [ExternalRun](./ExternalRun.h): Reads an intermediate file and render records in sorted order from that file. One `ExternalRenderer` typically merges multiple `ExternalRun`s.
 - [ExternalSorter](./ExternalSorter.h): Takes a list of in-memory runs and merges them into a single `ExternalRenderer`, potentially taking multiple passes. This final renderer will be used to output records one by one in `SortIterator::next()`.
+
+In addition, the in-memory run (while it is being sorted in memory) and the in-memory page of an external run are expressed by a class [Buffer](./Buffer.h). The `Buffer` class manages a contiguous memory block that consist of multiple records. It maintains two pointers: `toBeRead` and `toBeFilled`. A `next()` call is used to scan records from the buffer one by one. For a page of an external run, data is copied from the external run file sequentially page by page. For an in-memory run, alphanumeric data is generated randomly record by record or read from an input file.
 
 ## Features Implemented
 
@@ -89,7 +98,9 @@ Two methods are implemented to remove duplicated records:
 
 ### Cache-size mini runs
 
-TODO@Yuheng
+Cache-size mini runs are implemented in class [`CacheOptimizedRenderer`](./InMemoryRenderer.cpp). It first splits the input data into several mini segments so that each segment can be fitted into the cache. Then, for each segment, it creates a cache-size run by building a tournament tree. After building the runs, the renderer builds one tournament tree with leaves pointing to the top of the trees of these cache-size runs.
+
+When doing an in-memory sort, the [`SortIterator::_formInMemoryRenderer`](./sort.cpp) computes the number of rows (records) in cache, and the number of cache-size runs needed (`numCaches`). It creates a tournamant tree for each of the runs. The tree is then passed to `CacheOptimizedRenderer`, where a list of rows of length `numCaches` is formed by polling one element out from each tree, and a master tournament tree is built from these rows. When sorting, this renderer first finds (from the master tree) which tree the smallest element belongs to; then, it tries to get the second largest element from that tree. If such element exists, this element is then pushed into the master tree to maintain the order of the trees. This is repeated until all elements are exhausted.
 
 ### Device-optimized page sizes
 
@@ -146,12 +157,27 @@ Instead of having every record of this long run go through a series of contests 
 
 ### Verifiers
 
-- Two [Witness](./Witness.h)es: TODO@Yuheng
-- [Verify](./Verify.h): TODO@Yuheng
+- Two [Witness](./Witness.h)es: The witness does an integrity check on the data to ensure no record is altered during the sort by calculating a parity of all records before and after sort. Note that the parity will not match with duplicate removal. The witness creates a check record of the same size as the input records, with initial value `0xFF` for all bytes. It then loops through all the given data, and apply an XOR to the check record with the given record (i.e., `checkRecord = checkRecord xor inputRecord`). The final value of the check record will be displayed at the end.
+- [Verify](./Verify.h): The VerifyPlan is another check and inspect the following 3 properties of the data after sort:
+  - Whether records are sorted.
+  - Whether there are duplicates.
+  - Whether there are non-alphanumeric characters in the records.
+  
+  The VerifyPlan reads in the outcome of the SortPlan and maintains the "previous record". If current record is larger than the previous record, then the outcome is not sorted ascending; if current record is equal to the previous record, then there are duplicates in the outcome.
 
-## Read ahead buffers
+### Bonus implementation: Read ahead buffers
 
-TODO@Alicia
+Relevant functions:
+
+- [`void ExternalRun::readAhead()`](./ExternalRun.cpp)
+- [`ExternalRenderer::ExternalRenderer (RowSize recordSize, vector<string>::const_iterator runFileNames_begin, vector<string>::const_iterator runFileNames_end, u_int64_t readAheadSize, u_int8_t pass, u_int16_t rendererNumber, bool removeDuplicates)`](./ExternalRenderer.cpp)
+- [`tuple<u_int64_t, u_int64_t> ExternalSorter::profileReadAheadAndOutput (const vector<string>& runNames, u_int16_t mergedRunCount)`](./ExternalSorter.cpp)
+
+As an additional optimization technique, we implemented read ahead buffers for an `ExternalRenderer`. The read ahead buffer is used to read data from the run files in advance, whose pages are exhausted faster than other runs.
+
+All `ExternalRun`s in an `ExternalRenderer` share `READ_AHEAD_SIZE`. "Exhausted faster" is defined by which run reaches a threshold value `READ_AHEAD_THRESHOLD` first. Both `READ_AHEAD_SIZE` and `READ_AHEAD_THRESHOLD` are implemented as static variables in `ExternalRun` and are initialized in the constructor of `ExternalRenderer`.
+
+Typically, extra memory are allocated for at least 2 such buffers. The size of each buffer depends on the distribution of the run files on storage devices. Currently, when 67% or more of the runs are on HDD, 2 are both of HDD page size; when 33%--67% of the runs are on HDD, 1 is of SSD page size and 1 is of HDD page size; otherwise, 2 are both of SSD page size. The actual profiling algorithm is implemented in `ExternalSorter::profileReadAheadAndOutput`. After allocating memory to all input pages, output pages, and the profiled read ahead size, extra memory is additionally allocated for the read ahead buffers.
 
 ## Appendix: Documentation
 

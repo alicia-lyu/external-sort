@@ -20,6 +20,9 @@ void Metrics::read(const int device_type, const u_int64_t num_bytes, bool readAh
     if (device_type < 0 || device_type >= NUM_STORAGE_TYPES) {
         throw std::invalid_argument("Invalid device type");
     }
+    if (num_bytes == 0) {
+        return;
+    }
     #ifdef VERBOSEL2
     traceprintf("Accessing storage %d with %lu bytes\n", device_type, num_bytes);
     #endif
@@ -27,13 +30,21 @@ void Metrics::read(const int device_type, const u_int64_t num_bytes, bool readAh
     StorageParams & param = instance->params[device_type];
     StorageMetrics & metric = instance->metrics[device_type];
 
-    // calculate the time spent on data transfer
-    if (!readAhead) metric.dataTransferCost += num_bytes / param.bandwidth;
-    metric.numBytesRead += num_bytes;
+    double latency = 0.0;
 
-    // calculate the fixed latency of the storage system
-    if (!readAhead) metric.accessCost += param.latency;
+    // calculate the time spent on data transfer and fixed latency if not read ahead
+    if (!readAhead) {
+        metric.dataTransferCost += num_bytes / param.bandwidth;
+        metric.accessCost += param.latency;
+        latency = num_bytes / param.bandwidth + param.latency;
+    }
+
+    metric.numBytesRead += num_bytes;
     metric.numAccessesRead++;
+
+    #ifdef PRODUCTION
+    Trace::TraceAccess(ACCESS_READ, device_type, latency, num_bytes);
+    #endif
 }
 
 int Metrics::write(const int device_type, const u_int64_t num_bytes)
@@ -58,6 +69,12 @@ int Metrics::write(const int device_type, const u_int64_t num_bytes)
     metric.numAccessesWritten++;
 
     metric.storageUsed += num_bytes;
+
+    #ifdef PRODUCTION
+    // output to trace
+    double latency = num_bytes / param.bandwidth + param.latency;
+    Trace::TraceAccess(ACCESS_WRITE, device_type, latency, num_bytes);
+    #endif
 
     return device_type;
 }

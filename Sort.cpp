@@ -12,9 +12,23 @@ SortPlan::SortPlan (Plan * const input, RowSize const size, RowCount const count
 	_removeDuplicates (removeDuplicates)
 {
 	TRACE (false);
-	traceprintf ("SortPlan: memory space %d, record per run %d\n", MEMORY_SIZE, _recordCountPerRun);
+
+	#ifdef PRODUCTION
+	string output = "Memory space: ";
+	output += to_string(MEMORY_SIZE) + " bytes";
+	// if memory size is larger than 1KB, also print in formatted size
+	if (MEMORY_SIZE > 1000) {
+		output += " (";
+		output += Trace::FormatSize(MEMORY_SIZE);
+		output += ")";
+	}
+	output += ", record per run: ";
+	output += to_string(_recordCountPerRun);
+
+	Trace::PrintTrace(OP_STATE, INIT_SORT, output);
 	if (_removeDuplicates)
-		traceprintf ("SortPlan: remove duplicates using in-sort method\n");
+		Trace::PrintTrace(OP_STATE, INIT_SORT, "Remove duplicates using in-sort method");
+	#endif
 } // SortPlan::SortPlan
 
 SortPlan::~SortPlan ()
@@ -38,8 +52,10 @@ SortIterator::SortIterator (SortPlan const * const plan) :
 	} else {
 		_renderer = _externalSort();
 	}
+	#if defined(VERBOSEL1) || defined(VERBOSEL2)
 	traceprintf ("consumed %lu rows\n",
 			(unsigned long) (_consumed));
+	#endif
 } // SortIterator::SortIterator
 
 SortIterator::~SortIterator ()
@@ -47,9 +63,16 @@ SortIterator::~SortIterator ()
 	TRACE (false);
 	delete _input;
 	delete _renderer;
+
+	#ifdef PRODUCTION
+	Trace::PrintTrace(OP_RESULT, SORT_RESULT, "SortPlan produced " + to_string(_produced) + " of " + to_string(_consumed) + " rows");
+	#endif
+
+	#if defined(VERBOSEL1) || defined(VERBOSEL2)
 	traceprintf ("produced %lu of %lu rows\n",
 			(unsigned long) (_produced),
 			(unsigned long) (_consumed));
+	#endif
 } // SortIterator::~SortIterator
 
 byte * SortIterator::next ()
@@ -60,7 +83,11 @@ byte * SortIterator::next ()
 	// is done before the first next() call
 	if (row == nullptr) return nullptr;
 	++ _produced;
-	// traceprintf ("#%llu produced %s\n", _produced, rowToHexString(row, _plan->_size).c_str());
+	if (_produced % 10000 == 0) {
+		#if defined(VERBOSEL1)
+		traceprintf ("#%llu produced %s\n", _produced, rowToString(row, _plan->_size).c_str());
+		#endif
+	}
 	return row;
 } // SortIterator::next
 
@@ -68,7 +95,8 @@ byte * SortIterator::next ()
 SortedRecordRenderer * SortIterator::_formInMemoryRenderer (RowCount base, u_int16_t runNumber, u_int32_t memory_limit, bool materialize)
 {
 	vector<byte *> rows;
-	while ((_consumed - base) * _plan->_size < memory_limit) {
+	while ((_consumed - base + 1) * _plan->_size <= memory_limit) {
+		Assert(_consumed - base < _plan->_recordCountPerRun, __FILE__, __LINE__);
 		byte * received = _input->next ();
 		if (received == nullptr) break;
 		rows.push_back(received);
@@ -95,18 +123,18 @@ SortedRecordRenderer * SortIterator::_formInMemoryRenderer (RowCount base, u_int
 		// start is inclusive, end is exclusive
 		int start = i * rowsPerCache;
 		int end = std::min((i + 1) * rowsPerCache, (int) rows.size());
-		vector<byte *> cacheRows(rows.begin() + start, rows.begin() + end);
-
-		#ifdef VERBOSEL2
-		traceprintf ("In-memory renderer forming cache tree %d with rows #%d-#%d\n",
-			i, start, end - 1);
+		#if defined(VERBOSEL2)
+		traceprintf ("Cache %d: start %d, end %d\n", i, start, end);
 		#endif
+		vector<byte *> cacheRows(rows.begin() + start, rows.begin() + end);
 
 		TournamentTree * tree = new TournamentTree(cacheRows, _plan->_size);
 		cacheTrees.push_back(tree);
 	}
 
 	SortedRecordRenderer * renderer = new CacheOptimizedRenderer(_plan->_size, cacheTrees, runNumber, _plan->_removeDuplicates, materialize);
+	// TournamentTree * tree = new TournamentTree(rows, _plan->_size);
+	// SortedRecordRenderer * renderer = new NaiveRenderer(_plan->_size, tree, runNumber, _plan->_removeDuplicates, materialize);
 	return renderer;
 }
 
@@ -118,6 +146,8 @@ vector<string> SortIterator::_createInitialRuns () // metrics
 		string runName = renderer->run();
 		delete renderer; // Only after deleting the renderer, the run file is flushed and closed
 		runNames.push_back(runName);
+
+		Trace::PrintStdout("Initial run: %d / %d\n", _consumed, _plan->_count);
 	}
 	#if defined(VERBOSEL1) || defined(VERBOSEL2)
 	traceprintf ("Created %lu initial runs\n", runNames.size());
@@ -160,8 +190,3 @@ SortedRecordRenderer * SortIterator::_externalSort ()
 	ExternalSorter * sorter = new ExternalSorter(runNames, _plan->_size, _plan->_removeDuplicates);
 	return sorter->init();
 }
-
-// Return: mergedRunCount, readAheadSize, neededMemorySize
-// mergedRunCount: the number of runs that can be merged in this pass
-// readAheadSize: the size of read-ahead buffers needed in this pass
-// neededMemorySize: if merge all runs in this pass, the memory needed

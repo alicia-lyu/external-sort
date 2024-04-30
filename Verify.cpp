@@ -25,8 +25,7 @@ VerifyIterator::VerifyIterator(VerifyPlan const * const plan)
         isSorted(true), hasDuplicates(false), _descending(_plan->_descending)
 {
     TRACE(false);
-    lastRow = (byte *)malloc(_plan->_size);
-    isFirstRow = true;
+    lastRow = nullptr;
 } // VerifyIterator::VerifyIterator
 
 VerifyIterator::~VerifyIterator()
@@ -35,8 +34,18 @@ VerifyIterator::~VerifyIterator()
     free(lastRow);
 
     delete _input;
-    traceprintf("Result is %s %s\n", isSorted ? "sorted" : "not sorted", _descending ? "descending" : "ascending");
-    traceprintf("Result has %s\n", hasDuplicates ? "duplicates" : "no duplicates");
+
+    #ifdef PRODUCTION
+    string output = "Result is ";
+    output += isSorted ? "sorted" : "not sorted";
+    output += " ";
+    output += _descending ? "descending" : "ascending";
+    Trace::PrintTrace(OP_RESULT, VERIFY_RESULT, output);
+
+    output = "Result has ";
+    output += hasDuplicates ? "duplicates" : "no duplicates";
+    Trace::PrintTrace(OP_RESULT, VERIFY_RESULT, output);
+    #endif
 
     #if defined(VERBOSEL2) || defined(VERBOSEL1)
     traceprintf ("produced %lu of %lu rows\n",
@@ -64,8 +73,8 @@ byte * VerifyIterator::next()
             if (_descending ? cmp < 0 : cmp > 0) {
                 isSorted = false;
 
-                #ifdef VERBOSEL2
-                traceprintf ("#%lu not sorted with value %s\n", (unsigned long) (_consumed), rowToString(received, _plan->_size).c_str());
+                #ifdef VERBOSEL1
+                traceprintf ("!!!!!! Sort error: #%lu || %s #%lu || %s\n", (unsigned long) (_consumed - 1), rowToString(lastRow, _plan->_size).c_str(), (unsigned long) (_consumed), rowToString(received, _plan->_size).c_str());
                 #endif
             }
             else if (cmp == 0) {
@@ -75,11 +84,24 @@ byte * VerifyIterator::next()
                 traceprintf ("#%lu has duplicates with value %s\n", (unsigned long) (_consumed), rowToString(lastRow, _plan->_size).c_str());
                 #endif
             }
+        } else {
+            lastRow = (byte *) malloc(_plan->_size);
+        }
+
+        for (int i = 0; i < _plan->_size; ++i) {
+            byte c = received[i];
+            if ((c >= '0' && c <= '9') || 
+                (c >= 'A' && c <= 'Z') || 
+                (c >= 'a' && c <= 'z')
+            ) {
+                continue;
+            } else {
+                throw std::invalid_argument("Invalid character " + std::to_string(c) + " in row " + rowToString(received, _plan->_size) + " at " + std::to_string(_consumed));
+            }
         }
 
         // copy received to lastRow
         memcpy(lastRow, received, _plan->_size);
-        isFirstRow = false;
         
         ++ _produced;
         

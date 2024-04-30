@@ -26,6 +26,8 @@ void Iterator::run ()
 
 	while (next ())  ++ _count;
 
+	#if defined(VERBOSEL2) || defined(VERBOSEL1)
 	traceprintf ("entire plan produced %lu rows\n",
 			(unsigned long) _count);
+	#endif
 } // Iterator::run

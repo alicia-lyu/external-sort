@@ -23,6 +23,163 @@ void Trace::_trace (char const lead [])
 		printf ("%s %s (%s:%d)\n", lead, _function, _file, _line);
 } // Trace::_trace
 
+map<int, string> Trace::opName = {
+	{OP_STATE, "STATE"},
+	{OP_ACCESS, "ACCESS"},
+	{OP_RESULT, "RESULT"},
+	{MERGE_RUNS_HDD, "MERGE_RUNS_HDD"},
+	{MERGE_RUNS_SSD, "MERGE_RUNS_SSD"},
+	{MERGE_RUNS_BOTH, "MERGE_RUNS_BOTH"},
+	{SORT_MINI_RUNS, "SORT_MINI_RUNS"},
+	{SPILL_RUNS_SSD, "SPILL_RUNS_SSD"},
+	{SPILL_RUNS_HDD, "SPILL_RUNS_HDD"},
+	{READ_RUN_PAGES_SSD, "READ_RUN_PAGES_SSD"},
+	{READ_RUN_PAGES_HDD, "READ_RUN_PAGES_HDD"},
+	{INIT_SORT, "INIT_SORT"},
+	{SORT_RESULT, "SORT"},
+	{VERIFY_RESULT, "VERIFY"},
+	{WITNESS_RESULT, "WITNESS"},
+	{METRICS_RESULT, "METRICS"}
+};
+
+int Trace::lastOp = -1;
+
+string Trace::finalOutputFileName = "";
+
+int Trace::stdout_copy = -1;
+FILE * Trace::stdout_copy_fp = nullptr;
+
+void Trace::PrintTrace(int opType, const string & message)
+{
+	if (lastOp == OP_ACCESS && opType != OP_ACCESS) {
+		FlushAccess();
+	}
+
+	printf ("[%s] -> %s\n", opName[opType].c_str(), message.c_str());
+	lastOp = opType;
+}
+
+void Trace::PrintTrace(int opType, int subOpType, const string & message)
+{
+	if (lastOp == OP_ACCESS && opType != OP_ACCESS) {
+		FlushAccess();
+	}
+
+	printf ("[%s] -> [%s]: %s\n", opName[opType].c_str(), opName[subOpType].c_str(), message.c_str());
+	lastOp = opType;
+}
+
+map<tuple<int, int>, tuple<double, u_int64_t, u_int64_t>> Trace::accessTrace = {
+	{{ACCESS_READ, STORAGE_SSD}, {0.0, 0, 0}},
+	{{ACCESS_READ, STORAGE_HDD}, {0.0, 0, 0}},
+	{{ACCESS_WRITE, STORAGE_SSD}, {0.0, 0, 0}},
+	{{ACCESS_WRITE, STORAGE_HDD}, {0.0, 0, 0}}
+};
+
+void Trace::TraceAccess(int accessOp, int deviceType, double latency, u_int64_t numBytes)
+{
+	auto key = make_tuple(accessOp, deviceType);
+	auto it = accessTrace.find(key);
+	if (it == accessTrace.end()) {
+		accessTrace[key] = make_tuple(latency, numBytes, 1);
+	} else {
+		auto & [totalLatency, totalBytes, totalAccess] = it->second;
+		totalLatency += latency;
+		totalBytes += numBytes;
+		totalAccess += 1;
+	}
+	lastOp = OP_ACCESS;
+}
+
+void Trace::FlushAccess()
+{
+	// enumerate all pairs of (accessOp, deviceType)
+	for (auto & [key, value] : accessTrace) {
+		auto & [latency, numBytes, numAccess] = value;
+		if (numBytes > 0) {
+			WriteAccess(std::get<0>(key), std::get<1>(key), latency, numBytes, numAccess);
+			latency = 0.0;
+			numBytes = 0;
+		}
+	}
+}
+
+char Trace::buffer[50];
+
+void Trace::WriteAccess(int accessOp, int deviceType, double latency, u_int64_t numBytes, u_int64_t numAccess)
+{
+	string output = "A total of " + to_string(numAccess);;
+	output += (accessOp == ACCESS_READ) ? " reads" : " writes";
+	output += " to ";
+	output += getDeviceName(deviceType);
+	output += " device were made with ";
+	output += to_string(numBytes) + " bytes ";
+	if (numBytes > 1000) {
+		output += "(" + FormatSize(numBytes) + ") ";
+	}
+	output += "and latency " + to_string(int(latency*1e6)) + " us";
+	PrintTrace(OP_ACCESS, output);
+}
+
+string Trace::FormatSize(u_int64_t size)
+{
+	string unit = "B";
+	double size_d = size;
+	if (size_d >= 1000) {
+		size_d /= 1000;
+		unit = "KB";
+	}
+	if (size_d >= 1000) {
+		size_d /= 1000;
+		unit = "MB";
+	}
+	if (size_d >= 1000) {
+		size_d /= 1000;
+		unit = "GB";
+	}
+
+	// if is an integer, don't show decimal places
+	if (size_d == (int) size_d) {
+		snprintf(buffer, 49, "%d ", (int) size_d);
+	} else {
+		snprintf(buffer, 49, "%.2f ", size_d);
+	}
+
+	return string(buffer) + unit;
+}
+
+void Trace::SetOutputFd(int fd)
+{
+	stdout_copy = dup(fileno(stdout));
+	stdout_copy_fp = fdopen(stdout_copy, "w");
+}
+
+void Trace::PrintStdout(const char * format, ...)
+{
+	if (stdout_copy_fp == nullptr) {
+		return;
+	}
+
+	va_list args;
+	va_start(args, format);
+	vfprintf(stdout_copy_fp, format, args);
+	va_end(args);
+	fflush(stdout_copy_fp);
+}
+
+void Trace::ResumeStdout()
+{
+	if (stdout_copy_fp != nullptr) {
+		fclose(stdout_copy_fp);
+		stdout_copy_fp = nullptr;
+	}
+	if (stdout_copy != -1) {
+		dup2(stdout_copy, fileno(stdout));
+		close(stdout_copy);
+		stdout_copy = -1;
+	}
+}
+
 // -----------------------------------------------------------------
 
 size_t Random (size_t const range)

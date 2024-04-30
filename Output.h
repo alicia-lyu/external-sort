@@ -1,33 +1,24 @@
 #pragma once
 
-#include "Iterator.h"
+#include "defs.h"
+#include "utils.h"
 #include "Buffer.h"
 #include <fstream>
+#include <string>
 
+using std::ifstream;
 using std::ofstream;
+using std::ios;
 
-class OutputPlan : public Plan
-{
-    friend class OutputIterator;
-public:
-    OutputPlan (Plan * const input, RowSize const size, const string &outputPath);
-    ~OutputPlan ();
-    Iterator * init () const;
-private:
-    Plan * const _input;
-    RowSize const _size;
-    const string & _outputPath;
-}; // class OutputPlan
-
-class OutputIterator : public Iterator
+class OutputPrinter
 {
 public:
-    OutputIterator (OutputPlan const * const plan);
-    ~OutputIterator ();
-    byte * next ();
+    OutputPrinter (const string &outputPath, const RowSize recordSize);
+    ~OutputPrinter ();
+    void Print();
 private:
-    OutputPlan const * const _plan;
-    Iterator * const _input;
-    ofstream _outputFile;
-    RowCount _consumed, _produced;
-}; // class OutputIterator
+    ifstream answerFile;
+    ofstream outputFile;
+    RowSize const _recordSize;
+    byte * _lastRow;
+}; // class OutputPrinter

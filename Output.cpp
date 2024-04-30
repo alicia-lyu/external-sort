@@ -1,43 +1,38 @@
 #include "Output.h"
 
-OutputPlan::OutputPlan(Plan * const input, RowSize const size, const string &outputPath)
-    : _input(input), _size(size), _outputPath(outputPath)
+OutputPrinter::OutputPrinter (const string &outputPath, const RowSize recordSize) :
+    _recordSize (recordSize)
 {
-} // OutputPlan::OutputPlan
+    auto &answerPath = Trace::finalOutputFileName;
 
-OutputPlan::~OutputPlan()
-{
-    delete _input;
-} // OutputPlan::~OutputPlan
-
-Iterator * OutputPlan::init() const
-{
-    return new OutputIterator(this);
-} // OutputPlan::init
-
-OutputIterator::OutputIterator(OutputPlan const * const plan)
-    : _plan(plan), _input(plan->_input->init()), _consumed(0), _produced(0)
-{
-    _outputFile.open(_plan->_outputPath.c_str(), ofstream::out | ofstream::trunc | ofstream::binary);
-} // OutputIterator::OutputIterator
-
-OutputIterator::~OutputIterator()
-{
-    _outputFile.close();
-    delete _input;
-} // OutputIterator::~OutputIterator
-
-byte * OutputIterator::next()
-{
-    byte * received = _input->next();
-    if (received == nullptr) {
-        return nullptr;
-    } else {
-        byte * row = received;
-        ++_consumed;
-        _outputFile.write(reinterpret_cast<char *>(row), _plan->_size);
-        _outputFile.write("\n", 1);
-        ++_produced;
-        return row;
+    answerFile.open(answerPath, ios::binary);
+    if (!answerFile.is_open()) {
+        throw std::runtime_error("Sorted output file not found");
     }
-} // OutputIterator::next
+
+    outputFile.open(outputPath, ios::binary);
+    if (!outputFile.is_open()) {
+        throw std::runtime_error("Cannot create output file");
+    }
+
+    _lastRow = new byte[_recordSize+5];
+} // OutputPrinter::OutputPrinter
+
+OutputPrinter::~OutputPrinter ()
+{
+    answerFile.close();
+    outputFile.close();
+    delete[] _lastRow;
+} // OutputPrinter::~OutputPrinter
+
+void OutputPrinter::Print()
+{
+    while (!answerFile.eof()) {
+        answerFile.read(reinterpret_cast<char *>(_lastRow), _recordSize);
+        if (answerFile.eof()) {
+            break;
+        }
+        outputFile.write(reinterpret_cast<char *>(_lastRow), _recordSize);
+        outputFile.write("\n", 1);
+    }
+} // OutputPrinter::Print

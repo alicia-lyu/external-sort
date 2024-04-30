@@ -5,6 +5,7 @@
 #include <tuple>
 using std::tuple;
 using std::string;
+using std::to_string;
 
 /*
 StorageMetrics: the metrics of a storage system (SSD / HDD)

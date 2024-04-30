@@ -4,16 +4,20 @@
 #include "ExternalRun.h"
 #include "TournamentTree.h"
 #include <vector>
+#include <set>
 
 using std::string;
 using std::vector;
 using std::ofstream;
+using std::set;
 
 class ExternalRenderer : public SortedRecordRenderer
 {
 public:
     ExternalRenderer (RowSize recordSize, 
-        vector<string> runFileNames, u_int64_t readAheadSize,
+        vector<string>::const_iterator runFileNames_begin,
+        vector<string>::const_iterator runFileNames_end,
+        u_int64_t readAheadSize,
         u_int8_t pass, u_int16_t rendererNumber = 0, 
         bool removeDuplicates = false); // this function will modify runFileNames, so it is passed by value
     ~ExternalRenderer ();

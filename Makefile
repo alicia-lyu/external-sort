@@ -81,8 +81,10 @@ instream : $(TARGET) Makefile $(LOG_DIR) ./inputs/
 	echo $(TIMESTAMP) > $(LOG_FILE)
 	./$(TARGET) -c 4000 -s 2 -t $(LOG_FILE) -d instream
 
-# Small test plan: Memory size = 100 KB, SSD page size = 2 KB
-# 50 pages per memory, 98 KB per memory run
+# Memory size = 100 MB, SSD page size = 20 KB
+# 200--5000 pages can fit in memory
+# Memory run size = 100 MB
+# Pass 1 run: 20 GB -- 500 GB
 
 # 200 KB data, 3 initial runs, 1 pass
 external: $(TARGET) Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1

@@ -51,8 +51,8 @@ ExternalRun::~ExternalRun ()
     delete _currentPage;
     Metrics::erase(storage, std::filesystem::file_size(_runFileName) - switchPoint * _recordSize); // OPTIMIZATION: Erase in a smaller granularity at each fill?
     if (_readAheadPage != nullptr) delete _readAheadPage;
-    _runFile.close();
 
+    _runFile.close();
     // delete the run file
     if (std::remove(_runFileName.c_str()) != 0) {
         std::cerr << "Error deleting run file " << _runFileName << std::endl;
@@ -98,8 +98,9 @@ byte * ExternalRun::peek ()
 
 u_int32_t ExternalRun::_fillPage (Buffer * page)
 {
-    u_int32_t readCount;
+    u_int32_t readCount = 0;
     TRACE (false);
+
     if (_runFile.eof()) {
         readCount = 0;
     } else if (_runFile.good() == false) {
@@ -108,7 +109,7 @@ u_int32_t ExternalRun::_fillPage (Buffer * page)
         _runFile.read((char *) page->data(), _pageSize);
         readCount = _runFile.gcount(); // Same scale as _pageSize
     }
-
+    
     #if defined(VERBOSEL2)
     traceprintf("Read %d rows from run file %s\n", readCount / _recordSize, _runFileName.c_str());
     #endif

@@ -67,18 +67,18 @@ byte * ScanIterator::next ()
 		row = _run->next();
 	}
 
-	RowCount rowCountInCurrentScan = _count - _scanCount * _countPerScan;
-	if (rowCountInCurrentScan >= _countPerScan) {
-		_inputFile.close();
-		_inputFile = std::ofstream(_getInputFileName(), std::ios::binary);
-		_scanCount++;
-	}
-	if (_inputFile.good()) {
-		_inputFile.write((char *) row, _plan->_size);
-		_inputFile.write("\n", 1);
-	} else {
-		throw std::runtime_error("Error writing to input file scan" + std::to_string(_scanCount));
-	}
+	// RowCount rowCountInCurrentScan = _count - _scanCount * _countPerScan;
+	// if (rowCountInCurrentScan >= _countPerScan) {
+	// 	_inputFile.close();
+	// 	_inputFile = std::ofstream(_getInputFileName(), std::ios::binary);
+	// 	_scanCount++;
+	// }
+	// if (_inputFile.good()) {
+	// 	_inputFile.write((char *) row, _plan->_size);
+	// 	_inputFile.write("\n", 1);
+	// } else {
+	// 	throw std::runtime_error("Error writing to input file scan" + std::to_string(_scanCount));
+	// }
 	#ifdef VERBOSEL1
 	if (_count % 10000 == 0) traceprintf ("# %llu produced %s\n", _count, rowToString(row, _plan->_size).c_str());
 	#endif

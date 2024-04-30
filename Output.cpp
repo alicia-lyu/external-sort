@@ -15,13 +15,13 @@ OutputPrinter::OutputPrinter (const string &outputPath, const RowSize recordSize
         throw std::runtime_error("Cannot create output file");
     }
 
-    _lastRow = new byte[_recordSize+5];
+    // read as many bytes in one time as possible depending on the memory size
+    bytesPerRead = MEMORY_SIZE / recordSize * recordSize;
+    _lastRow = new byte[bytesPerRead + 5];
 } // OutputPrinter::OutputPrinter
 
 OutputPrinter::~OutputPrinter ()
 {
-    answerFile.close();
-    outputFile.close();
     delete[] _lastRow;
 } // OutputPrinter::~OutputPrinter
 
@@ -29,10 +29,20 @@ void OutputPrinter::Print()
 {
     while (!answerFile.eof()) {
         answerFile.read(reinterpret_cast<char *>(_lastRow), _recordSize);
-        if (answerFile.eof()) {
+        bytesRead = answerFile.gcount();
+        if (bytesRead == 0) {
             break;
         }
-        outputFile.write(reinterpret_cast<char *>(_lastRow), _recordSize);
-        outputFile.write("\n", 1);
+
+        for (u_int64_t i = 0; i < bytesRead; i += _recordSize) {
+            outputFile.write(reinterpret_cast<char *>(_lastRow + i), _recordSize);
+            outputFile.write("\n", 1);
+        }
     }
+
+    answerFile.close();
+    outputFile.close();
+
+    // remove the answer file
+    remove(Trace::finalOutputFileName.c_str());
 } // OutputPrinter::Print

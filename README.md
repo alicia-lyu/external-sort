@@ -44,9 +44,15 @@ In the Makefile, you can control the level of log output by defining verbosity m
 - `-DVERBOSEL2`: prints out information about each record, such as whether it is a duplicated or an out-of-order record. Warning: will produce huge output.
 - `-DPRODUCTION`: (enabled by default) prints out production traces in the form of `[Operation] -> [Type]: <message>`.
 
-### Trace
+### Trace Explanation
 
-Metrics:
+Trace file resides in the output path that is specified when running the program. For the existing test cases in the Makefile, the trace file is located in `logs/<current timestamp>`.
+
+Metrics are located in the bottom of the trace file. 
+
+- 2 metrics are recorded for each storage device: data transfer cost, access cost.
+- Additionally, we calculated the expected data transfer cost and access cost for each storage device. The difference between the actual and expected costs is simply the saved cost from read ahead buffers. Other optimizations are reflected both in the actual cost and the expected cost and do not contribute to the gap there-between.
+- Note that the cost for writing the final output is included, while reading the input is not. This means that merge sort without intermediate spills still has a non-zero cost.
 
 ## Design Overview
 

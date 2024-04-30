@@ -116,7 +116,8 @@ SortedRecordRenderer * SortIterator::_formInMemoryRenderer (RowCount base, u_int
 	}
 
 	if (forceFlushBuffer) {
-		_input->forceFlushBuffer();
+		bool result = _input->forceFlushBuffer();
+		Assert(result, __FILE__, __LINE__);
 	}
 
 	#if defined(VERBOSEL2)

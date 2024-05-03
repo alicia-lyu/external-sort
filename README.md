@@ -4,7 +4,12 @@ External sort project. Individual contributions are listed in the [Tasks](./Task
 
 ## Getting started
 
-First, intall `argparse` as dependency: [installation](https://github.com/p-ranav/argparse?tab=readme-ov-file#building-installing-and-testing).
+First, install `argparse` as dependency: [installation](https://github.com/p-ranav/argparse?tab=readme-ov-file#building-installing-and-testing).
+
+Second, ensure that the following paths exist:
+
+- `./inputs/`
+- `./spills/pass0/` to `./spills/passN/`: N is the number of passes needed to sort the data. 
 
 Use the command line to run the program:
 

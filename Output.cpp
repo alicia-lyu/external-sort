@@ -7,7 +7,7 @@ OutputPrinter::OutputPrinter (const string &outputPath, const RowSize recordSize
 
     answerFile.open(answerPath, ios::binary);
     if (!answerFile.is_open()) {
-        throw std::runtime_error("Sorted output file not found");
+        throw std::runtime_error("Sorted output file" + answerPath + " not found");
     }
 
     outputFile.open(outputPath, ios::binary);

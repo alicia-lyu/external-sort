@@ -64,20 +64,20 @@ clean-inputs:
 clean-spills:
 	rm -rf ./spills/*
 
-test : $(TARGET) Makefile $(LOG_DIR) ./inputs/
+test : $(TARGET) Makefile $(LOG_DIR) ./inputs/ ./spills/pass0
 	echo $(TIMESTAMP) > $(LOG_FILE)
 	./$(TARGET) -c 7 -s 20 -t $(LOG_FILE) -d insort
 
-testinput : $(TARGET) Makefile $(LOG_DIR) ./inputs/
+testinput : $(TARGET) Makefile $(LOG_DIR) ./inputs/ ./spills/pass0
 	echo $(TIMESTAMP) > $(LOG_FILE)
 	./$(TARGET) -c 20 -s 1023 -i input_table -t $(LOG_FILE)
 	# diff output_table output.txt
 
-insort : $(TARGET) Makefile $(LOG_DIR) ./inputs/
+insort : $(TARGET) Makefile $(LOG_DIR) ./inputs/ ./spills/pass0
 	echo $(TIMESTAMP) > $(LOG_FILE)
 	./$(TARGET) -c 4000 -s 2 -t $(LOG_FILE) -d insort
 
-instream : $(TARGET) Makefile $(LOG_DIR) ./inputs/
+instream : $(TARGET) Makefile $(LOG_DIR) ./inputs/ ./spills/pass0
 	echo $(TIMESTAMP) > $(LOG_FILE)
 	./$(TARGET) -c 4000 -s 2 -t $(LOG_FILE) -d instream
 

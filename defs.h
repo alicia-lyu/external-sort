@@ -9,6 +9,7 @@
 #include <map>
 #include <tuple>
 #include <unistd.h>
+#include <cstdarg>
 
 #include "params.h"
 

@@ -134,7 +134,11 @@ byte * RandomBuffer::next ()
         #if defined(VERBOSEL2)
         traceprintf("Buffer cleared for refill.\n");
         #endif
-        std::generate(_rows, _rowsEnd, [this](){ return getRandomAlphaNumeric(); });
+
+        // not use generate, simply loop
+        for (auto it = _rows; it < _rowsEnd; it++) {
+            *it = getRandomAlphaNumeric();
+        }
         toBeFilled = _rowsEnd;
     }
 

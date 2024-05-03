@@ -4,6 +4,7 @@
 #include <vector>
 #include "Buffer.h"
 #include <tuple>
+#include <cstring>
 
 using std::vector;
 using std::tuple;

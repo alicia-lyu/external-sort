@@ -85,7 +85,8 @@ byte * Buffer::batchFillByOverwrite (u_int64_t sizeToBeFilled)
 // Derived class: RandomBuffer
 RandomBuffer::RandomBuffer (u_int32_t recordCount, RowSize recordSize):
     Buffer(recordCount, recordSize),
-    _engine(_device()), _device(),_distribution(0, RANDOM_BYTE_UPPER_BOUND - 1)
+    _distribution(0, RANDOM_BYTE_UPPER_BOUND - 1),
+    _engine(std::chrono::system_clock::now().time_since_epoch().count())
 {
     TRACE (false);
     // nothing to do here right now

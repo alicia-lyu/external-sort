@@ -4,9 +4,9 @@
 #include <memory>
 #include <random>
 #include <fstream>
+#include <chrono> // to seed random number generator
 #include <string>
 
-using std::random_device;
 using std::default_random_engine;
 using std::uniform_int_distribution;
 using std::ifstream;
@@ -54,7 +54,6 @@ public:
     byte * next() override;
 private:
     default_random_engine _engine;
-    random_device _device;
     uniform_int_distribution<byte> _distribution;
     byte getRandomAlphaNumeric();
     static const int RANDOM_BYTE_UPPER_BOUND = (26+26+10); // 26 upper case, 26 lower case, 10 digits

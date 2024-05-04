@@ -1,5 +1,6 @@
 #include "Buffer.h"
 #include <iostream>
+#include <algorithm>
 
 // Base class: Buffer
 Buffer::Buffer(u_int32_t recordCount, RowSize recordSize):
@@ -85,8 +86,8 @@ byte * Buffer::batchFillByOverwrite (u_int64_t sizeToBeFilled)
 // Derived class: RandomBuffer
 RandomBuffer::RandomBuffer (u_int32_t recordCount, RowSize recordSize):
     Buffer(recordCount, recordSize),
-    _distribution(0, RANDOM_BYTE_UPPER_BOUND - 1),
-    _engine(std::chrono::system_clock::now().time_since_epoch().count())
+    _engine(std::chrono::system_clock::now().time_since_epoch().count()),
+    _distribution(0, RANDOM_BYTE_UPPER_BOUND - 1)
 {
     TRACE (false);
     // nothing to do here right now
@@ -136,11 +137,7 @@ byte * RandomBuffer::next ()
         traceprintf("Buffer cleared for refill.\n");
         #endif
 
-        // not use generate, simply loop
-        for (auto it = _rows; it < _rowsEnd; it++) {
-            *it = getRandomAlphaNumeric();
-        }
-        toBeFilled = _rowsEnd;
+        std::generate(_rows, _rowsEnd, [this](){ return getRandomAlphaNumeric(); });
     }
 
     byte * read = toBeRead;

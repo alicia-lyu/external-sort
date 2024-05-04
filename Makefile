@@ -16,19 +16,19 @@ HDRS=	defs.h params.h\
 		Iterator.h Scan.h Sort.h \
 		utils.h Buffer.h Witness.h TournamentTree.h, SortedRecordRenderer.h \
 		ExternalRenderer.h ExternalRun.h Verify.h Remove.h Metrics.h \
-		InMemoryRenderer.h Output.h GracefulRenderer.h ExternalSorter.h
+		InMemoryRenderer.h GracefulRenderer.h ExternalSorter.h
 SRCS=	defs.cpp Assert.cpp Test.cpp \
 		Iterator.cpp Scan.cpp Sort.cpp \
 		utils.cpp Buffer.cpp Witness.cpp TournamentTree.cpp SortedRecordRenderer.cpp \
 		ExternalRenderer.cpp ExternalRun.cpp Verify.cpp Remove.cpp Metrics.cpp \
-		InMemoryRenderer.cpp Output.cpp GracefulRenderer.cpp ExternalSorter.cpp
+		InMemoryRenderer.cpp GracefulRenderer.cpp ExternalSorter.cpp
 
 # compilation targets
 OBJS=	defs.o Assert.o Test.o \
 		Iterator.o Scan.o Sort.o \
 		utils.o Buffer.o Witness.o TournamentTree.o SortedRecordRenderer.o \
 		ExternalRenderer.o ExternalRun.o Verify.o Remove.o Metrics.o \
-		InMemoryRenderer.o Output.o GracefulRenderer.o ExternalSorter.o
+		InMemoryRenderer.o GracefulRenderer.o ExternalSorter.o
 
 # RCS assists
 REV=-q -f
@@ -173,8 +173,8 @@ lldb : $(TARGET)
 # ./ExternalSort.exe -c 120 -s 1000 -o trace0.txt  (Example values)
 
 $(OBJS) : Makefile defs.h
-Test.o : Iterator.h Scan.h Sort.h utils.h Buffer.h Witness.h TournamentTree.h SortedRecordRenderer.h Verify.h Remove.h Metrics.h Output.h GracefulRenderer.h ExternalRenderer.h ExternalRun.h
-Iterator.o Scan.o Sort.o utils.o Buffer.o Witness.o TournamentTree.o SortedRecordRenderer.o Verify.o Remove.o Metrics.o Output.o GracefulRenderer.o ExternalRenderer.o ExternalRun.o: Iterator.h Buffer.h params.h utils.h
+Test.o : Iterator.h Scan.h Sort.h utils.h Buffer.h Witness.h TournamentTree.h SortedRecordRenderer.h Verify.h Remove.h Metrics.h GracefulRenderer.h ExternalRenderer.h ExternalRun.h
+Iterator.o Scan.o Sort.o utils.o Buffer.o Witness.o TournamentTree.o SortedRecordRenderer.o Verify.o Remove.o Metrics.o GracefulRenderer.o ExternalRenderer.o ExternalRun.o: Iterator.h Buffer.h params.h utils.h
 Scan.o : Scan.h 
 Sort.o : Sort.h TournamentTree.h SortedRecordRenderer.h
 utils.o: utils.h
@@ -183,7 +183,6 @@ Verify.o: Verify.h
 Remove.o: Remove.h
 TournamentTree.o: TournamentTree.h
 Metrics.o: Metrics.h
-Output.o: Output.h
 SortedRecordRenderer.o: SortedRecordRenderer.h
 ExternalRun.o: ExternalRun.h
 ExternalRenderer.o: ExternalRenderer.h ExternalRun.h SortedRecordRenderer.h TournamentTree.h

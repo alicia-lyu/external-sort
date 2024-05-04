@@ -202,3 +202,9 @@ u_int8_t getLargestDeviceType(const string &filename) {
     }
     return *std::max_element(deviceTypes.begin(), deviceTypes.end());
 }
+
+void renameOutputFile(const string &outputPath) {
+    auto &answerPath = Trace::finalOutputFileName;
+    Assert(std::filesystem::exists(answerPath), __FILE__, __LINE__);
+    std::rename(answerPath.c_str(), outputPath.c_str());
+}

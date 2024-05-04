@@ -6,7 +6,6 @@
 #include "Verify.h"
 #include "Remove.h"
 #include "Metrics.h"
-#include "Output.h"
 #include <unistd.h>
 
 int main (int argc, char * argv [])
@@ -51,8 +50,7 @@ int main (int argc, char * argv [])
 	delete it;
 	delete witnessPlan2;
 
-	OutputPrinter printer(config.outputPath, recordSize);
-	printer.Print();
+	renameOutputFile(config.outputPath);
 
 	// print the metrics
 	auto ssdMetrics = Metrics::getMetrics(STORAGE_SSD);

@@ -37,7 +37,7 @@ MSG=no message
 # default target
 #
 $(TARGET) : $(OBJS)
-	g++ $(CPPFLAGS) -o $(TARGET) $(OBJS)
+	g++ $(CPPFLAGS) -o $(TARGET) $(OBJS) -lstdc++fs
 
 LOG_DIR=./logs/${TIMESTAMP}
 LOG_FILE=$(LOG_DIR)/trace

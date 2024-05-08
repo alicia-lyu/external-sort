@@ -120,7 +120,7 @@ tuple<Node *, Node *> TournamentTree::_contest (Node * root_left, Node * root_ri
 Node * TournamentTree::_advanceToTop(Node * advancing, Node * incumbent)
 {
     Node * winner;
-    Node * loser;
+    Node * loser = nullptr;
     Node * lastLoser = nullptr;
     bool incumbentIsLeft;
     while (incumbent != _root) { // Guaranteed that incumbent arg is not root
@@ -160,7 +160,8 @@ Node * TournamentTree::_advanceToTop(Node * advancing, Node * incumbent)
     advancing->parent = nullptr;
     advancing->left = loser;
     advancing->right = nullptr;
-    loser->parent = advancing;
+    if (loser != nullptr)
+        loser->parent = advancing;
     Node * previousRoot = _root;
     _root = advancing;
     return previousRoot;

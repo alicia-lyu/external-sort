@@ -136,15 +136,16 @@ SortedRecordRenderer * SortIterator::_formInMemoryRenderer (RowCount base, u_int
 	#endif
 
 	vector<TournamentTree *> cacheTrees;
-	for (int i = 0; i < numCaches; i++) {
+	for (RowCount i = 0; i < numCaches; i++) {
 		// start is inclusive, end is exclusive
 		int start = i * rowsPerCache;
-		int end = std::min((i + 1) * rowsPerCache, (int) rows.size());
+		int end = std::min((i + 1) * rowsPerCache, rows.size());
 		#if defined(VERBOSEL2)
 		traceprintf ("Cache %d: start %d, end %d\n", i, start, end);
 		#endif
+		vector<byte *> cacheRows(rows.begin() + start, rows.begin() + end);
 
-		TournamentTree * tree = new TournamentTree(rows.cbegin() + start, _plan->_size, end - start);
+		TournamentTree * tree = new TournamentTree(cacheRows, _plan->_size);
 		cacheTrees.push_back(tree);
 	}
 
@@ -157,13 +158,15 @@ SortedRecordRenderer * SortIterator::_formInMemoryRenderer (RowCount base, u_int
 vector<string> SortIterator::_createInitialRuns () // metrics
 {
 	vector<string> runNames;
+	int runNum = 0;
 	while (_consumed < _plan->_count) {
 		SortedRecordRenderer * renderer = _formInMemoryRenderer(_consumed, runNames.size());
 		string runName = renderer->run();
 		delete renderer; // Only after deleting the renderer, the run file is flushed and closed
 		runNames.push_back(runName);
 
-		Trace::PrintStdout("Initial run: %d / %d (%.2lf%%)\n", _consumed, _plan->_count, 100.0 * (double) _consumed / _plan->_count);
+		++runNum;
+		Trace::PrintStdout("Initial run #%d: %d / %d (%.2lf%%)\n", runNum, _consumed, _plan->_count, 100.0 * _consumed / _plan->_count);
 	}
 	#if defined(VERBOSEL1) || defined(VERBOSEL2)
 	traceprintf ("Created %lu initial runs\n", runNames.size());

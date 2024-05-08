@@ -4,8 +4,11 @@
 #include <memory>
 #include <random>
 #include <fstream>
-#include <chrono> // to seed random number generator
+#include <iostream>
 #include <string>
+#include <chrono>
+#include <algorithm>
+
 
 using std::default_random_engine;
 using std::uniform_int_distribution;
@@ -49,6 +52,7 @@ class RandomBuffer : public Buffer
 public:
     RandomBuffer (u_int32_t recordCount, RowSize recordSize);
     ~RandomBuffer ();
+    byte * fillRandomly(); // Fill the first bytes not filled yet with random bytes. Return the pointer to the filled bytes.
     // alpha numeric characters
     static byte toAlphaNumeric(const byte randomByte);
     byte * next() override;

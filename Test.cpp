@@ -58,18 +58,17 @@ int main (int argc, char * argv [])
 	auto hddMetrics = Metrics::getMetrics(STORAGE_HDD);
 	auto hddParams = Metrics::getParams(STORAGE_HDD);
 
-	traceprintf("SSD: dataTransferCost: %f, expected data transfer cost: %f\naccessCost: %f, expected access cost: %f\n",
-		ssdMetrics.dataTransferCost,
-		(ssdMetrics.numBytesRead + ssdMetrics.numBytesWritten) / (double) ssdParams.bandwidth,
-		ssdMetrics.accessCost,
-		(ssdMetrics.numAccessesRead + ssdMetrics.numAccessesWritten) * ssdParams.latency
-	);
-	traceprintf("HDD: dataTransferCost: %f, expected data transfer cost: %f\naccessCost: %f, expected access cost: %f\n",
-		hddMetrics.dataTransferCost,
-		(hddMetrics.numBytesRead + hddMetrics.numBytesWritten) / (double) hddParams.bandwidth,
-		hddMetrics.accessCost,
-		(hddMetrics.numAccessesRead + hddMetrics.numAccessesWritten) * hddParams.latency
-	);
+	Trace::PrintTrace(OP_RESULT, METRICS_RESULT, 
+		"SSD: dataTransferCost: " + to_string(ssdMetrics.dataTransferCost) +
+		", expected data transfer cost: " + to_string((ssdMetrics.numBytesRead + ssdMetrics.numBytesWritten) / (double) ssdParams.bandwidth) +
+		"\naccessCost: " + to_string(ssdMetrics.accessCost) +
+		", expected access cost: " + to_string((ssdMetrics.numAccessesRead + ssdMetrics.numAccessesWritten) * ssdParams.latency));
+
+	Trace::PrintTrace(OP_RESULT, METRICS_RESULT,
+		"HDD: dataTransferCost: " + to_string(hddMetrics.dataTransferCost) +
+		", expected data transfer cost: " + to_string((hddMetrics.numBytesRead + hddMetrics.numBytesWritten) / (double) hddParams.bandwidth) +
+		"\naccessCost: " + to_string(hddMetrics.accessCost) +
+		", expected access cost: " + to_string((hddMetrics.numAccessesRead + hddMetrics.numAccessesWritten) * hddParams.latency));
 	
 	// restore stdout
 	fflush(stdout);

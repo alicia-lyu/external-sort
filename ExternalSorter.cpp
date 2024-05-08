@@ -99,7 +99,7 @@ u_int64_t ExternalSorter::calculateMemoryForAll (const vector<string>& runNames)
 
 	// Calculate all memory consumption till the end of runNames
 	u_int64_t allMemoryConsumption = readAheadSize + outputPageSize;
-	for (int i = 0; i < runNames.size(); i++) {
+	for (size_t i = 0; i < runNames.size(); i++) {
 		auto deviceType = getLargestDeviceType(runNames.at(i));
 		auto pageSize = Metrics::getParams(deviceType).pageSize;
 		allMemoryConsumption += pageSize;
@@ -182,7 +182,7 @@ SortedRecordRenderer * ExternalSorter::gracefulMerge (const vector<string>& runN
 	int const gracefulOutputDevice = Metrics::getAvailableStorage(allRunSize);
 	
 	u_int64_t initialRunSize = 0;
-	u_int64_t initialPageSize;
+	u_int64_t initialPageSize = 0;
 	u_int64_t initialInputMemory = 0; // output page size for initialRenderer, input page size of initialRun for gracefulRenderer
 	u_int64_t const gracefulOutputPage = Metrics::getParams(gracefulOutputDevice).pageSize;
 	u_int64_t const gracefulMemoryFixed = gracefulOutputPage + gracefulReadAheadSize;

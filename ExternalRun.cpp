@@ -53,9 +53,13 @@ ExternalRun::~ExternalRun ()
     if (_readAheadPage != nullptr) delete _readAheadPage;
 
     _runFile.close();
-    // delete the run file
-    if (std::remove(_runFileName.c_str()) != 0) {
-        std::cerr << "Error deleting run file " << _runFileName << std::endl;
+
+    // remove the run file
+    if (std::filesystem::remove(_runFileName)) {
+        Trace::PrintStdout("Deleted run file %s after reading data from it.\n", _runFileName.c_str());
+    }
+    else {
+        Trace::PrintStdout("Failed to delete run file %s after reading data from it.\n", _runFileName.c_str());
     }
 
     #if defined(VERBOSEL1) || defined(VERBOSEL2)
@@ -98,9 +102,8 @@ byte * ExternalRun::peek ()
 
 u_int32_t ExternalRun::_fillPage (Buffer * page)
 {
-    u_int32_t readCount = 0;
+    u_int32_t readCount;
     TRACE (false);
-
     if (_runFile.eof()) {
         readCount = 0;
     } else if (_runFile.good() == false) {
@@ -109,7 +112,7 @@ u_int32_t ExternalRun::_fillPage (Buffer * page)
         _runFile.read((char *) page->data(), _pageSize);
         readCount = _runFile.gcount(); // Same scale as _pageSize
     }
-    
+
     #if defined(VERBOSEL2)
     traceprintf("Read %d rows from run file %s\n", readCount / _recordSize, _runFileName.c_str());
     #endif
@@ -130,7 +133,7 @@ Buffer * ExternalRun::getBuffer ()
         // when we are reading ahead, i.e. when we are not so sensitive to suboptimal choice of page size
         u_int64_t nextProducedCount = _produced + _pageSize / _recordSize;
         if (nextProducedCount > switchPoint) {
-            traceprintf("# %llu: Switching device before switch point %llu\n", _produced, switchPoint);
+            traceprintf("# %lu: Switching device before switch point %lu\n", _produced, switchPoint);
             Metrics::erase(storage, _produced * _recordSize);
             // We may leave a small fragment in the next device, left for future OPTIMIZATION
             storage = nextStorage;

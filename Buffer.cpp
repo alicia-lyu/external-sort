@@ -1,6 +1,4 @@
 #include "Buffer.h"
-#include <iostream>
-#include <algorithm>
 
 // Base class: Buffer
 Buffer::Buffer(u_int32_t recordCount, RowSize recordSize):
@@ -109,9 +107,6 @@ byte RandomBuffer::toAlphaNumeric (const byte randomByte) {
     const byte numericOffset = 48;
     const byte upperCaseOffset = 65;
     const byte lowerCaseOffset = 97;
-    // first, check if it's less than 62
-    Assert(randomByte < RANDOM_BYTE_UPPER_BOUND, __FILE__, __LINE__);
-
     if (randomByte < 10) {
         return randomByte + numericOffset;
     } else if (randomByte < 36) {
@@ -127,22 +122,29 @@ byte RandomBuffer::getRandomAlphaNumeric ()
     return toAlphaNumeric(randomByte);
 }
 
+byte * RandomBuffer::fillRandomly ()
+{
+    if (toBeFilled >= _rowsEnd) {
+        toBeFilled = _rows;
+        #if defined(VERBOSEL1) || defined(VERBOSEL2)
+        traceprintf("Buffer cleared for refill.\n");
+        #endif
+        return nullptr;
+    }
+    std::generate(toBeFilled, toBeFilled + recordSize, [this](){ return getRandomAlphaNumeric(); });
+    byte * filled = toBeFilled;
+    toBeFilled += recordSize;
+    return filled;
+}
+
 byte * RandomBuffer::next ()
 {
     TRACE (false);
-
-    if (toBeRead >= _rowsEnd || toBeRead >= toBeFilled) {
-        toBeRead = _rows;
-        #if defined(VERBOSEL2)
-        traceprintf("Buffer cleared for refill.\n");
-        #endif
-
-        std::generate(_rows, _rowsEnd, [this](){ return getRandomAlphaNumeric(); });
-    }
-
-    byte * read = toBeRead;
-    toBeRead += recordSize;
-    return read;
+    byte * nextRecord = fillRandomly();
+    // toBeRead is always the same as toBeFilled, since 
+    // we generate random records on the fly
+    toBeRead = toBeFilled;
+    return nextRecord;
 }
 
 

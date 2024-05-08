@@ -123,7 +123,7 @@ external-2-lldb: $(TARGET) Makefile ./inputs/ ./spills/pass0 ./spills/pass1 ./sp
 10g: $(TARGET) Makefile $(LOG_DIR) ./inputs/ ./spills/pass0 ./spills/pass1 ./spills/pass2
 	echo $(TIMESTAMP) > $(LOG_FILE)
 	date +%s > time
-	./$(TARGET) -c 12500000 -s 800 -t $(LOG_FILE)
+	./$(TARGET) -c 8000000 -s 1250 -t $(LOG_FILE)
 	date +%s >> time
 	./calculateTime.sh time
 
@@ -176,7 +176,7 @@ $(OBJS) : Makefile defs.h
 Test.o : Iterator.h Scan.h Sort.h utils.h Buffer.h Witness.h TournamentTree.h SortedRecordRenderer.h Verify.h Remove.h Metrics.h GracefulRenderer.h ExternalRenderer.h ExternalRun.h
 Iterator.o Scan.o Sort.o utils.o Buffer.o Witness.o TournamentTree.o SortedRecordRenderer.o Verify.o Remove.o Metrics.o GracefulRenderer.o ExternalRenderer.o ExternalRun.o: Iterator.h Buffer.h params.h utils.h
 Scan.o : Scan.h 
-Sort.o : Sort.h TournamentTree.h SortedRecordRenderer.h
+Sort.o : Sort.h
 utils.o: utils.h
 Witness.o: Witness.h
 Verify.o: Verify.h
@@ -185,9 +185,9 @@ TournamentTree.o: TournamentTree.h
 Metrics.o: Metrics.h
 SortedRecordRenderer.o: SortedRecordRenderer.h
 ExternalRun.o: ExternalRun.h
-ExternalRenderer.o: ExternalRenderer.h ExternalRun.h SortedRecordRenderer.h TournamentTree.h
-InMemoryRenderer.o: InMemoryRenderer.h SortedRecordRenderer.h TournamentTree.h
-GracefulRenderer.o: GracefulRenderer.h InMemoryRenderer.h ExternalRun.h TournamentTree.h
+ExternalRenderer.o: ExternalRenderer.h ExternalRun.h SortedRecordRenderer.h
+InMemoryRenderer.o: InMemoryRenderer.h SortedRecordRenderer.h
+GracefulRenderer.o: GracefulRenderer.h InMemoryRenderer.h ExternalRun.h
 ExternalSorter.o: ExternalRenderer.h utils.h
 
 list : Makefile

@@ -73,8 +73,8 @@ byte * VerifyIterator::next()
             if (_descending ? cmp < 0 : cmp > 0) {
                 isSorted = false;
 
-                #ifdef VERBOSEL2
-                traceprintf ("Sort error: #%lu || %s #%lu || %s\n", (unsigned long) (_consumed - 1), rowToString(lastRow, _plan->_size).c_str(), (unsigned long) (_consumed), rowToString(received, _plan->_size).c_str());
+                #ifdef VERBOSEL1
+                traceprintf ("!!!!!! Sort error: #%lu || %s #%lu || %s\n", (unsigned long) (_consumed - 1), rowToString(lastRow, _plan->_size).c_str(), (unsigned long) (_consumed), rowToString(received, _plan->_size).c_str());
                 #endif
             }
             else if (cmp == 0) {
@@ -96,7 +96,7 @@ byte * VerifyIterator::next()
             ) {
                 continue;
             } else {
-                throw std::invalid_argument("Invalid character " + std::to_string(c) + " (" + std::to_string(int(c)) + ") in row " + rowToString(received, _plan->_size) + " at " + std::to_string(_consumed));
+                throw std::invalid_argument("Invalid character " + std::to_string(c) + " in row " + rowToString(received, _plan->_size) + " at " + std::to_string(_consumed));
             }
         }
 

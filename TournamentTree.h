@@ -19,7 +19,7 @@ public:
     Node * parent;
     u_int16_t bufferNum;
     Node * farthestLoser;
-    Node (byte * &data, RowSize size, u_int16_t bufferNum, Node * farthestLoser);
+    Node (byte * data, RowSize size, u_int16_t bufferNum, Node * farthestLoser);
     ~Node ();
 private:
 };
@@ -27,7 +27,7 @@ private:
 class TournamentTree
 {
 public:
-    TournamentTree (vector<byte *>::const_iterator records, u_int16_t recordSize, u_int16_t numRecords);
+    TournamentTree (const vector<byte *> &records, RowSize recordSize);
     ~TournamentTree ();
     byte * poll (); // When the buffer that the root comes from is exhausted, advance the farthest loser of the root, push the tree all the way to the top, and poll the root
     u_int16_t peekTopBuffer (); // Peek the buffer number of the root
@@ -37,7 +37,7 @@ public:
 private:
     Node * _root;
     RowSize _recordSize;
-    tuple<Node *, Node *> _formRoot (vector<byte *>::const_iterator &records, u_int16_t offset, u_int16_t numRecords); // max records.size() = 100 MB / 20 KB = 2^13
+    tuple<Node *, Node *> _formRoot (const vector<byte *> &records, u_int16_t offset, u_int16_t numRecords); // max records.size() = 100 MB / 20 KB = 2^13
     tuple<Node *, Node *> _contest(Node * root_left, Node * root_right);
     Node * _advanceToTop(Node * advancing, Node * incumbent);
     void _printNode (Node * node, string prefix, bool isLeft);

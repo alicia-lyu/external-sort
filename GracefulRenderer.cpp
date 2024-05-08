@@ -10,7 +10,7 @@ GracefulRenderer::GracefulRenderer (RowSize recordSize, SortedRecordRenderer * i
     vector<byte *> formingRows;
     formingRows.push_back(inMemoryRenderer->next());
     formingRows.push_back(externalRun->next());
-    tree = new TournamentTree(formingRows.cbegin(), recordSize, formingRows.size());
+    tree = new TournamentTree(formingRows, recordSize);
 }
 
 GracefulRenderer::~GracefulRenderer ()

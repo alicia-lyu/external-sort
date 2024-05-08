@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <stdexcept>
 
-Node::Node (byte * &data, RowSize size, u_int16_t bufferNum, Node * farthestLoser)
+Node::Node (byte * data, RowSize size, u_int16_t bufferNum, Node * farthestLoser)
 : data (data), _size (size), left (nullptr), right (nullptr),parent (nullptr), 
     bufferNum (bufferNum), farthestLoser (farthestLoser)
 {   
@@ -19,14 +19,14 @@ Node::~Node ()
     // traceprintf("Node deleted with bufferNum %d\n", bufferNum);
 }
 
-TournamentTree::TournamentTree (vector<byte *>::const_iterator records, RowSize recordSize, u_int16_t numRecords)
+TournamentTree::TournamentTree (const vector<byte *> &records, RowSize recordSize)
 : _recordSize (recordSize)
 {
     TRACE (false);
     Node * root;
     Node * second;
     // traceprintf("Forming tree with %zu records\n", records.size());
-    std::tie(root, second) = _formRoot (records, 0, numRecords);
+    std::tie(root, second) = _formRoot (records, 0, records.size());
     _root = root;
 }
 
@@ -47,12 +47,12 @@ TournamentTree::~TournamentTree ()
     }
 }
 
-tuple<Node *, Node *> TournamentTree::_formRoot (vector<byte *>::const_iterator &records, u_int16_t offset, u_int16_t numRecords)
+tuple<Node *, Node *> TournamentTree::_formRoot (const vector<byte *> &records, u_int16_t offset, u_int16_t numRecords)
 {
     // TRACE (true);
     // traceprintf("Forming root with offset %d and numRecords %d\n", offset, numRecords);
     if (numRecords == 1) {
-        byte * record = *(records + offset);
+        byte * record = records.at(offset);
         if (record == nullptr) {
             throw std::invalid_argument("A forming record at offset " + std::to_string(offset) + " is NULL");
         }
@@ -64,8 +64,8 @@ tuple<Node *, Node *> TournamentTree::_formRoot (vector<byte *>::const_iterator 
     Node * root;
     Node * loser;
     if (numRecords == 2) {
-        byte * record1 = *(records + offset);
-        byte * record2 = *(records + offset + 1);
+        byte * record1 = records.at(offset);
+        byte * record2 = records.at(offset+1);
         if (record1 == nullptr || record2 == nullptr) {
             throw std::invalid_argument("A forming record at offset " + std::to_string(offset) + " is NULL");
         }

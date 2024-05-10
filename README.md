@@ -1,6 +1,15 @@
 # External-Sort
 
-External sort project.
+High-performance external sort implementation in C++, incorporating multiple techniques published in the field of query execution in recent years. **Exceeds the second-best solution in class by 15% less time** taken to sort 120 GB of data on Linux machine.
+
+Highlights:
+
+- Fulling exploiting **4 levels of cache hierarchy**: cache line, DRAM, SSD, and HDD.
+- **Tournament tree** for merging sorted runs that proximates optimal sorting cost.
+- **Robust to cardinality estimation errors** with graceful degradation.
+- **Testing efforts in good faith**: parity checks, sorted order checks, random data generation.
+
+[TOC]
 
 ## Getting started
 
@@ -209,3 +218,7 @@ We defined a class `Metrics` to record all access to SSD and HDD that can be acc
   - `u_int64_t numAccessesRead`: number of read accesses to this storage device
   - `u_int64_t numAccessesWritten`: number of write accesses to this storage device
 - The specific parameters are defined in `params.h`.
+
+## Acknowledgements
+
+Thanks to course staff of CS 764 Advanced Topics in Database Management Systems at UW--Madison for providing barebone code (mainly the `Makefile`, `defs`, `Iterator`) and guidance on the project.
